@@ -44,33 +44,28 @@ The template generalizes *the calculus*, not the proof format. A signature it
 can generate a checker for has to meet the framework where it stands, in two
 ways.
 
-### Required builtins
+### The signature contract
 
 The correctness development is not neutral about vocabulary. It is stated in
-terms of specific operators, referenced as constructors of the `UserOp` enum
-the signature compiles to, so a signature that does not declare them under
-these names does not merely lose a feature — the core proofs stop typechecking.
+terms of one operator, named as a constructor of the `UserOp` enum the signature
+compiles to.
 
-| symbol | arity | why the core needs it |
-| ------ | ----- | --------------------- |
-| `and` | binary | The soundness statement is about the *conjunction* of a proof's assumptions. The assumption term is literally `(and A rest)`, and the state invariants are stated over it. |
-| `imp` | binary | Discharging an assumption — `scope` — yields an implication, so the state invariants are stated over it too. |
-| `Bool` | type | The checker's guard: every assumption and every proven term must have EO type `Bool`. |
-| `true`, `false` | literals | What a proof is checked to entail, and what a refutation reaches. |
+| requirement | why |
+| ----------- | --- |
+| an operator **`and`** | The soundness statement is about the *conjunction* of a proof's assumptions, and the checker folds its proof stack with the same operator. |
+| declared **`:right-assoc-nil true`** | Not decoration. The checker reads the input problem as an `and`-chain terminated by `true`, and every `:list`-premise rule depends on the nil the attribute generates. |
+| **`and` sent to `SmtTerm.and`** by the semantics | A signature that declared `and` and translated it elsewhere would break soundness *silently*: nothing downstream re-checks that seam. |
+| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is literally "has `false` been proven" — and `true` is the unit of the assumption chain. |
 
-That is the whole list. It is deliberately short, and Logos has been shortening
-it: `not` and `eq` were on it until recently and are not any more. Two
-connectives are what the *statement* of soundness needs — a conjunction to hold
-the assumptions and an implication to discharge one — and everything else a
-calculus has is its own business.
+That is the whole list, and it is short because Logos worked at making it short:
+`not`, `=` and `imp` were all required at some point and none are now. Two
+things drove the shrinking — a conjunction is what the *statement* of soundness
+needs, and everything else a calculus has is its own business.
 
-Declaring an operator with the right *name* is necessary but not sufficient: it
-must also **mean** what the SMT-LIB semantics says it means. A signature whose
-`and` is not conjunction will compile and then fail to prove.
-
-Everything else about the vocabulary is yours. The embedding supplies the rest
-of the structure — `Apply`, `UOp`, `Stuck`, `Type`, the Eunoia list — and the
-signature supplies the theory.
+**All four are checked**, on the compiler's output rather than on the signature
+text — the name an operator compiles to need not be its spelling, and the
+attribute is only visible in what it generates. `install/install-<calc>.sh`
+refuses before installing anything, naming what is missing.
 
 ### The proof format is fixed
 

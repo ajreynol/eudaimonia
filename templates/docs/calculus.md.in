@@ -19,20 +19,30 @@ SMT-LIB, and `install/defs/smt.eos` says what that target means to a model.
 Together they are what makes a verdict of `correct` an assertion about
 satisfiability rather than about a syntactic derivation.
 
-## Required builtins
+## The signature contract
 
-The correctness development is stated in terms of specific operators, so the
-signature has to declare them under these names:
+The checker layer depends on the signature in four places. All four are checked
+by `install/install-@CALCLOWER@.sh` against the compiler's output, before
+anything is installed.
 
-| symbol | why |
-| ------ | --- |
-| `and` | the soundness statement is about the conjunction of the assumptions |
-| `imp` | discharging an assumption (`scope`) yields an implication |
-| `Bool` | every assumption and proven term must have EO type `Bool` |
-| `true`, `false` | what a proof entails, and what a refutation reaches |
+| requirement | why |
+| ----------- | --- |
+| an operator **`and`** | The soundness statement is about the *conjunction* of a proof's assumptions, and the checker folds its proof stack with the same operator. |
+| declared **`:right-assoc-nil true`** | Not decoration. The checker reads the input problem as an `and`-chain terminated by `true`, and every `:list`-premise rule depends on the nil the attribute generates. |
+| **`and` sent to `SmtTerm.and`** by the semantics | A signature that declared `and` and translated it elsewhere would break soundness *silently*: nothing downstream re-checks that seam. |
+| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is literally "has `false` been proven" — and `true` is the unit of the assumption chain. |
 
-Each must also *mean* what the SMT-LIB semantics says: a signature whose `and`
-is not conjunction compiles and then fails to prove.
+For example, in `install/defs/@CALCULUS@.eo`:
+
+```
+(declare-const and (-> Bool Bool Bool) :right-assoc-nil true)
+```
+
+and in `install/defs/@CALCULUS@.eos`, a rule sending it to the SMT-LIB `and`.
+
+Everything else in the vocabulary is yours. `not`, `=` and `imp` are **not**
+required by the checker — they are used only by rule proofs, so a calculus
+without them costs nothing.
 
 ## The rules
 

@@ -247,6 +247,63 @@ and abstraction routinely breaks that automation. Try it on
 `Invariants/Stability.lean` — 319 lines, one operator — before committing the
 other 4,600.
 
+### Corrections from the Logos maintainer
+
+`~/logos/docs/modularity.md` (2026-08-29) measures the same tree from the other
+side and sends back two corrections to what is above. Both are accepted, and
+both were verified here rather than taken on trust.
+
+**The required-operator list was stale, twice.** It is now **`and` alone**.
+`not` and `=` went, then `imp` — the last by accident, five `eo_interprets_imp_*`
+lemmas in `CheckerState.lean` that nothing in the checker used. Verified: the
+core files name `UserOp.and` and nothing else, and `Proofs/Checker.lean` names
+no `UserOp` at all.
+
+**The 108 differing lines in `Invariants/Stability.lean` are necessity, not
+duplication.** Cpc carries the real `StableWhenTrueInAnyVarModel` machinery;
+CpcMini defines it `True`. The table above should not be read as saying that
+file has drifted.
+
+### What the report establishes that this roadmap could not
+
+Measuring from outside, the best available evidence was a diff between two
+packages. From inside, the maintainer can say what the diff *means*:
+
+- **`Proofs/Checker.lean` is byte-identical between `Cpc` and `CpcMini`**
+  modulo the package name — verified here. Zero `CRule`, zero `UserOp`, three
+  `Term` constructors. And the two packages differ in rule set (591 vs 5), in
+  signature, *and* in which invariants their rules need, so this is real
+  separation rather than two calculi that happen to be similar.
+- **`CheckerState.lean` contains no occurrence of `Invariant`** — verified.
+- **The extra-invariant slot** (`Invariants/Stability.lean`) is the designed
+  escape hatch: four `abbrev`s plus a preservation lemma, pointed at `True` by a
+  calculus that needs nothing. It is coupled to `RuleSupport/Contract.lean`, and
+  the report is explicit that the two choices are made together, up front.
+- **The layering is the reusable unit, and it is template reuse, not library
+  reuse.** The report accepts the finding above that compilation configures the
+  model, and agrees the same text about two different types is what
+  byte-identity buys — so stabilizing the SMT-LIB model comes first.
+
+- [ ] **Seed `Proofs/Assumptions.lean` from CpcMini\'s 44-line version**, whose
+      `cmdTranslationOk` is generic (`| CCmd.step _ args _ => cArgListTranslationOk args`)
+      and names no rule. Cpc\'s 257-line version is a hand-maintained
+      specialization naming 32 rules — the only hand-written non-rule file that
+      mentions a rule at all. The template\'s current stub has the right verdict
+      behaviour but not this shape.
+- [ ] **Track the checker layer as it becomes seedable.** The report\'s TODO 2
+      proposes promoting `Checker.lean`, `CheckerState.lean`,
+      `RuleSupport/Contract.lean` and a generic `Assumptions.lean` to eoc
+      templates, installed once and preserved thereafter — the treatment
+      `Proofs/Rules/*.lean` already gets. That is precisely the **L (library)**
+      category this template lacks, arriving by the cheaper route. When it
+      lands, those four stop being stubs a user writes and become files a
+      generated checker inherits.
+- [ ] **Take the report\'s advice to start from `CpcMini`.** The worked example
+      here is `examples/cpc`, which generates 591 rule stubs and a full
+      semantics layer. A minimal specification would exercise the same pipeline
+      in seconds. This is the same item as the mini calculus in §6, now with an
+      argument for it from the other side.
+
 ### What not to chase
 
 `Spec.lean` (180 distinct `UserOp`), `TermCompat.lean` (189), `Translation/`
@@ -265,12 +322,19 @@ deliberately rather than drifted into.
 
 ### Validating a signature
 
-- [x] **Check the required builtins.** `install/install-<calc>.sh` checks the
-      compiler's output for `and` and `imp` in the operator enum *before*
-      installing anything, and refuses with one sentence naming what is missing.
-      The check is on the compiler's output rather than on the signature text
-      because the name an operator compiles to need not be its spelling — CPC's
-      `=>` becomes `imp` — so grepping the `.eo` would be wrong.
+- [x] **Check the signature contract.** `install/install-<calc>.sh` checks all
+      four requirements against the compiler's output *before* installing
+      anything, and refuses naming what is missing: that `and` exists, that it
+      is `:right-assoc-nil true` (evidenced by the `__eo_nil` arm the attribute
+      generates), and that the semantics sends it to `SmtTerm.and`. The checks
+      are on the compiler's output rather than the signature text because the
+      name an operator compiles to need not be its spelling, and the attribute
+      is only visible in what it generates.
+
+      This implements TODO 8 of `~/logos/docs/modularity.md`, including the two
+      seams that document records as unchecked — the nil attribute and the
+      translation of `and` — both of which turn out to be greppable in what the
+      compiler emits.
 
 ## 5. Build and CI
 
