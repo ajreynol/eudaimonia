@@ -1,0 +1,15 @@
+# Lake build artifacts.
+/.lake/
+*.olean
+*.ilean
+*.trace
+
+# The Ethos tree and ethos-eoc, downloaded and built by
+# install/get-eo-compiler.sh. Reproducible from the pin in that script, so what
+# is kept in git is the pin and not what it fetches.
+/install/deps/
+
+# Editor scratch files.
+.*.sw[po]
+.*.kate-swp
+*~

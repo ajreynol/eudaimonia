@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Reject unproven proofs, textually. See --help.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/check-proof-hygiene.sh
+
+Fail if any Lean source under @CALCULUS@/ contains `sorry`, `admit` or a new
+`axiom`.
+
+This is textual and builds nothing, which is the point: a full proof build is
+far too slow to run on every change, so without this an unproven rule could
+land silently. It runs in a second and it cannot be fooled by a proof that
+merely has not been rebuilt.
+
+A freshly generated rule file is a `sorry` stub by construction, so this is
+expected to fail until every rule has been discharged. That is the report, not
+a fault.
+USAGE
+}
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+# `sorry` as a word, so that `sorryAx` in a comment or a name containing it is
+# not mistaken for one.
+PATTERN='(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)|^[[:space:]]*axiom[[:space:]]'
+
+status=0
+if grep -rInE "${PATTERN}" @CALCULUS@ --include='*.lean' > /tmp/hygiene.$$ 2>/dev/null; then
+  echo "==> Unproven proofs found:"
+  echo
+  sed 's/^/  /' /tmp/hygiene.$$
+  echo
+  echo "==> $(wc -l < /tmp/hygiene.$$) occurrence(s)."
+  status=1
+else
+  echo "==> No sorry, admit or axiom under @CALCULUS@/."
+fi
+rm -f /tmp/hygiene.$$
+exit "${status}"

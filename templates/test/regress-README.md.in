@@ -1,0 +1,18 @@
+# Regression proofs
+
+Proofs to run the checker over, with the verdict each should get.
+
+```bash
+lake exe @EXE@ test/regress/<proof>
+```
+
+Three verdicts are worth covering, not two:
+
+| verdict | status | what a test here would show |
+| ------- | ------ | --------------------------- |
+| `correct` | 0 | a refutation the checker accepts |
+| `incorrect` | 1 | something it must reject |
+| `incomplete` | 2 | a proof it accepts that the semantics does not model |
+
+The third is the one that is easy to forget and most worth having: it is what
+keeps `correct` from quietly overstating what the soundness theorem covers.

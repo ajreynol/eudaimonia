@@ -1,0 +1,73 @@
+# Working on @CHECKER@
+
+## The loop
+
+```bash
+install/get-eo-compiler.sh          # once
+install/install-@CALCLOWER@.sh      # signature -> Lean
+scripts/build.sh                    # check the result
+```
+
+After a change to the signature or its semantics, install and build again.
+Regeneration overwrites the signature-wide modules and **preserves** everything
+under `@CALCULUS@/Proofs/Rules/`, so proofs are never lost — see
+[`install/README.md`](../install/README.md).
+
+## What to build, and what not to
+
+`scripts/build.sh` builds the library and the executable. It does **not** build
+the correctness proof: `@CALCULUS@.ApiCorrect` depends on every per-rule proof,
+which is far too slow for a routine build. Ask for it explicitly, and expect it
+to take a long time:
+
+```bash
+scripts/build.sh @CALCULUS@.ApiCorrect
+```
+
+While working on one rule, build just that rule:
+
+```bash
+scripts/build.sh @CALCULUS@.Proofs.Rules.Symm
+```
+
+## Checks
+
+```bash
+scripts/run-ci.sh              # everything CI runs
+scripts/run-ci.sh hygiene      # just the sorry/admit/axiom check
+```
+
+`scripts/check-proof-hygiene.sh` is textual and builds nothing. That is what
+makes it worth running constantly: a full proof build is too slow to gate every
+change, so without it an unproven rule could land unnoticed.
+
+`install/install-@CALCLOWER@.sh --check` reports whether `@CALCULUS@/` has
+drifted from the signature it was compiled from, writing nothing.
+
+## Where the correctness argument lives
+
+| file | what it establishes |
+| ---- | ------------------- |
+| `@CALCULUS@/SmtModel.lean` | the model semantics of SMT-LIB, on its own terms |
+| `@CALCULUS@/Spec.lean` | the correspondence between @CALCULUS@ terms and SMT-LIB, and satisfiability |
+| `@CALCULUS@/Proofs/Assumptions.lean` | the side conditions, and the instances that decide them |
+| `@CALCULUS@/Proofs/CheckerCore.lean` | correctness of the core checker, independent of the rules |
+| `@CALCULUS@/Proofs/Rules/*.lean` | one correctness proof per rule |
+| `@CALCULUS@/Proofs/RuleLemmas.lean` | the dispatcher tying the rules to the core |
+| `@CALCULUS@/Proofs/Checker.lean` | the soundness theorem |
+| `@CALCULUS@/ApiCorrect.lean` | that theorem, restated about the text of a proof file |
+
+The side conditions are checked at run time, which is why a proof the checker
+accepts can still come back `incomplete`: it mentions something the semantics
+does not model, so the theorem does not apply to it.
+
+## Adding a rule
+
+1. Add it to `install/defs/@CALCULUS@.eo`.
+2. `install/install-@CALCLOWER@.sh` — it arrives as a `sorry` stub in
+   `@CALCULUS@/Proofs/Rules/`.
+3. Discharge the stub.
+4. `scripts/build.sh @CALCULUS@.Proofs.Rules.<Rule>`.
+
+Changing an existing rule's *statement* leaves its old proof in place, so the
+build fails. That is the intended signal, not a fault in the install.

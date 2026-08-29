@@ -207,47 +207,57 @@ close once there are proofs to keep.
 
 ## What a run generates
 
-The full set of artifacts Logos's `install/install-cpc.sh` produces, plus the
-hand-written modules it leaves alone — every one a stub describing what belongs
-in it and which Logos file it corresponds to:
+A checker whose **development infrastructure is initialized**, not just a Lake
+package: the compiler that regenerates it, the scripts that build and check it,
+and documentation about its own calculus. The shape is Logos's.
 
 ```text
 <Checker>/
-  lakefile.toml            the package: the <Calculus> library and the <checker> executable
-  lean-toolchain           the pinned Lean version
-  Main.lean                the executable: read a proof, report a verdict
-  <Calculus>.lean          the root of the library
-  <Calculus>/
-    SmtEval.lean           G  the primitives the embedding is evaluated over
-    <Checker>Term.lean     G  the term datatype of the calculus
-    SmtModelDefs.lean      G  what the model semantics is built from
-    SmtValueOrder.lean     G  the order on values
-    SmtModel.lean          G  the model semantics of SMT-LIB
-    Spec.lean              G  calculus <-> SMT-LIB, and satisfiability
-    <Checker>.lean         G  the core checker
-    Parser.lean            G  the operator table for this signature
-    Api.lean               H  what the executable does with a file
-    ApiChecks.lean         H  each check is the component it stands for
-    ApiCorrect.lean        H  the theorem, about the text of a file
-    Diagnostics.lean       H  why a run came back incomplete
-    Proofs/
-      Assumptions.lean     H  the side conditions, and deciding them
-      CheckerCore.lean     H  correctness of the core, rule-agnostic
-      RuleLemmas.lean      G  the dispatcher over the rules
-      Checker.lean         H  the soundness theorem
-      Rules/               G+H  one file per rule: statement generated, proof yours
-  signature/
-    <Calculus>.eo          the Eunoia signature
-    <Calculus>.eos         what its symbols mean
-    smt.eos                the SMT-LIB semantics that is written against
+  install/                 regenerating <Calculus> from its signature
+    defs/<Calculus>.eo     the Eunoia signature
+    defs/<Calculus>.eos    what its symbols mean
+    defs/smt.eos           the SMT-LIB semantics that is written against
+    get-eo-compiler.sh     fetch and build the Eunoia compiler
+    install-<calc>.sh      compile the signature into <Calculus>/
+    README.md              what regeneration overwrites, and what it preserves
+  scripts/                 build.sh, check-proof-hygiene.sh, run-ci.sh
+  docs/                    calculus.md, development.md
+  test/regress/            proofs to check, and the verdict each should get
+  .github/workflows/ci.yml
+  .gitignore
+  lakefile.toml
+  lean-toolchain
+  Main.lean
+  <Calculus>.lean
+  <Calculus>/              the package: 17 modules, G generated and H hand-written
+    ...
+    Proofs/Rules/          one file per rule: statement generated, proof yours
   README.md
 ```
 
-**G** is generated from the signature and overwritten by a regeneration; **H**
-is hand-written and left alone. Each file says which it is in its own header,
-because that distinction is what makes regeneration safe. `Proofs/Rules/` is
-both: the compiler emits each rule's statement with `sorry`, the proof goes in
-that same file, and a reinstall then preserves it.
+Every module under `<Calculus>/` carries a header saying whether it is
+generated from the signature — and so overwritten by a reinstall — or
+hand-written and left alone. `Proofs/Rules/` is both: the compiler emits a
+rule's statement with `sorry`, the proof goes in that same file, and a reinstall
+preserves it.
+
+A generated checker does not refer back to this repository. It owns its own
+copy of the compiler setup, so it can be moved anywhere or made a repository of
+its own.
+
+### Trying it end to end
+
+```bash
+scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
+cd checkers/Logos
+install/get-eo-compiler.sh
+install/install-cpc.sh
+scripts/build.sh
+```
+
+That compiles the CPC signature into 8 signature-wide modules and 591 rule
+stubs, and builds them. The generated Lean is byte-identical to what Logos
+carries, modulo the header naming which installer wrote it.
 
 A signature or semantics file you do not name is written as a commented stub to
 fill in, so the project has the file either way and says in it what it is for.
@@ -261,6 +271,8 @@ config.sh                  the settings a run reads
 scripts/new-checker.sh     the generator
 scripts/get-eo-compiler.sh fetches and builds the Eunoia compiler, pinned
 templates/                 what it renders, one file per generated file
+  pkg/ install/ scripts/  the checker's package, installer and dev scripts
+  docs/ ci/ test/         its documentation, CI workflow and test layout
 examples/cpc/              a worked specification: CPC, as Logos compiles it
 checkers/                  where runs write, ignored by git
 deps/                      the Ethos tree and ethos-eoc, ignored by git

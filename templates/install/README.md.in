@@ -1,0 +1,75 @@
+# Regenerating @CALCULUS@
+
+The `@CALCULUS@` package is compiled from a Eunoia signature rather than
+written by hand. This directory is what does that.
+
+```text
+install/get-eo-compiler.sh      fetch and build the Eunoia compiler
+install/install-@CALCLOWER@.sh  compile the signature into @CALCULUS@/
+install/defs/@CALCULUS@.eo      the signature, kept in git
+install/defs/@CALCULUS@.eos     what its symbols mean, kept in git
+install/defs/smt.eos            the SMT-LIB semantics that is written against
+install/deps/                   the Ethos tree and the compiler, ignored by git
+```
+
+## Usage
+
+```bash
+install/get-eo-compiler.sh          # once
+install/install-@CALCLOWER@.sh      # compile install/defs/@CALCULUS@.eo
+scripts/build.sh                    # check the result
+```
+
+Any signature reachable on the machine can be compiled instead, including one
+being edited:
+
+```bash
+install/install-@CALCLOWER@.sh ~/sigs/@CALCULUS@.eo
+```
+
+`--check` installs nothing and exits 1 if the package has drifted from its
+signature. Both scripts take `--help`.
+
+## What is generated and what is not
+
+Generated, and overwritten by every install:
+
+```text
+@CALCULUS@/@CHECKER@.lean       @CALCULUS@/SmtModelDefs.lean
+@CALCULUS@/@CHECKER@Term.lean   @CALCULUS@/SmtValueOrder.lean
+@CALCULUS@/Parser.lean          @CALCULUS@/SmtModel.lean
+@CALCULUS@/SmtEval.lean         @CALCULUS@/Spec.lean
+                                @CALCULUS@/Proofs/RuleLemmas.lean
+```
+
+Hand-written, and left alone: `@CALCULUS@/Api*.lean`,
+`@CALCULUS@/Diagnostics.lean`, and everything under `@CALCULUS@/Proofs/` other
+than `RuleLemmas.lean` and `Rules/`.
+
+**Rule files are preserved.** The compiler emits each rule as its statement
+with `sorry` for a proof, and the proof then lives in that same file, so an
+existing file is kept and only a rule with no file yet gets a stub:
+
+* a rule new to the signature appears as a `sorry` stub to discharge
+* a rule whose *statement* changed keeps its old file and therefore fails to
+  build, which is how a proof needing attention shows up — build after an
+  install to find them
+* a reinstall over an up-to-date tree changes nothing
+
+## The three files a specification is
+
+`defs/@CALCULUS@.eo` is the calculus: its sorts, operators and proof rules.
+`defs/@CALCULUS@.eos` says what those symbols mean, as a transformation into
+the deep embedding. `defs/smt.eos` is the SMT-LIB semantics that transformation
+is written against — the same for any calculus over ordinary SMT-LIB, so a new
+calculus replaces the first two and keeps the third.
+
+Changing what the calculus means changes what a verdict of `correct` asserts,
+so `Spec.lean` and the `SmtModel` modules are downstream of these files and are
+regenerated from them.
+
+## Pinning
+
+The Ethos commit is not an option of `install-@CALCLOWER@.sh`. It is set in
+`get-eo-compiler.sh`, so that what the compiler emits changes only when someone
+moves it deliberately. See the note above `DEV_MODE` in that script.

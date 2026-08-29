@@ -13,6 +13,11 @@ module
 -- the text of a file rather than about an internal term, so that the verdict the
 -- executable prints is the theorem's conclusion.
 --
+-- The `Parser` it imports is the stub, not a generated one: the generated
+-- parser configuration plugs into a signature-independent parser library that
+-- this checker does not have yet, so installing a signature leaves the stub in
+-- place. See the Eudaimonia roadmap, TODO.md.
+--
 -- In Logos: `Cpc/Api.lean`, whose `Eo.logos_check_proof` this corresponds to.
 
 public import @CALCULUS@.@CHECKER@

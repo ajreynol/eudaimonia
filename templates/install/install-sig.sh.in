@@ -1,0 +1,303 @@
+#!/usr/bin/env bash
+
+# Compile the Eunoia signature of @CALCULUS@ into Lean and install it. See
+# --help.
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/.." && pwd)"
+DEPS_DIR="${script_dir}/deps"
+DEFS_DIR="${script_dir}/defs"
+PACKAGE="@CALCULUS@"
+PACKAGE_DIR="${repo_root}/${PACKAGE}"
+
+usage() {
+  cat <<'USAGE'
+Usage: install/install-@CALCLOWER@.sh [OPTION]... [SIGNATURE]
+
+Compile a Eunoia signature into Lean with ethos-eoc and install what it
+publishes into @CALCULUS@/, which is how the modules of that package are
+written.
+
+With no SIGNATURE, compiles install/defs/@CALCULUS@.eo -- the signature this
+checker is of. Passing one compiles that instead, which is how a signature
+being edited elsewhere is tried without copying it here first.
+
+Requires install/get-eo-compiler.sh to have been run once.
+
+Options:
+  --semantics PATH     what the symbols of the signature mean
+                       (default: install/defs/@CALCULUS@.eos)
+  --smt-semantics PATH the SMT-LIB semantics that is written against
+                       (default: install/defs/smt.eos)
+  --rules R...         compile only these rules, rather than the whole
+                       signature. The package is built around only these, so
+                       this makes a reduced calculus and not a partial refresh
+  --parser             install the generated parser configuration. Off by
+                       default: the generated parser is an operator table that
+                       plugs into a signature-independent parser library, and
+                       this checker has none yet, so installing it gives a
+                       package that does not build
+  --no-parser          the default; leaves @CALCULUS@/Parser.lean alone
+  --check              install nothing; report whether @CALCULUS@/ is up to
+                       date with the signature, exiting 1 if it is not
+  --jobs N             parallel build jobs
+  -h, --help           show this message
+
+What is written, and what is left alone:
+
+  @CALCULUS@/*.lean            signature-wide modules, overwritten every run
+                               (except Parser.lean, unless --parser)
+  @CALCULUS@/Proofs/RuleLemmas.lean   the rule dispatcher, overwritten
+  @CALCULUS@/Proofs/Rules/*.lean      one per rule: written only if absent
+
+Rule files are preserved because the proof lives in the same file as the
+generated statement. So a rule new to the signature arrives as a `sorry` stub
+to discharge, and a rule whose statement changed keeps its old proof and
+therefore fails to build -- which is the intended signal that a proof needs
+attention. Build after installing to find them.
+
+Everything hand-written is left alone: @CALCULUS@/Api*.lean,
+@CALCULUS@/Diagnostics.lean, and everything under @CALCULUS@/Proofs/ other
+than RuleLemmas.lean and Rules/.
+
+Examples:
+  install/install-@CALCLOWER@.sh
+  install/install-@CALCLOWER@.sh ~/sigs/@CALCULUS@.eo
+  install/install-@CALCLOWER@.sh --check
+USAGE
+}
+
+expand_tilde() {
+  case "$1" in
+    "~") printf '%s\n' "${HOME}" ;;
+    "~/"*) printf '%s\n' "${HOME}/${1#\~/}" ;;
+    *) printf '%s\n' "$1" ;;
+  esac
+}
+
+SIGNATURE=""
+SEMANTICS=""
+SMT_SEMANTICS=""
+JOBS=""
+CHECK=0
+# The generated Parser.lean imports a signature-independent parser library
+# (`Logos.Sexp` and `Logos.Parser` in Logos) that this checker does not have.
+# Installing it would give a package that does not build, so it is off until
+# there is a library for it to plug into.
+NO_PARSER=1
+RULES=()
+RULES_GIVEN=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --semantics) SEMANTICS="${2:?--semantics requires a value}"; shift 2 ;;
+    --semantics=*) SEMANTICS="${1#*=}"; shift ;;
+    --smt-semantics) SMT_SEMANTICS="${2:?--smt-semantics requires a value}"; shift 2 ;;
+    --smt-semantics=*) SMT_SEMANTICS="${1#*=}"; shift ;;
+    --jobs) JOBS="${2:?--jobs requires a value}"; shift 2 ;;
+    --jobs=*) JOBS="${1#*=}"; shift ;;
+    --check) CHECK=1; shift ;;
+    --no-parser) NO_PARSER=1; shift ;;
+    --parser) NO_PARSER=0; shift ;;
+    --rules)
+      RULES_GIVEN=1; shift
+      while [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; do RULES+=("$1"); shift; done ;;
+    -h|--help) usage; exit 0 ;;
+    --*) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
+    *)
+      [ -z "${SIGNATURE}" ] || { echo "error: more than one signature given." >&2; exit 2; }
+      SIGNATURE="$1"; shift ;;
+  esac
+done
+
+SIGNATURE="$(expand_tilde "${SIGNATURE}")"
+SEMANTICS="$(expand_tilde "${SEMANTICS}")"
+SMT_SEMANTICS="$(expand_tilde "${SMT_SEMANTICS}")"
+
+SIGNATURE="${SIGNATURE:-${DEFS_DIR}/@CALCULUS@.eo}"
+SEMANTICS="${SEMANTICS:-${DEFS_DIR}/@CALCULUS@.eos}"
+SMT_SEMANTICS="${SMT_SEMANTICS:-${DEFS_DIR}/smt.eos}"
+
+for f in "${SIGNATURE}" "${SEMANTICS}"; do
+  [ -f "${f}" ] || { echo "error: ${f} not found." >&2; exit 1; }
+done
+# The SMT-LIB semantics is the one that may be absent: without it the compiler
+# compiles the set it ships with, which is the right default for a calculus
+# over ordinary SMT-LIB.
+if [ ! -f "${SMT_SEMANTICS}" ]; then
+  echo "note: ${SMT_SEMANTICS} not found; using the compiler's own SMT-LIB semantics."
+  SMT_SEMANTICS=""
+fi
+
+# get-eo-compiler.sh records where it put things, so that is the only place
+# this looks for them.
+ENV_FILE="${DEPS_DIR}/eoc-env.sh"
+[ -f "${ENV_FILE}" ] || {
+  echo "error: ${ENV_FILE} not found, so the Eunoia compiler has not been" >&2
+  echo "built here yet. Run:" >&2
+  echo >&2
+  echo "  install/get-eo-compiler.sh" >&2
+  exit 1
+}
+# shellcheck source=/dev/null
+. "${ENV_FILE}"
+
+DRIVER="${EOC_DRIVER:?eoc-env.sh did not record EOC_DRIVER}"
+[ -f "${DRIVER}" ] || {
+  echo "error: ${DRIVER} is gone. Re-run install/get-eo-compiler.sh." >&2
+  exit 1
+}
+
+if [ "${EOC_DEV_MODE:-0}" = "1" ]; then
+  echo "note: the compiler was built in development mode from the head of"
+  echo "      ${EOC_ETHOS_BRANCH:-a branch}, so this install is not reproducible."
+fi
+
+OUT_DIR="${DEPS_DIR}/eoc-out"
+BUILD_DIR="${EOC_BUILD_DIR:-${EOC_ETHOS_DIR}/build-eoc}"
+DEST_DIR="${PACKAGE_DIR}"
+
+# --check installs into a throwaway copy and compares, rather than predicting
+# what an install would do. Every step below then runs unchanged against that
+# copy, so the check cannot drift from the install it is checking.
+if [ "${CHECK}" = "1" ]; then
+  CHECK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/install-@CALCLOWER@-check.XXXXXX")"
+  trap 'rm -rf "${CHECK_DIR}"' EXIT INT TERM
+  DEST_DIR="${CHECK_DIR}/${PACKAGE}"
+  [ ! -d "${PACKAGE_DIR}" ] || cp -R "${PACKAGE_DIR}" "${DEST_DIR}"
+fi
+
+# The signature-wide files the lean subcommand publishes, in the layout of the
+# package they are installed into, so one name is both where a file is read and
+# where it is written. Per-rule files stand under Proofs/Rules and are handled
+# separately. A file the driver writes that is missing from this list is
+# silently left behind.
+LEAN_OUTPUTS=(
+  "@CHECKER@.lean"
+  "@CHECKER@Term.lean"
+  "Parser.lean"
+  "SmtEval.lean"
+  "SmtModelDefs.lean"
+  "SmtValueOrder.lean"
+  "SmtModel.lean"
+  "Spec.lean"
+  "Proofs/RuleLemmas.lean"
+)
+
+GENERATED_HEADER='-- This file is auto-generated by install/install-@CALCLOWER@.sh, which
+-- compiles the Eunoia signature in install/defs/ into Lean.
+-- Do not edit. Change the signature, or its semantics, instead.'
+
+# Idempotent, so that a second pass over an installed tree does not stack
+# banners. The banner goes ahead of `module`, which Lean allows: comments are
+# not commands.
+prepend_header() {
+  local file="$1" tmp
+  case "$(head -n 1 "${file}")" in
+    "-- This file is auto-generated by install/install-@CALCLOWER@.sh"*) return 0 ;;
+  esac
+  tmp="${file}.hdr"
+  { printf '%s\n\n' "${GENERATED_HEADER}"; cat "${file}"; } > "${tmp}"
+  mv "${tmp}" "${file}"
+}
+
+echo "==> Compiling ${SIGNATURE}"
+echo "    semantics  ${SEMANTICS}"
+[ -z "${SMT_SEMANTICS}" ] || echo "    smt        ${SMT_SEMANTICS}"
+echo "    package    ${PACKAGE}"
+
+driver_args=(lean --build-dir "${BUILD_DIR}" --final-out-dir "${OUT_DIR}"
+             --semantics "${SEMANTICS}" --calc-name "${PACKAGE}" --skip-cvc5)
+[ -z "${SMT_SEMANTICS}" ] || driver_args+=(--smt-semantics "${SMT_SEMANTICS}")
+[ -z "${JOBS}" ] || driver_args+=(--jobs "${JOBS}")
+[ "${NO_PARSER}" = "0" ] || driver_args+=(--no-parser)
+[ ! -x "${BUILD_DIR}/ethos-eoc" ] || driver_args+=(--no-build)
+if [ "${RULES_GIVEN}" = "1" ]; then
+  [ "${#RULES[@]}" -gt 0 ] || {
+    echo "error: --rules was given with no rule names. Drop it to compile the" >&2
+    echo "whole signature." >&2
+    exit 2
+  }
+  driver_args+=("${SIGNATURE}" "${RULES[@]}")
+else
+  driver_args+=(--all "${SIGNATURE}")
+fi
+
+python3 "${DRIVER}" "${driver_args[@]}"
+
+LEAN_DIR="${OUT_DIR}/lean"
+[ -d "${LEAN_DIR}" ] || {
+  echo "error: the compiler published nothing in ${LEAN_DIR}." >&2
+  exit 1
+}
+
+if [ "${CHECK}" = "1" ]; then
+  echo "==> Staging a copy of ${PACKAGE} to compare against"
+else
+  echo "==> Installing into ${PACKAGE}/"
+fi
+mkdir -p "${DEST_DIR}/Proofs/Rules"
+
+for name in "${LEAN_OUTPUTS[@]}"; do
+  # Left alone rather than removed: @CALCULUS@/Api.lean imports it, and the
+  # stub that is there parses and compiles, which the generated one would not.
+  if [ "${NO_PARSER}" = "1" ] && [ "${name}" = "Parser.lean" ]; then
+    continue
+  fi
+  [ -f "${LEAN_DIR}/${name}" ] || {
+    echo "error: ${LEAN_DIR}/${name} was not generated." >&2
+    exit 1
+  }
+  [ "${CHECK}" = "1" ] || echo "    ${PACKAGE}/${name}"
+  mkdir -p "$(dirname "${DEST_DIR}/${name}")"
+  cp "${LEAN_DIR}/${name}" "${DEST_DIR}/${name}"
+  prepend_header "${DEST_DIR}/${name}"
+done
+
+written=0
+preserved=0
+if [ -d "${LEAN_DIR}/Proofs/Rules" ]; then
+  shopt -s nullglob
+  for file in "${LEAN_DIR}"/Proofs/Rules/*.lean; do
+    dest="${DEST_DIR}/Proofs/Rules/$(basename "${file}")"
+    if [ -e "${dest}" ]; then preserved=$((preserved + 1)); continue; fi
+    cp "${file}" "${dest}"
+    written=$((written + 1))
+  done
+  shopt -u nullglob
+  [ "${CHECK}" = "1" ] || \
+    echo "    ${PACKAGE}/Proofs/Rules/*.lean (${written} written, ${preserved} preserved)"
+fi
+
+if [ "${CHECK}" = "1" ]; then
+  updates=0
+  while IFS= read -r rel; do
+    if [ ! -e "${PACKAGE_DIR}/${rel}" ]; then
+      echo "  add     ${PACKAGE}/${rel}"; updates=$((updates + 1))
+    elif ! cmp -s "${DEST_DIR}/${rel}" "${PACKAGE_DIR}/${rel}"; then
+      echo "  update  ${PACKAGE}/${rel}"; updates=$((updates + 1))
+    fi
+  done < <(cd "${DEST_DIR}" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)
+  if [ "${updates}" -eq 0 ]; then
+    echo "==> ${PACKAGE} is up to date with ${SIGNATURE}. Nothing was written."
+    exit 0
+  fi
+  echo "==> ${PACKAGE} is NOT up to date: ${updates} file(s) would change."
+  echo "    Nothing was written. Rerun without --check to apply."
+  exit 1
+fi
+
+cat <<DONE
+
+==> Done.
+
+Build it with:
+
+  scripts/build.sh
+
+A rule new to the signature arrives as a \`sorry\` stub, and a rule whose
+statement changed keeps its old proof and fails to build. Both show up in that
+build, and both are proofs needing attention rather than faults in the install.
+DONE

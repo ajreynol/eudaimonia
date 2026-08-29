@@ -9,6 +9,15 @@ can be moved anywhere, or made a repository of its own.
 ## Layout
 
 ```text
+install/                 regenerating @CALCULUS@ from its signature
+  defs/@CALCULUS@.eo     the Eunoia signature
+  defs/@CALCULUS@.eos    what its symbols mean
+  defs/smt.eos           the SMT-LIB semantics that is written against
+  get-eo-compiler.sh     fetch and build the Eunoia compiler
+  install-@CALCLOWER@.sh compile the signature into @CALCULUS@/
+scripts/                 build.sh, check-proof-hygiene.sh, run-ci.sh
+docs/                    calculus.md, development.md
+test/regress/            proofs to check, and the verdict each should get
 lakefile.toml            the package: the @CALCULUS@ library and the @EXE@ executable
 lean-toolchain           the pinned Lean version
 Main.lean                the executable: read a proof, report a verdict
@@ -32,16 +41,25 @@ Main.lean                the executable: read a proof, report a verdict
     RuleLemmas.lean      G  the dispatcher over the rules
     Checker.lean         H  the soundness theorem
     Rules/               one file per rule: statement generated, proof yours
-signature/               what the calculus is, and what it means
-  @CALCULUS@.eo          the Eunoia signature
-  @CALCULUS@.eos         what its symbols mean
-  smt.eos                the SMT-LIB semantics that is written against
 ```
 
-**G** is generated from the signature and is overwritten when one is installed;
-**H** is hand-written and left alone. Each file says which it is in its own
-header. `Proofs/Rules/` is both: a rule's statement is generated with `sorry`
-for its proof, the proof goes in that same file, and a reinstall preserves it.
+**G** is generated from the signature and is overwritten by
+`install/install-@CALCLOWER@.sh`; **H** is hand-written and left alone. Each
+file says which it is in its own header. `Proofs/Rules/` is both: a rule's
+statement is generated with `sorry` for its proof, the proof goes in that same
+file, and a reinstall preserves it.
+
+## Getting started
+
+```bash
+install/get-eo-compiler.sh       # once: build the Eunoia compiler
+install/install-@CALCLOWER@.sh   # signature -> Lean
+scripts/build.sh                 # check the result
+```
+
+Then [`docs/development.md`](docs/development.md) for the working loop and
+[`install/README.md`](install/README.md) for what regeneration does and does not
+overwrite.
 
 ## What @CALCULUS@ must provide
 
@@ -66,22 +84,28 @@ and then fails to prove.
 ## Building
 
 ```bash
-lake build
+scripts/build.sh
 ```
 
 That builds the library and the executable. Either alone:
 
 ```bash
-lake build @CALCULUS@     # the library
-lake build @EXE@          # the executable
+scripts/build.sh @CALCULUS@     # the library
+scripts/build.sh @EXE@          # the executable
 ```
 
 `@CALCULUS@.ApiCorrect` is deliberately outside the default target: it depends
-on the whole rule-correctness tree, which is far too expensive to build every
-time. Build it, and so the proofs, explicitly:
+on every per-rule proof, which is far too expensive to build every time. Ask
+for it by name, and expect it to take a long time:
 
 ```bash
-lake build @CALCULUS@.ApiCorrect
+scripts/build.sh @CALCULUS@.ApiCorrect
+```
+
+The checks CI runs:
+
+```bash
+scripts/run-ci.sh
 ```
 
 ## Running
@@ -98,10 +122,18 @@ After a build the executable can be run directly, without Lake:
 
 ## Status
 
-The build infrastructure and the shape of the checker are in place; the content
-is not. Every module under `@CALCULUS@/` is a stub saying what belongs in it,
-and `@EXE@` reports that it has nothing to check with.
+Freshly generated, every module under `@CALCULUS@/` is a stub saying what
+belongs in it, and `@EXE@` reports that it has nothing to check with. Running
+`install/install-@CALCLOWER@.sh` replaces the generated ones with the calculus
+compiled from `install/defs/`.
 
-What replaces the stubs is compiled from `signature/`. The Eunoia compiler that
-does that is not wired up yet — see the Eudaimonia roadmap, `TODO.md`, for what
-is missing and in what order it is worth building.
+Two things are missing after that, and both are expected:
+
+- **The rule proofs.** Each rule arrives as a `sorry` stub, so
+  `scripts/check-proof-hygiene.sh` fails until they are discharged. That
+  failure is the work list.
+- **The parser.** The generated parser configuration is an operator table that
+  plugs into a signature-independent parser library, and this checker has none,
+  so `install-@CALCLOWER@.sh` leaves `Parser.lean` as its stub. `--parser`
+  installs the generated one, which will not build until there is a library for
+  it to plug into.

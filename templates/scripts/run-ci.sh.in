@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Run the checks CI runs. See --help.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/run-ci.sh [GROUP]...
+
+Run the same checks as CI. With no group, runs all of them.
+
+Groups:
+  build           build the default targets
+  hygiene         reject sorry, admit and axiom under @CALCULUS@/
+  regeneration    check @CALCULUS@/ has not drifted from its signature
+
+`regeneration` needs install/get-eo-compiler.sh to have been run, and is
+skipped with a note when it has not.
+
+Note that no group builds every per-rule proof: that takes hours. A full build
+is still the only way to catch a proof broken by a changed rule statement, so
+run `scripts/build.sh @CALCULUS@.ApiCorrect` before a release.
+USAGE
+}
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+# Not named GROUPS: bash keeps that as the current user's group ids and
+# silently ignores an assignment to it.
+CI_GROUPS=("$@")
+[ "${#CI_GROUPS[@]}" -gt 0 ] || CI_GROUPS=(build hygiene regeneration)
+
+failed=()
+run_group() {
+  local name="$1"; shift
+  echo
+  echo "############ ${name} ############"
+  if "$@"; then echo "---- ${name}: ok"; else echo "---- ${name}: FAILED"; failed+=("${name}"); fi
+}
+
+for g in "${CI_GROUPS[@]}"; do
+  case "${g}" in
+    build)    run_group build scripts/build.sh ;;
+    hygiene)  run_group hygiene scripts/check-proof-hygiene.sh ;;
+    regeneration)
+      if [ -f install/deps/eoc-env.sh ]; then
+        run_group regeneration install/install-@CALCLOWER@.sh --check
+      else
+        echo
+        echo "############ regeneration ############"
+        echo "---- skipped: install/get-eo-compiler.sh has not been run."
+      fi ;;
+    *) echo "unknown group ${g}" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+echo
+if [ "${#failed[@]}" -eq 0 ]; then
+  echo "==> All groups passed."
+else
+  echo "==> Failed: ${failed[*]}"
+  exit 1
+fi

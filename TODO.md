@@ -51,29 +51,48 @@ has a `signature/` directory and no way to turn it into Lean.
       configurable calculus name and the third specification file — the two
       things that make this a template rather than a copy of Logos. Logos
       carries the same workaround and the same TODO.
-- [ ] **Run the compiler and install what it publishes.** Logos's
-      `install/install-sig.sh` drives `tools/eoc/driver.py lean` with
-      `--semantics`, `--smt-semantics` and `--calc-name`, then places the
-      published tree into the package. The three files in `examples/cpc` are
-      exactly the inputs it takes.
-- [ ] **Preserve per-rule proofs across a regeneration.** The single most
-      important behaviour of the installer: signature-wide modules are
-      overwritten, and files under `Proofs/Rules/` are kept, because the proof
-      lives in the same file as the generated statement. See
-      `<Calculus>/Proofs/Rules/README.md` in a generated project.
-- [ ] **Fix `--force`.** It currently deletes the project directory outright,
-      which destroys hand-written Lean. Regeneration must become the
-      overwrite-some-preserve-others operation above.
+- [x] **Run the compiler and install what it publishes.**
+      `install/install-<calc>.sh` in a generated checker drives
+      `driver.py lean` with `--semantics`, `--smt-semantics` and `--calc-name`,
+      then installs the published tree. Verified against `examples/cpc`: 8
+      signature-wide modules and 591 rule files, byte-identical to what Logos
+      carries modulo the generated header, and the result builds.
+- [x] **Preserve per-rule proofs across a regeneration.** Signature-wide
+      modules are overwritten; files under `Proofs/Rules/` are kept, because the
+      proof lives in the same file as the generated statement. Verified: a
+      second install reports `0 written, 591 preserved` and a hand edit to a
+      rule file survives it.
+- [x] **`--check` mode.** Installs into a throwaway copy and compares, exiting
+      1 if anything would change. Doing the real install and comparing is what
+      keeps the check from drifting from the install it checks.
+- [x] **The checker owns its own development infrastructure.** A generated
+      directory has `install/` (compiler setup, installer, `defs/`), `scripts/`
+      (build, proof hygiene, CI groups), `docs/` about its own calculus,
+      `test/regress/`, a CI workflow and a `.gitignore` — the Logos shape. It
+      does not refer back to this repository.
+- [ ] **Fix `--force` in `scripts/new-checker.sh`.** It still deletes the
+      project directory outright, which destroys hand-written Lean *and* the
+      591 rule proofs. Now that regeneration is the right operation for
+      refreshing a calculus, `--force` should be reserved for starting over,
+      and should say what it is about to destroy.
 - [ ] **Cache the signature.** Logos keeps `install/defs/Cpc.cached.eo`: the
       signature it compiled, flattened to one self-contained file, so a
       regeneration needs nothing outside the repository. `examples/cpc/Cpc.eo`
-      is such a file.
-- [ ] **`--check` mode.** Install into a throwaway copy and diff, exiting
-      non-zero if generated code has drifted from the signature it came from.
-      Logos does the real install and compares, so the check cannot drift from
-      the install it checks.
+      is such a file. A generated checker keeps its signature in
+      `install/defs/` already; what is missing is the flattening step for a
+      signature given by path from a tree of includes.
+- [ ] **Install a mini calculus alongside the full one.** Logos generates
+      `CpcMini` from the same signature with five rules and no parser, for
+      developing proofs against something that builds in seconds. The installer
+      takes `--rules` already; what is missing is generating the second package.
 
 ## 2. Reading proofs
+
+This is now the blocking item for a usable checker — confirmed by building
+one: everything generated compiles except `Parser.lean`, which fails with
+`unknown module prefix 'Logos'`. The installer therefore leaves `Parser.lean`
+as its stub by default, and `--parser` installs the generated one for whoever
+has a library to plug it into.
 
 - [ ] **A signature-independent parser library.** Logos's `Logos/Sexp.lean`
       (an s-expression reader, ~156 lines) and `Logos/Parser.lean` (a

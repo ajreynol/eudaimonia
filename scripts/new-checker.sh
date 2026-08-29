@@ -153,6 +153,7 @@ for named in "${SIGNATURE}" "${SEMANTICS}" "${SMT_SEMANTICS}"; do
 done
 
 EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
+CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
 # checkers/ here unless told otherwise; see the note on --out in config.sh.
 OUT_DIR="${OUT_DIR:-${repo_root}/checkers}"
 DEST="${OUT_DIR}/${CHECKER}"
@@ -182,8 +183,15 @@ render() {
   sed -e "s|@CHECKER@|${CHECKER}|g" \
       -e "s|@CALCULUS@|${CALCULUS}|g" \
       -e "s|@EXE@|${EXE}|g" \
+      -e "s|@CALCLOWER@|${CALCLOWER}|g" \
       -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
       "${template}" > "${out}"
+}
+
+# Render a template that is a script, and make it runnable.
+render_exe() {
+  render "$1" "$2"
+  chmod +x "$2"
 }
 
 # A file the user supplies is copied verbatim; one they do not is the rendered
@@ -206,7 +214,9 @@ echo "    executable  ${EXE}"
 echo "    toolchain   ${TOOLCHAIN}"
 
 rm -rf "${DEST}"
-mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/signature"
+mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/install/defs" \
+         "${DEST}/scripts" "${DEST}/docs" "${DEST}/test/regress" \
+         "${DEST}/.github/workflows"
 
 render lakefile.toml.in   "${DEST}/lakefile.toml"
 render lean-toolchain.in  "${DEST}/lean-toolchain"
@@ -242,23 +252,48 @@ render pkg/Proofs/RuleLemmas.lean.in   "${DEST}/${CALCULUS}/Proofs/RuleLemmas.le
 render pkg/Proofs/Checker.lean.in      "${DEST}/${CALCULUS}/Proofs/Checker.lean"
 render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.md"
 
-echo "==> Installing the signature and its semantics"
-install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/signature/${CALCULUS}.eo"
-install_or_stub "${SEMANTICS}"     semantics.eos.in "${DEST}/signature/${CALCULUS}.eos"
+# The development infrastructure, in the shape Logos has it: the checker owns
+# the compiler that regenerates it, the scripts that build and check it, and
+# the documentation of its own calculus. A generated directory is a project to
+# work in, not only a package to build.
+render     install/README.md.in           "${DEST}/install/README.md"
+render_exe install/get-eo-compiler.sh.in  "${DEST}/install/get-eo-compiler.sh"
+render_exe install/install-sig.sh.in      "${DEST}/install/install-${CALCLOWER}.sh"
+
+render_exe scripts/build.sh.in                "${DEST}/scripts/build.sh"
+render_exe scripts/check-proof-hygiene.sh.in  "${DEST}/scripts/check-proof-hygiene.sh"
+render_exe scripts/run-ci.sh.in               "${DEST}/scripts/run-ci.sh"
+
+render docs/calculus.md.in     "${DEST}/docs/calculus.md"
+render docs/development.md.in  "${DEST}/docs/development.md"
+
+render gitignore.in            "${DEST}/.gitignore"
+render ci/ci.yml.in            "${DEST}/.github/workflows/ci.yml"
+render test/regress-README.md.in "${DEST}/test/regress/README.md"
+
+echo "==> Installing the specification into install/defs"
+install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/install/defs/${CALCULUS}.eo"
+install_or_stub "${SEMANTICS}"     semantics.eos.in "${DEST}/install/defs/${CALCULUS}.eos"
 # The SMT-LIB semantics is the one file with no stub: leaving it out means the
 # calculus is written against whatever base semantics the toolchain supplies,
 # which is a choice rather than something left to fill in.
 if [ -n "${SMT_SEMANTICS}" ]; then
-  cp "${SMT_SEMANTICS}" "${DEST}/signature/smt.eos"
-  echo "    $(rel "${DEST}/signature/smt.eos")  <- ${SMT_SEMANTICS}"
+  cp "${SMT_SEMANTICS}" "${DEST}/install/defs/smt.eos"
+  echo "    $(rel "${DEST}/install/defs/smt.eos")  <- ${SMT_SEMANTICS}"
 fi
 
 cat <<DONE
 
 ==> Done.
 
-Build it with:
+  cd $(rel "${DEST}")
+  scripts/build.sh                    # the stubs build as they stand
 
-  cd $(rel "${DEST}") && lake build
+To replace the stubs with the calculus compiled from install/defs:
 
+  install/get-eo-compiler.sh          # once: build the Eunoia compiler
+  install/install-${CALCLOWER}.sh
+  scripts/build.sh
+
+See its README.md, docs/development.md and install/README.md.
 DONE

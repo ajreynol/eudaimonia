@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Build @CHECKER@. See --help.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/build.sh [TARGET]...
+
+Build @CHECKER@ with the Lean toolchain pinned in lean-toolchain. With no
+target, builds the default ones: the @CALCULUS@ library and the @EXE@
+executable.
+
+The correctness proof is deliberately not among them. `@CALCULUS@.ApiCorrect`
+depends on every per-rule proof under @CALCULUS@/Proofs/Rules/, which is far
+too expensive to build every time. Ask for it by name:
+
+  scripts/build.sh @CALCULUS@.ApiCorrect
+
+Examples:
+  scripts/build.sh
+  scripts/build.sh @CALCULUS@
+  scripts/build.sh @CALCULUS@.Proofs.Rules.Symm
+USAGE
+}
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+command -v lake >/dev/null 2>&1 || {
+  echo "error: lake was not found on PATH. Install Lean with elan:" >&2
+  echo "  https://leanprover-community.github.io/get_started.html" >&2
+  exit 1
+}
+
+echo "==> lake build ${*:-(default targets)}"
+exec lake build "$@"
