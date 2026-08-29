@@ -30,6 +30,31 @@ install/install-@CALCLOWER@.sh ~/sigs/@CALCULUS@.eo
 `--check` installs nothing and exits 1 if the package has drifted from its
 signature. Both scripts take `--help`.
 
+## The recorded signature
+
+A signature given by path is **recorded**: written to `install/defs/@CALCULUS@.eo`
+as a single self-contained file, with every `(include "...")` replaced by the
+text of the file it names, each file appearing once and in the order ethos
+reads them, and the comments dropped.
+
+That matters because a signature usually sits in a tree of includes and cannot
+be copied on its own. The flattened copy compiles to the same Lean as the
+original tree, so:
+
+- a regeneration needs nothing outside this repository, which is what lets the
+  `regeneration` CI group run anywhere;
+- a diff of that file is a diff of the calculus, rather than a diff of a
+  checkout.
+
+The header records the path it was read from, and the commit if it came from a
+git checkout. It deliberately does not record *which* checkout in a way that
+would change the file: the copy is a function of the signature and of nothing
+else, so regenerating from a different copy of the same calculus leaves it
+alone. Note the commit in the message of whatever commit updates it.
+
+`--no-record` skips this. A `--rules` run records nothing, because a reduced
+calculus is not the signature.
+
 ## What is generated and what is not
 
 Generated, and overwritten by every install:

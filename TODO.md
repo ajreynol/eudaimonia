@@ -70,21 +70,23 @@ has a `signature/` directory and no way to turn it into Lean.
       (build, proof hygiene, CI groups), `docs/` about its own calculus,
       `test/regress/`, a CI workflow and a `.gitignore` — the Logos shape. It
       does not refer back to this repository.
-- [ ] **Fix `--force` in `scripts/new-checker.sh`.** It still deletes the
-      project directory outright, which destroys hand-written Lean *and* the
-      591 rule proofs. Now that regeneration is the right operation for
-      refreshing a calculus, `--force` should be reserved for starting over,
-      and should say what it is about to destroy.
-- [ ] **Cache the signature.** Logos keeps `install/defs/Cpc.cached.eo`: the
-      signature it compiled, flattened to one self-contained file, so a
-      regeneration needs nothing outside the repository. `examples/cpc/Cpc.eo`
-      is such a file. A generated checker keeps its signature in
-      `install/defs/` already; what is missing is the flattening step for a
-      signature given by path from a tree of includes.
-- [ ] **Install a mini calculus alongside the full one.** Logos generates
-      `CpcMini` from the same signature with five rules and no parser, for
-      developing proofs against something that builds in seconds. The installer
-      takes `--rules` already; what is missing is generating the second package.
+- [x] **`--force` no longer destroys proofs.** `scripts/new-checker.sh --force`
+      refuses when the target holds rule proofs or a git repository, names what
+      it found, and points at the checker's own installer — which is the right
+      way to refresh a calculus, since it keeps every proof. `--clobber` is the
+      explicit, unrecoverable "start over anyway".
+- [x] **Cache the signature.** A signature given by path is recorded into
+      `install/defs/<Calculus>.eo` as one self-contained file: every
+      `(include "...")` replaced by the text of the file it names, each file
+      once and in the order ethos reads them, comments dropped. So a checker
+      carries the signature it was built from and a regeneration needs nothing
+      outside it, and a diff of that file is a diff of the calculus.
+      `--no-record` skips it, and a `--rules` run records nothing since a
+      reduced calculus is not the signature.
+
+      Verified against cvc5's `proofs/eo/cpc/Cpc.eo` — a tree of 14 includes.
+      The flattened result compiles to Lean identical to compiling the original
+      tree, which is the property that makes the copy worth keeping.
 
 ## 2. Reading proofs
 
@@ -274,7 +276,27 @@ deliberately rather than drifted into.
       checker, the parser and the proof separately, which is how the shape of
       the development stays legible.
 
-## 6. Later
+## 6. Future work
+
+Tracked, but **overkill for now**. These earn their cost once a checker is
+being developed in earnest; before that they are infrastructure for work that
+is not happening yet.
+
+- [ ] **A mini calculus alongside the full one.** Logos generates `CpcMini`
+      from the same signature with five rules and no parser, so that proofs can
+      be developed against something that builds in seconds rather than
+      minutes. The installer already takes `--rules`, so the missing part is
+      only generating and wiring a second package — but a second package is a
+      second thing to keep in step, and its whole value is shortening a
+      proof-development loop that has not started. Revisit when the build time
+      of the full package is actually in the way.
+
+      It is also the cheapest way to test whether a proof file is genuinely
+      calculus-independent: two packages from one signature, differing only in
+      rules, is a controlled experiment. That is a reason to want it eventually
+      (see §4b), not yet.
+
+## 7. Later
 
 - [ ] **A native proof format** — Logos's second executable, `logos-native`
       (`MainNative.lean`, `Cpc/Native/`), reading an internal format instead of

@@ -37,9 +37,13 @@ Options:
   --smt-semantics PATH  the SMT-LIB semantics it is written against (.eos)
   --toolchain VERSION   the Lean toolchain the project pins
   --out DIR             where to write the project (default: checkers/ here)
-  --force               delete and regenerate an existing project directory.
-                        Everything under it goes, hand-written Lean included;
-                        nothing is preserved across a regeneration.
+  --force               regenerate an existing project directory. It is
+                        deleted and written again, so this replaces the
+                        scaffolding and nothing is carried across. It refuses
+                        if the directory holds rule proofs or a git repository,
+                        since those cannot be put back
+  --clobber             delete an existing project directory whatever is in it.
+                        This is how to start over, and it is not recoverable
   -h, --help            show this message
 
 Both names are used verbatim as Lean names, so both must be upper camel case
@@ -83,6 +87,7 @@ SPEC_DIR=""
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
 
 FORCE=0
+CLOBBER=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --checker) CHECKER="${2:?--checker requires a value}"; shift 2 ;;
@@ -102,6 +107,7 @@ while [ $# -gt 0 ]; do
     --spec) SPEC_DIR="${2:?--spec requires a value}"; shift 2 ;;
     --spec=*) SPEC_DIR="${1#*=}"; shift ;;
     --force) FORCE=1; shift ;;
+    --clobber) CLOBBER=1; FORCE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -152,17 +158,6 @@ for named in "${SIGNATURE}" "${SEMANTICS}" "${SMT_SEMANTICS}"; do
   }
 done
 
-EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
-CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
-# checkers/ here unless told otherwise; see the note on --out in config.sh.
-OUT_DIR="${OUT_DIR:-${repo_root}/checkers}"
-DEST="${OUT_DIR}/${CHECKER}"
-
-if [ -d "${DEST}" ] && [ "${FORCE}" = "0" ]; then
-  echo "error: ${DEST} already exists. Pass --force to overwrite it." >&2
-  exit 1
-fi
-
 # How a generated path is named in the output: relative to this repository when
 # it is inside it, and absolute when --out put it somewhere else, so what is
 # printed is always a path that can be used from where the script was run.
@@ -172,6 +167,43 @@ rel() {
     *) printf '%s\n' "$1" ;;
   esac
 }
+
+EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
+CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
+# checkers/ here unless told otherwise; see the note on --out in config.sh.
+OUT_DIR="${OUT_DIR:-${repo_root}/checkers}"
+DEST="${OUT_DIR}/${CHECKER}"
+
+if [ -d "${DEST}" ] && [ "${FORCE}" = "0" ] && [ "${CLOBBER}" = "0" ]; then
+  echo "error: ${DEST} already exists. Pass --force to regenerate it." >&2
+  exit 1
+fi
+
+# Regenerating writes the scaffolding again, and the scaffolding is all it is
+# meant to replace. A checker that has been worked in holds things this cannot
+# put back -- discharged rule proofs above all -- so it refuses rather than
+# deleting them, and says what it found. Refreshing the *calculus* of an
+# existing checker is its own installer's job, not this script's.
+if [ -d "${DEST}" ] && [ "${CLOBBER}" = "0" ]; then
+  at_risk=()
+  rules="$(find "${DEST}/${CALCULUS}/Proofs/Rules" -name '*.lean' 2>/dev/null | wc -l | tr -d ' ')"
+  [ "${rules}" = "0" ] || at_risk+=("${rules} rule proof(s) under ${CALCULUS}/Proofs/Rules/")
+  [ ! -d "${DEST}/.git" ] || at_risk+=("a git repository")
+  if [ "${#at_risk[@]}" -gt 0 ]; then
+    echo "error: ${DEST} has been worked in. It holds:" >&2
+    printf '  %s\n' "${at_risk[@]}" >&2
+    echo >&2
+    echo "Regenerating deletes the directory, so this would destroy them." >&2
+    echo >&2
+    echo "To refresh the calculus from its signature instead, which keeps every" >&2
+    echo "proof, use that checker's own installer:" >&2
+    echo >&2
+    echo "  cd $(rel "${DEST}") && install/install-${CALCLOWER}.sh" >&2
+    echo >&2
+    echo "To start over anyway and lose the above, pass --clobber." >&2
+    exit 1
+  fi
+fi
 
 # Substitute the four names into a template. The values are Lean identifiers, a
 # toolchain version and a lowercased identifier, so none of them contains a

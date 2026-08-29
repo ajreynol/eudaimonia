@@ -259,6 +259,17 @@ That compiles the CPC signature into 8 signature-wide modules and 591 rule
 stubs, and builds them. The generated Lean is byte-identical to what Logos
 carries, modulo the header naming which installer wrote it.
 
+Any signature reachable on the machine can be compiled instead, including one
+sitting in a tree of includes:
+
+```bash
+install/install-cpc.sh ~/cvc5/proofs/eo/cpc/Cpc.eo
+```
+
+That also **records** it — flattening the tree into `install/defs/Cpc.eo` as
+one self-contained file — so the checker carries the signature it was built
+from and can be regenerated without that tree.
+
 A signature or semantics file you do not name is written as a commented stub to
 fill in, so the project has the file either way and says in it what it is for.
 That is the expected state before a calculus has been settled on: the project

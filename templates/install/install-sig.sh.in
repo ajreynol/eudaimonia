@@ -24,6 +24,16 @@ With no SIGNATURE, compiles install/defs/@CALCULUS@.eo -- the signature this
 checker is of. Passing one compiles that instead, which is how a signature
 being edited elsewhere is tried without copying it here first.
 
+A signature given by path is then *recorded*: it is written to
+install/defs/@CALCULUS@.eo as a single self-contained file, with every
+(include "...") replaced by the text of the file it names and the comments
+dropped. That copy compiles to the same Lean as the original tree, so a later
+regeneration needs nothing outside this repository, and a diff of it is a diff
+of the calculus. --no-record skips that.
+
+A run that compiles a reduced calculus (--rules) records nothing: what it
+compiled is not the signature.
+
 Requires install/get-eo-compiler.sh to have been run once.
 
 Options:
@@ -42,6 +52,8 @@ Options:
   --no-parser          the default; leaves @CALCULUS@/Parser.lean alone
   --check              install nothing; report whether @CALCULUS@/ is up to
                        date with the signature, exiting 1 if it is not
+  --no-record          do not copy a signature given by path into
+                       install/defs/, leaving the recorded one as it was
   --jobs N             parallel build jobs
   -h, --help           show this message
 
@@ -82,6 +94,7 @@ SEMANTICS=""
 SMT_SEMANTICS=""
 JOBS=""
 CHECK=0
+RECORD=1
 # The generated Parser.lean imports a signature-independent parser library
 # (`Logos.Sexp` and `Logos.Parser` in Logos) that this checker does not have.
 # Installing it would give a package that does not build, so it is off until
@@ -99,6 +112,7 @@ while [ $# -gt 0 ]; do
     --jobs) JOBS="${2:?--jobs requires a value}"; shift 2 ;;
     --jobs=*) JOBS="${1#*=}"; shift ;;
     --check) CHECK=1; shift ;;
+    --no-record) RECORD=0; shift ;;
     --no-parser) NO_PARSER=1; shift ;;
     --parser) NO_PARSER=0; shift ;;
     --rules)
@@ -116,7 +130,9 @@ SIGNATURE="$(expand_tilde "${SIGNATURE}")"
 SEMANTICS="$(expand_tilde "${SEMANTICS}")"
 SMT_SEMANTICS="$(expand_tilde "${SMT_SEMANTICS}")"
 
-SIGNATURE="${SIGNATURE:-${DEFS_DIR}/@CALCULUS@.eo}"
+DEFAULT_SIGNATURE="${DEFS_DIR}/@CALCULUS@.eo"
+if [ -n "${SIGNATURE}" ]; then SIGNATURE_GIVEN=1; else SIGNATURE_GIVEN=0; fi
+SIGNATURE="${SIGNATURE:-${DEFAULT_SIGNATURE}}"
 SEMANTICS="${SEMANTICS:-${DEFS_DIR}/@CALCULUS@.eos}"
 SMT_SEMANTICS="${SMT_SEMANTICS:-${DEFS_DIR}/smt.eos}"
 
@@ -203,6 +219,162 @@ prepend_header() {
   mv "${tmp}" "${file}"
 }
 
+# Where a signature came from, for the header of the copy: the path, and the
+# commit if it sits in a git checkout.
+signature_location() {
+  local dir sha
+  dir="$(cd "$(dirname "$1")" && pwd)"
+  printf '%s' "$1"
+  sha="$(git -C "${dir}" rev-parse HEAD 2>/dev/null)" || { printf '\n'; return 0; }
+  if [ -n "$(git -C "${dir}" status --porcelain -- "${dir}" 2>/dev/null)" ]; then
+    printf ', at %s with uncommitted changes\n' "${sha}"
+  else
+    printf ', at %s\n' "${sha}"
+  fi
+}
+
+# Write the signature $1 to $2 as a single file: every (include "...") replaced
+# by the text of the file it names, depth first, each file written only the
+# first time it is reached, and every comment dropped. Writing a file once is
+# what makes the result equivalent to the original rather than a redeclaration
+# of everything the tree shares: ethos also reads a file only the first time it
+# is named, see markIncluded in its src/state.cpp. Which lines name a file is
+# decided the way driver.py decides it, so the copy holds the files a
+# compilation of the original would have read and no others.
+flatten_signature() {
+  python3 - "$1" "$2" "$(signature_location "$1")" <<'FLATTEN'
+import os
+import re
+import sys
+
+INCLUDE_RE = re.compile(r'^\(include\s+"([^"]+)"\s*\)')
+# Anything else that names another file. Splicing cannot represent it, and
+# leaving it in place would resolve it against the copy's own directory, so
+# stop instead of writing a file that quietly means something else.
+UNSPLICEABLE_RE = re.compile(r"^\((include|reference)\b")
+
+HEADER = """\
+; Written by install/install-@CALCLOWER@.sh. Do not edit it, and do not read it
+; as the upstream signature: it is a copy of one.
+;
+; It is the Eunoia signature that @CALCULUS@/ was compiled from, written as a
+; single file: every (include "...") of the original replaced by the text of
+; the file it names, each file appearing once and in the order ethos reads
+; them, and the comments of the original dropped. Compiling this produces the
+; same Lean as compiling the original tree, so a regeneration needs nothing
+; outside this repository.
+;
+; Read the original for the prose. What is here is what the compiler acts on,
+; which is what makes a diff of this file a diff of the calculus.
+;
+; Read from:
+;   %s
+;
+; Which checkout that was, and at what commit, is deliberately not recorded:
+; this file is then a function of the signature and of nothing else, so
+; regenerating from another copy of the same calculus leaves it alone rather
+; than rewriting a line that says nothing about what it compiles to. The commit
+; belongs in the message of whatever commit updates this file.
+;
+; scripts/run-ci.sh regeneration compiles it and fails if what comes out
+; differs from what is committed under @CALCULUS@/, which is what makes a
+; generated package that no longer matches its signature visible.
+"""
+
+
+def strip_comments(text):
+    """The lines of `text` with every comment removed, and with the lines that
+    leaves empty dropped along with the ones that already were.
+
+    A `;` inside a string literal or a |quoted symbol| is content rather than
+    the start of a comment, and a line that begins inside either is passed
+    through untouched, since its blankness and its trailing spaces are content
+    too. `""` is how a string literal spells a quote, so it does not end one.
+    """
+    lines = []
+    line = []
+    quote = ""
+    quoted_at_start = False
+    index = 0
+    length = len(text)
+
+    def end_line():
+        joined = "".join(line)
+        if quoted_at_start or quote:
+            lines.append(joined)
+        elif joined.strip():
+            lines.append(joined.rstrip())
+
+    while index < length:
+        char = text[index]
+        if char == "\n":
+            end_line()
+            del line[:]
+            quoted_at_start = bool(quote)
+            index += 1
+            continue
+        if not quote:
+            if char == ";":
+                newline = text.find("\n", index)
+                index = length if newline < 0 else newline
+                continue
+            if char in '"|':
+                quote = char
+        elif char == quote:
+            if char == '"' and text[index + 1 : index + 2] == '"':
+                line.append(char)
+                index += 1
+                char = text[index]
+            else:
+                quote = ""
+        line.append(char)
+        index += 1
+    end_line()
+    if quote:
+        sys.exit("error: a %s left open at the end of the file." % quote)
+    return lines
+
+
+source, dest, location = sys.argv[1], sys.argv[2], sys.argv[3]
+root = os.path.realpath(source)
+base = os.path.dirname(root)
+seen = set()
+out = []
+
+
+def name_of(path):
+    return os.path.relpath(path, base)
+
+
+def visit(path, named_by):
+    real = os.path.realpath(path)
+    if not os.path.isfile(real):
+        sys.exit("error: %s includes %s, which is not there." % (named_by, path))
+    if real in seen:
+        out.append("; (%s is included above)\n" % name_of(real))
+        return
+    seen.add(real)
+    out.append("\n; ==== %s ====\n" % name_of(real))
+    with open(real) as handle:
+        text = handle.read()
+    for line in strip_comments(text):
+        command = line.strip()
+        match = INCLUDE_RE.match(command)
+        if match:
+            visit(os.path.join(os.path.dirname(real), match.group(1)), name_of(real))
+            continue
+        if UNSPLICEABLE_RE.match(command):
+            sys.exit("error: %s: cannot splice `%s` into one file." % (name_of(real), command))
+        out.append(line + "\n")
+
+
+visit(root, os.path.basename(root))
+with open(dest, "w") as handle:
+    handle.write(HEADER % location)
+    handle.write("".join(out))
+FLATTEN
+}
+
 echo "==> Compiling ${SIGNATURE}"
 echo "    semantics  ${SEMANTICS}"
 [ -z "${SMT_SEMANTICS}" ] || echo "    smt        ${SMT_SEMANTICS}"
@@ -287,6 +459,25 @@ if [ "${CHECK}" = "1" ]; then
   echo "==> ${PACKAGE} is NOT up to date: ${updates} file(s) would change."
   echo "    Nothing was written. Rerun without --check to apply."
   exit 1
+fi
+
+# Record what was compiled, so the checker carries its own signature. Only for
+# a whole-signature run from a path: --rules compiles a reduced calculus, which
+# is not what install/defs/ is a copy of, and a run of the recorded file itself
+# has nothing to record.
+if [ "${SIGNATURE_GIVEN}" = "1" ] && [ "${RECORD}" = "1" ] && [ "${RULES_GIVEN}" = "0" ]; then
+  echo "==> Recording the signature in $(basename "${DEFAULT_SIGNATURE}")"
+  tmp_record="${DEFAULT_SIGNATURE}.new"
+  flatten_signature "${SIGNATURE}" "${tmp_record}"
+  if [ -f "${DEFAULT_SIGNATURE}" ] && cmp -s "${tmp_record}" "${DEFAULT_SIGNATURE}"; then
+    rm -f "${tmp_record}"
+    echo "    unchanged"
+  else
+    mv "${tmp_record}" "${DEFAULT_SIGNATURE}"
+    echo "    ${DEFAULT_SIGNATURE#"${repo_root}/"}"
+  fi
+elif [ "${SIGNATURE_GIVEN}" = "1" ] && [ "${RULES_GIVEN}" = "1" ]; then
+  echo "==> Not recording the signature: --rules compiled a reduced calculus."
 fi
 
 cat <<DONE
