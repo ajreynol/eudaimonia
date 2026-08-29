@@ -1,0 +1,10 @@
+; The Eunoia signature defining the @CALCULUS@ calculus: its sorts, its
+; operators and its proof rules.
+;
+; This is a stub. Replace it with the signature of the calculus, either by
+; editing here or by rerunning the generator with --signature pointing at one:
+;
+;   scripts/new-checker.sh --signature <path>/@CALCULUS@.eo --force
+;
+; Eunoia is the language of the Ethos proof checker; its reference is at
+; https://github.com/cvc5/ethos.

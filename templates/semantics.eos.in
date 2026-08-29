@@ -1,0 +1,11 @@
+; What the symbols of @CALCULUS@.eo mean, as a transformation into the deep
+; embedding of SMT-LIB that the correctness proof is stated against.
+;
+; This is a stub. Replace it with the semantics of the calculus, either by
+; editing here or by rerunning the generator with --semantics pointing at one:
+;
+;   scripts/new-checker.sh --semantics <path>/@CALCULUS@.eos --force
+;
+; The SMT-LIB semantics such a file is written against is a second .eos, named
+; with --smt-semantics; leaving that one out means the calculus is written
+; against whatever base semantics the toolchain supplies.

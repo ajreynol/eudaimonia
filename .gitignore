@@ -1,0 +1,11 @@
+# Generated checkers. `scripts/new-checker.sh` writes them here, and everything
+# it writes is reproducible from config.sh and templates/, so none of it is
+# kept in git. A checker being developed for its own sake belongs in its own
+# repository: generate it there with --out.
+/checkers/
+
+# Lake build artifacts.
+.lake/
+*.olean
+*.ilean
+*.trace

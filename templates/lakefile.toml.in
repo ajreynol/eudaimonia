@@ -1,0 +1,15 @@
+name = "@CHECKER@"
+version = "0.1.0"
+defaultTargets = ["@CALCULUS@", "@EXE@"]
+
+# The calculus: the proof rules, the terms they are stated about, and the
+# semantics they are proven correct against. The modules compiled from
+# signature/@CALCULUS@.eo belong here.
+[[lean_lib]]
+name = "@CALCULUS@"
+moreLeanArgs = ["-DwarningAsError=true"]
+
+# The checker: the executable that reads a proof and reports a verdict.
+[[lean_exe]]
+name = "@EXE@"
+root = "Main"
