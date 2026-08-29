@@ -265,20 +265,24 @@ deliberately rather than drifted into.
 
 ### Validating a signature
 
-- [ ] **Check the required builtins at generation time.** `and`, `imp`, `eq`,
-      `not`, `Bool`, `true`, `false` — see the README. Failing at `lake build`
-      with a typeclass error, deep inside a generated file, is a bad way to
-      learn that a signature is missing a connective.
+- [x] **Check the required builtins.** `install/install-<calc>.sh` checks the
+      compiler's output for `and` and `imp` in the operator enum *before*
+      installing anything, and refuses with one sentence naming what is missing.
+      The check is on the compiler's output rather than on the signature text
+      because the name an operator compiles to need not be its spelling — CPC's
+      `=>` becomes `imp` — so grepping the `.eo` would be wrong.
 
 ## 5. Build and CI
 
 - [ ] **A build script with a toolchain fallback.** Logos's `scripts/build.sh`
       plus `scripts/lean-toolchain-env.sh` fall back to the host C compiler and
       archiver where Lean's bundled Clang cannot run against the host glibc.
-- [ ] **Batched, resumable rule builds** (`scripts/build-all-cpc-rules.sh`).
-      A full proof build takes **over two hours** and can exhaust memory, so it
-      builds one target at a time by default and relies on Lake's cache to
-      resume.
+- [x] **Batched, resumable rule builds.** `scripts/build-rules.sh` in a
+      generated checker: one rule per Lake invocation by default, `--batch-size`
+      to trade memory for speed, resumable through Lake's cache. It builds only
+      rules that are actually proven, since a `sorry` cannot build under
+      warnings-as-errors and attempting all of them would bury the real
+      question — after a regeneration, which existing proofs still hold?
 - [ ] **CI groups** (`scripts/run-ci.sh`): build a representative subset of
       proofs rather than all of them, plus the regeneration check.
 - [ ] **Proof hygiene** (`scripts/check-proof-hygiene.sh`): reject `sorry`,
@@ -289,9 +293,13 @@ deliberately rather than drifted into.
       signature with five rules and no parser, for developing the proofs
       against something that builds in seconds. `install-sig.sh --rules` and
       `--mini` are how. Cheap to support and disproportionately useful.
-- [ ] **Reporting**: `scripts/cpc-loc-summary.py` sizes the specification, the
-      checker, the parser and the proof separately, which is how the shape of
-      the development stays legible.
+- [x] **Progress reporting.** `scripts/rule-status.sh` counts proven versus
+      `sorry` rules and names what is left. Textual and instant, and it counts
+      what is in the files rather than what has been built, so a proof counts as
+      soon as it is written.
+- [ ] **Size reporting**: Logos's `scripts/cpc-loc-summary.py` sizes the
+      specification, the checker, the parser and the proof separately, which is
+      how the shape of the development stays legible.
 
 ## 6. Future work
 

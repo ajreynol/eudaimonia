@@ -400,6 +400,38 @@ LEAN_DIR="${OUT_DIR}/lean"
   exit 1
 }
 
+# The correctness development is stated in terms of two connectives, and it
+# names them as constructors of the `UserOp` enum the signature compiles to. A
+# signature without them compiles fine and then fails to build, deep inside a
+# hand-written file, with an error that does not say why. Checking the
+# compiler\'s output before anything is installed turns that into one sentence,
+# and leaves the tree as it was.
+REQUIRED_OPS=(and imp)
+TERM_MODULE="${LEAN_DIR}/@CHECKER@Term.lean"
+if [ -f "${TERM_MODULE}" ]; then
+  missing_ops=()
+  for op in "${REQUIRED_OPS[@]}"; do
+    grep -qE "^[[:space:]]*\\|[[:space:]]+${op}[[:space:]]*:[[:space:]]*UserOp\\b" \
+      "${TERM_MODULE}" || missing_ops+=("${op}")
+  done
+  if [ "${#missing_ops[@]}" -gt 0 ]; then
+    echo >&2
+    echo "error: the signature does not provide: ${missing_ops[*]}" >&2
+    echo >&2
+    echo "The soundness statement is about the conjunction of a proof\'s" >&2
+    echo "assumptions, and discharging an assumption yields an implication, so" >&2
+    echo "the development names an \`and\` and an \`imp\` in the signature\'s" >&2
+    echo "operator enum. Without them @CALCULUS@/Api.lean and the proofs under" >&2
+    echo "@CALCULUS@/Proofs/ cannot even be stated." >&2
+    echo >&2
+    echo "Declare them in install/defs/@CALCULUS@.eo -- the name the compiler" >&2
+    echo "gives an operator need not be its spelling in the signature, so check" >&2
+    echo "what yours compiles to. Nothing has been installed." >&2
+    echo "See docs/calculus.md." >&2
+    exit 1
+  fi
+fi
+
 if [ "${CHECK}" = "1" ]; then
   echo "==> Staging a copy of ${PACKAGE} to compare against"
 else

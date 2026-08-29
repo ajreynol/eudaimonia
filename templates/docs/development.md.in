@@ -84,13 +84,57 @@ The side conditions are checked at run time, which is why a proof the checker
 accepts can still come back `incomplete`: it mentions something the semantics
 does not model, so the theorem does not apply to it.
 
+## The rule proofs
+
+This is the bulk of the work, and the part no tooling can do for you. Two
+scripts exist to keep it measurable and to keep a full build survivable.
+
+```bash
+scripts/rule-status.sh          # how many are proven, and what is left
+scripts/build-rules.sh          # build the proofs that exist
+```
+
+`rule-status.sh` is textual and instant. It counts what is *in the files*, not
+what has been built, so a proof counts as soon as it is written.
+
+`build-rules.sh` builds one rule per Lake invocation by default. That is
+deliberate: several Lean processes on proofs this size can exhaust memory, and
+Lake caches what completes, so an interrupted run resumes rather than starting
+over. `--batch-size N` trades memory for speed.
+
+It builds only rules that are **actually proven**. A rule still holding a
+`sorry` cannot build at all — this package builds with warnings as errors — so
+attempting them would bury the real question under hundreds of identical
+failures. The real question is the other one: *of the proofs that exist, which
+still hold?*
+
+That is the question to ask after regenerating the calculus, and it is why a
+full run matters:
+
+```bash
+scripts/build-rules.sh --keep-going
+```
+
+**Expect hours** once the rules are written. It is not something to put in CI.
+Run it before a release, or after a regeneration.
+
+### Before any of that works
+
+`@CALCULUS@/Proofs/RuleSupport/Support.lean` is the module every generated rule
+statement imports, and it is a stub. Until it supplies `StepRuleProperties`,
+`premiseTermList`, `model_wf` and the rest, no rule can be built — not because
+its proof is missing, but because there is nothing to state it against.
+`build-rules.sh` says so rather than reporting several hundred identical
+errors.
+
 ## Adding a rule
 
 1. Add it to `install/defs/@CALCULUS@.eo`.
 2. `install/install-@CALCLOWER@.sh` — it arrives as a `sorry` stub in
    `@CALCULUS@/Proofs/Rules/`.
 3. Discharge the stub.
-4. `scripts/build.sh @CALCULUS@.Proofs.Rules.<Rule>`.
+4. `scripts/build-rules.sh <Rule>` — a named rule is built whether or not it is
+   still a stub, so this is the loop while working on one.
 
 Changing an existing rule's *statement* leaves its old proof in place, so the
 build fails. That is the intended signal, not a fault in the install.

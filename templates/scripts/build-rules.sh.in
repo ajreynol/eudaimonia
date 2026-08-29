@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+
+# Build the per-rule proofs. See --help.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/build-rules.sh [OPTION]... [RULE]...
+
+Build the correctness proofs under @CALCULUS@/Proofs/Rules, one Lake invocation
+at a time.
+
+**By default only rules that are actually proven are built.** A rule still
+holding a `sorry` cannot build -- `declare uses sorry` is a warning, and this
+package builds with warnings as errors -- so attempting them would report
+hundreds of failures that say nothing. What this is for is the other question:
+of the proofs that exist, which still hold?
+
+That is the question to ask after regenerating the calculus. A rule whose
+*statement* changed keeps its old proof, so it stops building, and this is what
+finds those.
+
+Named rules are built whether or not they are stubs, so working on one is:
+
+  scripts/build-rules.sh Symm
+
+Building them one at a time is deliberate. Several Lean processes on proofs
+this size can exhaust memory; Lake caches what completes, so an interrupted run
+resumes rather than starting over. Raise --batch-size to trade memory for
+speed.
+
+**Expect a full run to take hours** once the rules are written. It is not
+something to put in CI; run it before a release, or after a regeneration.
+
+Options:
+  --all             include rules that are still `sorry` stubs (they will fail)
+  --batch-size N    rule targets per Lake invocation (default: 1)
+  --jobs N          Lake threads per invocation (default: 1)
+  --list            print the targets that would be built, and stop
+  --dry-run         print the Lake commands without running them
+  --keep-going      report every failure instead of stopping at the first
+  -h, --help        show this message
+
+Examples:
+  scripts/build-rules.sh
+  scripts/build-rules.sh --list
+  scripts/build-rules.sh --batch-size 4 --keep-going
+  scripts/build-rules.sh Symm Trans
+USAGE
+}
+
+BATCH=1
+JOBS=1
+LIST=0
+DRY=0
+KEEP=0
+ALL=0
+declare -a NAMED=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --all) ALL=1; shift ;;
+    --batch-size) BATCH="${2:?--batch-size requires a value}"; shift 2 ;;
+    --batch-size=*) BATCH="${1#*=}"; shift ;;
+    --jobs) JOBS="${2:?--jobs requires a value}"; shift 2 ;;
+    --jobs=*) JOBS="${1#*=}"; shift ;;
+    --list) LIST=1; shift ;;
+    --dry-run) DRY=1; shift ;;
+    --keep-going) KEEP=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    --*) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
+    *) NAMED+=("$1"); shift ;;
+  esac
+done
+
+case "${BATCH}" in ''|*[!0-9]*) echo "error: --batch-size must be a number." >&2; exit 2 ;; esac
+[ "${BATCH}" -gt 0 ] || { echo "error: --batch-size must be at least 1." >&2; exit 2; }
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+RULES_DIR="@CALCULUS@/Proofs/Rules"
+[ -d "${RULES_DIR}" ] || {
+  echo "error: ${RULES_DIR} is not there. Run install/install-@CALCLOWER@.sh first." >&2
+  exit 1
+}
+
+SORRY_RE='(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)'
+
+# Every generated rule statement is written in terms of the names
+# Proofs/RuleSupport/Support.lean is meant to supply. While that is still the
+# template's stub none of them can build, and they all fail the same way, which
+# is worth saying once here rather than leaving as several hundred identical
+# errors.
+SUPPORT="@CALCULUS@/Proofs/RuleSupport/Support.lean"
+if [ -f "${SUPPORT}" ] && grep -q "TEMPLATE STUB" "${SUPPORT}"; then
+  echo "==> No rule proof can be built yet."
+  echo
+  echo "    ${SUPPORT} is still the template's stub, and every generated rule"
+  echo "    statement is written in terms of the names it is meant to supply"
+  echo "    -- StepRuleProperties, premiseTermList, model_wf and the rest. So"
+  echo "    the rules do not fail here because their proofs are missing; they"
+  echo "    fail because there is nothing yet to state them against."
+  echo
+  echo "    Read that file for what it has to export, and any file under"
+  echo "    @CALCULUS@/Proofs/Rules/ for the shape the compiler expects."
+  echo
+  echo "    scripts/rule-status.sh reports the rules meanwhile."
+  exit 1
+fi
+
+declare -a targets=()
+if [ "${#NAMED[@]}" -gt 0 ]; then
+  for name in "${NAMED[@]}"; do
+    [ -f "${RULES_DIR}/${name}.lean" ] || {
+      echo "error: no rule ${name} (${RULES_DIR}/${name}.lean is not there)." >&2
+      exit 1
+    }
+    targets+=("@CALCULUS@.Proofs.Rules.${name}")
+  done
+else
+  shopt -s nullglob
+  for f in "${RULES_DIR}"/*.lean; do
+    name="$(basename "${f}" .lean)"
+    if [ "${ALL}" = "0" ] && grep -qE "${SORRY_RE}" "${f}"; then continue; fi
+    targets+=("@CALCULUS@.Proofs.Rules.${name}")
+  done
+  shopt -u nullglob
+fi
+
+if [ "${#targets[@]}" -eq 0 ]; then
+  echo "==> No rules to build."
+  if [ "${ALL}" = "0" ]; then
+    echo "    Every rule is still a \`sorry\` stub, so there is no proof to check."
+    echo "    scripts/rule-status.sh shows what is left; --all attempts them anyway."
+  fi
+  exit 0
+fi
+
+if [ "${LIST}" = "1" ]; then
+  printf '%s\n' "${targets[@]}"
+  exit 0
+fi
+
+echo "==> Building ${#targets[@]} rule target(s), ${BATCH} per invocation"
+[ "${ALL}" = "0" ] || echo "    including \`sorry\` stubs, which will fail"
+
+failed=()
+i=0
+while [ "${i}" -lt "${#targets[@]}" ]; do
+  batch=("${targets[@]:i:BATCH}")
+  i=$(( i + BATCH ))
+  cmd=(lake build -j "${JOBS}" "${batch[@]}")
+  if [ "${DRY}" = "1" ]; then
+    printf '%s\n' "${cmd[*]}"
+    continue
+  fi
+  printf '  [%d/%d] %s\n' "$(( i < ${#targets[@]} ? i : ${#targets[@]} ))" \
+    "${#targets[@]}" "${batch[*]##*.}"
+  if ! "${cmd[@]}" > /dev/null 2>&1; then
+    failed+=("${batch[@]}")
+    echo "        FAILED: ${batch[*]##*.}"
+    if [ "${KEEP}" = "0" ]; then
+      echo
+      echo "==> Stopped at the first failure. Rerun that one to see the error:"
+      echo "      scripts/build.sh ${batch[0]}"
+      echo "    or pass --keep-going to find every failure in one run."
+      exit 1
+    fi
+  fi
+done
+
+[ "${DRY}" = "0" ] || exit 0
+
+echo
+if [ "${#failed[@]}" -eq 0 ]; then
+  echo "==> All ${#targets[@]} rule target(s) built."
+  exit 0
+fi
+echo "==> ${#failed[@]} of ${#targets[@]} failed:"
+printf '      %s\n' "${failed[@]##*.}"
+echo
+echo "After a regeneration this usually means the rule's statement changed and"
+echo "its proof did not. Rerun one with scripts/build.sh to see the error."
+exit 1

@@ -15,7 +15,8 @@ install/                 regenerating @CALCULUS@ from its signature
   defs/smt.eos           the SMT-LIB semantics that is written against
   get-eo-compiler.sh     fetch and build the Eunoia compiler
   install-@CALCLOWER@.sh compile the signature into @CALCULUS@/
-scripts/                 build.sh, check-proof-hygiene.sh, run-ci.sh
+scripts/                 build.sh, build-rules.sh, rule-status.sh,
+                         check-proof-hygiene.sh, run-ci.sh
 docs/                    calculus.md, development.md
 test/regress/            proofs to check, and the verdict each should get
 lakefile.toml            the package: the @CALCULUS@ library and the @EXE@ executable
@@ -37,6 +38,7 @@ Main.lean                the executable: read a proof, report a verdict
   Diagnostics.lean       H  why a run came back incomplete
   Proofs/
     Assumptions.lean     H  the side conditions, and deciding them
+    RuleSupport/         H  what every rule statement is written against
     CheckerCore.lean     H  correctness of the core, rule-agnostic
     RuleLemmas.lean      G  the dispatcher over the rules
     Checker.lean         H  the soundness theorem
@@ -134,7 +136,8 @@ What it is not yet is a *verified* checker. Every proof it accepts comes back
   file — is already wired to it. Discharging it is what makes the executable\'s
   verdict mean something; no other file has to change.
 - **The rule proofs are `sorry` stubs**, one per rule of the signature.
-  `scripts/run-ci.sh hygiene` lists them.
+  `scripts/rule-status.sh` counts them and `scripts/build-rules.sh` builds the
+  ones that get written.
 - **The side conditions model nothing yet.**
   `@CALCULUS@/Proofs/Assumptions.lean` says so conservatively, which is why
   every accepted proof is `incomplete`. Writing them is what lets a proof come

@@ -246,7 +246,8 @@ echo "    executable  ${EXE}"
 echo "    toolchain   ${TOOLCHAIN}"
 
 rm -rf "${DEST}"
-mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/install/defs" "${DEST}/Eunoia" \
+mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/${CALCULUS}/Proofs/RuleSupport" \
+         "${DEST}/install/defs" "${DEST}/Eunoia" \
          "${DEST}/scripts" "${DEST}/docs" "${DEST}/test/regress" \
          "${DEST}/.github/workflows"
 
@@ -288,6 +289,8 @@ render pkg/Proofs/Assumptions.lean.in  "${DEST}/${CALCULUS}/Proofs/Assumptions.l
 render pkg/Proofs/CheckerCore.lean.in  "${DEST}/${CALCULUS}/Proofs/CheckerCore.lean"
 render pkg/Proofs/RuleLemmas.lean.in   "${DEST}/${CALCULUS}/Proofs/RuleLemmas.lean"
 render pkg/Proofs/Checker.lean.in      "${DEST}/${CALCULUS}/Proofs/Checker.lean"
+render pkg/Proofs/RuleSupport/Support.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/RuleSupport/Support.lean"
 render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.md"
 
 # The development infrastructure, in the shape Logos has it: the checker owns
@@ -301,6 +304,8 @@ render_exe install/install-sig.sh.in      "${DEST}/install/install-${CALCLOWER}.
 render_exe scripts/build.sh.in                "${DEST}/scripts/build.sh"
 render_exe scripts/check-proof-hygiene.sh.in  "${DEST}/scripts/check-proof-hygiene.sh"
 render_exe scripts/run-ci.sh.in               "${DEST}/scripts/run-ci.sh"
+render_exe scripts/build-rules.sh.in          "${DEST}/scripts/build-rules.sh"
+render_exe scripts/rule-status.sh.in          "${DEST}/scripts/rule-status.sh"
 
 render docs/calculus.md.in     "${DEST}/docs/calculus.md"
 render docs/development.md.in  "${DEST}/docs/development.md"

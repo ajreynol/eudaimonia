@@ -1,0 +1,44 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- **The seam every generated rule proof imports.** The compiler emits each rule
+-- as a statement in terms of the names below, so this is the one module that
+-- has to supply them before any rule can be built.
+--
+-- It is a stub, and it is the reason `scripts/build-rules.sh` reports that no
+-- rule can be built yet. Filling it in is the start of the correctness
+-- development, not a detail of it.
+--
+-- What a rule statement refers to, and so what this must export:
+--
+--   `model_wf M`               that `M` is a well-formed SMT model
+--   `premiseTermList s ps`     the terms a step's premises name in state `s`
+--   `AllHaveBoolType ts`       that every one of them is Boolean-typed
+--   `StepRuleProperties M ts`  what a rule must establish about its conclusion,
+--                              given what its premises say under `M` -- the
+--                              contract the checker's core relies on
+--   `cmdTranslationOk c`       from `Proofs/Assumptions.lean`, re-exported here
+--
+-- To see the exact shape the compiler expects, read any file under
+-- `@CALCULUS@/Proofs/Rules/`: each is a statement about these names, with
+-- `sorry` where its proof goes.
+--
+-- In Logos this is `Cpc/Proofs/RuleSupport/Support.lean`, a thin aggregator over
+-- `Proofs/Common.lean`, `Proofs/RuleSupport/Contract.lean` and the per-theory
+-- support libraries beneath them -- some 350,000 lines. Do not expect to write
+-- it in one sitting; `StepRuleProperties` and the model well-formedness
+-- predicate are the load-bearing definitions, and the rest accretes as rules
+-- are proven.
+--
+-- TEMPLATE STUB: scripts/build-rules.sh looks for this marker to explain why
+-- rule proofs cannot be built. Remove the line when this module is real.
+public import @CALCULUS@.Proofs.CheckerCore
+import all @CALCULUS@.Proofs.CheckerCore
+
+@[expose] public section
+
+namespace Eo
+
+end Eo

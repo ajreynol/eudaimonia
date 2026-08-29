@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+
+# How far the rule proofs have got. See --help.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/rule-status.sh [OPTION]...
+
+Report how many of the calculus's proof rules are proven and how many are still
+`sorry` stubs, and name some of what is left.
+
+Textual, and builds nothing, so it is instant and can be run constantly. It
+counts what is in the files rather than what has been built, which is what you
+want while working: a proof you just wrote counts before you have compiled it.
+
+Options:
+  --list           name every unproven rule, not just the first few
+  --proven         name the proven rules instead
+  --quiet          print only the counts
+  -h, --help       show this message
+
+Exit status is 0 whatever the counts are: this is a report, not a check.
+`scripts/check-proof-hygiene.sh` is the one that fails on an unproven rule.
+USAGE
+}
+
+LIST=0
+PROVEN=0
+QUIET=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --list) LIST=1; shift ;;
+    --proven) PROVEN=1; shift ;;
+    --quiet) QUIET=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+RULES_DIR="@CALCULUS@/Proofs/Rules"
+if [ ! -d "${RULES_DIR}" ]; then
+  echo "error: ${RULES_DIR} is not there. Run install/install-@CALCLOWER@.sh first." >&2
+  exit 1
+fi
+
+shopt -s nullglob
+files=("${RULES_DIR}"/*.lean)
+shopt -u nullglob
+
+if [ "${#files[@]}" -eq 0 ]; then
+  echo "==> No rule files yet. Run install/install-@CALCLOWER@.sh to generate them."
+  exit 0
+fi
+
+# `sorry` as a word, so a name containing it is not mistaken for one.
+SORRY_RE='(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)'
+
+declare -a stubs=() done_=()
+for f in "${files[@]}"; do
+  name="$(basename "${f}" .lean)"
+  if grep -qE "${SORRY_RE}" "${f}"; then stubs+=("${name}"); else done_+=("${name}"); fi
+done
+
+total="${#files[@]}"
+proven="${#done_[@]}"
+remaining="${#stubs[@]}"
+percent=$(( proven * 100 / total ))
+
+echo "==> @CALCULUS@ rules: ${total} total"
+printf '    %4s proven\n' "${proven}"
+printf '    %4s still `sorry`\n' "${remaining}"
+printf '    %3s%% complete\n' "${percent}"
+
+[ "${QUIET}" = "0" ] || exit 0
+
+if [ "${PROVEN}" = "1" ]; then
+  [ "${proven}" -eq 0 ] || { echo; echo "Proven:"; printf '  %s\n' "${done_[@]}"; }
+  exit 0
+fi
+
+if [ "${remaining}" -gt 0 ]; then
+  echo
+  if [ "${LIST}" = "1" ]; then
+    echo "Unproven:"
+    printf '  %s\n' "${stubs[@]}"
+  else
+    show=$(( remaining < 10 ? remaining : 10 ))
+    echo "Unproven (first ${show} of ${remaining}; --list for all):"
+    printf '  %s\n' "${stubs[@]:0:${show}}"
+  fi
+  echo
+  echo "Work on one with:"
+  echo "  scripts/build.sh @CALCULUS@.Proofs.Rules.${stubs[0]}"
+else
+  echo
+  echo "Every rule is proven. Turn on proof hygiene in CI -- see docs/development.md."
+fi
