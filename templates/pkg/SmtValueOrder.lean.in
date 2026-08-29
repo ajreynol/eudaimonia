@@ -1,0 +1,19 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The order on values, which the model semantics needs where a theory's meaning
+-- depends on one -- picking a representative, or deciding an extensionality
+-- question.
+--
+-- In Logos: `Cpc/SmtValueOrder.lean`.
+
+public import @CALCULUS@.SmtModelDefs
+import all @CALCULUS@.SmtModelDefs
+
+public section

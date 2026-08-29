@@ -1,0 +1,22 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The term datatype of the calculus: one constructor per operator of the
+-- signature, and the operations on terms the proof rules are written over.
+--
+-- This is the deep embedding the whole package is stated about. It is compiled
+-- from the signature, so adding an operator to the signature adds a constructor
+-- here.
+--
+-- In Logos: `Cpc/LogosTerm.lean`.
+
+public import @CALCULUS@.SmtEval
+import all @CALCULUS@.SmtEval
+
+public section

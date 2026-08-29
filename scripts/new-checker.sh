@@ -28,6 +28,10 @@ Options:
   --checker NAME        the checker: the generated directory, the Lake package,
                         and, lowercased, the executable it builds
   --calculus NAME       the calculus: the Lean library under it
+  --spec DIR            a directory holding all three of the below, named by
+                        convention: <CALCULUS>.eo, <CALCULUS>.eos and smt.eos.
+                        A file missing from it is a stub, and any of the three
+                        options below overrides what it found
   --signature PATH      the Eunoia signature (.eo) to copy in
   --semantics PATH      the semantics of that signature (.eos) to copy in
   --smt-semantics PATH  the SMT-LIB semantics it is written against (.eos)
@@ -49,6 +53,7 @@ Examples:
   scripts/new-checker.sh --checker Aletheia --calculus Lra
   scripts/new-checker.sh --calculus Lra --signature ~/sigs/Lra.eo
   scripts/new-checker.sh --checker Aletheia --out ~/aletheia
+  scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
 USAGE
 }
 
@@ -73,6 +78,7 @@ SEMANTICS=""
 SMT_SEMANTICS=""
 TOOLCHAIN=""
 OUT_DIR=""
+SPEC_DIR=""
 # shellcheck source=../config.sh
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
 
@@ -93,6 +99,8 @@ while [ $# -gt 0 ]; do
     --toolchain=*) TOOLCHAIN="${1#*=}"; shift ;;
     --out) OUT_DIR="${2:?--out requires a value}"; shift 2 ;;
     --out=*) OUT_DIR="${1#*=}"; shift ;;
+    --spec) SPEC_DIR="${2:?--spec requires a value}"; shift 2 ;;
+    --spec=*) SPEC_DIR="${1#*=}"; shift ;;
     --force) FORCE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
@@ -103,6 +111,7 @@ SIGNATURE="$(expand_tilde "${SIGNATURE}")"
 SEMANTICS="$(expand_tilde "${SEMANTICS}")"
 SMT_SEMANTICS="$(expand_tilde "${SMT_SEMANTICS}")"
 OUT_DIR="$(expand_tilde "${OUT_DIR}")"
+SPEC_DIR="$(expand_tilde "${SPEC_DIR}")"
 
 # Both names become Lean names, and the checker also becomes a directory, so
 # neither can be anything the two would not accept.
@@ -118,6 +127,23 @@ check_name() {
 check_name checker "${CHECKER}"
 check_name calculus "${CALCULUS}"
 [ -n "${TOOLCHAIN}" ] || { echo "error: no Lean toolchain. Set TOOLCHAIN in config.sh or use --toolchain." >&2; exit 2; }
+
+# A specification is a signature and the two semantics it is read against, and
+# --spec is the three of them named at once, by the convention the example in
+# examples/cpc follows. It only fills a blank: naming one of the three
+# explicitly overrides what the directory holds, and a file the directory does
+# not have is left blank, so it becomes a stub like any other.
+if [ -n "${SPEC_DIR}" ]; then
+  [ -d "${SPEC_DIR}" ] || { echo "error: --spec directory ${SPEC_DIR} not found." >&2; exit 1; }
+  [ -n "${SIGNATURE}" ]     || [ ! -f "${SPEC_DIR}/${CALCULUS}.eo" ]  || SIGNATURE="${SPEC_DIR}/${CALCULUS}.eo"
+  [ -n "${SEMANTICS}" ]     || [ ! -f "${SPEC_DIR}/${CALCULUS}.eos" ] || SEMANTICS="${SPEC_DIR}/${CALCULUS}.eos"
+  [ -n "${SMT_SEMANTICS}" ] || [ ! -f "${SPEC_DIR}/smt.eos" ]         || SMT_SEMANTICS="${SPEC_DIR}/smt.eos"
+  if [ -z "${SIGNATURE}${SEMANTICS}${SMT_SEMANTICS}" ]; then
+    echo "error: ${SPEC_DIR} holds none of ${CALCULUS}.eo, ${CALCULUS}.eos or smt.eos." >&2
+    echo "A --spec directory names its files after the calculus; check --calculus." >&2
+    exit 1
+  fi
+fi
 
 for named in "${SIGNATURE}" "${SEMANTICS}" "${SMT_SEMANTICS}"; do
   [ -z "${named}" ] || [ -f "${named}" ] || {
@@ -180,14 +206,41 @@ echo "    executable  ${EXE}"
 echo "    toolchain   ${TOOLCHAIN}"
 
 rm -rf "${DEST}"
-mkdir -p "${DEST}/${CALCULUS}" "${DEST}/signature"
+mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/signature"
 
 render lakefile.toml.in   "${DEST}/lakefile.toml"
 render lean-toolchain.in  "${DEST}/lean-toolchain"
 render Main.lean.in       "${DEST}/Main.lean"
-render Calculus.lean.in   "${DEST}/${CALCULUS}.lean"
-render Basic.lean.in      "${DEST}/${CALCULUS}/Basic.lean"
+render Root.lean.in       "${DEST}/${CALCULUS}.lean"
 render README.md.in       "${DEST}/README.md"
+
+# The package, in the layout Logos's install/install-cpc.sh produces: the
+# modules the signature compiler writes, and the hand-written ones it leaves
+# alone. Each is a stub saying what belongs in it, which one it corresponds to
+# in Logos, and which of the two kinds it is; the banner a stub carries is the
+# difference, since a regeneration overwrites the one kind and not the other.
+#
+# Two of them are named after the checker rather than fixed, because that is
+# what they are: the core checker and the term datatype it is written over.
+# Logos calls them Cpc/Logos.lean and Cpc/LogosTerm.lean.
+render pkg/SmtEval.lean.in        "${DEST}/${CALCULUS}/SmtEval.lean"
+render pkg/Term.lean.in           "${DEST}/${CALCULUS}/${CHECKER}Term.lean"
+render pkg/SmtModelDefs.lean.in   "${DEST}/${CALCULUS}/SmtModelDefs.lean"
+render pkg/SmtValueOrder.lean.in  "${DEST}/${CALCULUS}/SmtValueOrder.lean"
+render pkg/SmtModel.lean.in       "${DEST}/${CALCULUS}/SmtModel.lean"
+render pkg/Spec.lean.in           "${DEST}/${CALCULUS}/Spec.lean"
+render pkg/Checker.lean.in        "${DEST}/${CALCULUS}/${CHECKER}.lean"
+render pkg/Parser.lean.in         "${DEST}/${CALCULUS}/Parser.lean"
+render pkg/Api.lean.in            "${DEST}/${CALCULUS}/Api.lean"
+render pkg/ApiChecks.lean.in      "${DEST}/${CALCULUS}/ApiChecks.lean"
+render pkg/ApiCorrect.lean.in     "${DEST}/${CALCULUS}/ApiCorrect.lean"
+render pkg/Diagnostics.lean.in    "${DEST}/${CALCULUS}/Diagnostics.lean"
+
+render pkg/Proofs/Assumptions.lean.in  "${DEST}/${CALCULUS}/Proofs/Assumptions.lean"
+render pkg/Proofs/CheckerCore.lean.in  "${DEST}/${CALCULUS}/Proofs/CheckerCore.lean"
+render pkg/Proofs/RuleLemmas.lean.in   "${DEST}/${CALCULUS}/Proofs/RuleLemmas.lean"
+render pkg/Proofs/Checker.lean.in      "${DEST}/${CALCULUS}/Proofs/Checker.lean"
+render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.md"
 
 echo "==> Installing the signature and its semantics"
 install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/signature/${CALCULUS}.eo"

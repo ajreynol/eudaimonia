@@ -1,0 +1,24 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The core checker: the proof state, the commands that act on it, and the
+-- dispatch on rule names that runs a proof.
+--
+-- The core is agnostic to which rules the calculus has -- the correctness of the
+-- core does not depend on them, and each rule's own correctness is proven
+-- separately under `Proofs/Rules/`.
+--
+-- In Logos: `Cpc/Logos.lean`.
+
+public import @CALCULUS@.@CHECKER@Term
+import all @CALCULUS@.@CHECKER@Term
+public import @CALCULUS@.SmtEval
+import all @CALCULUS@.SmtEval
+
+public section

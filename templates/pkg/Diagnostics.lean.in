@@ -1,0 +1,17 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- It is a stub: what stands here is a description of what belongs in it.
+--
+-- What the executable prints besides the verdict: which assumption or command
+-- took a proof outside the fragment the semantics models, so that an `incomplete`
+-- run says why it was incomplete rather than only that it was.
+--
+-- In Logos: `Cpc/Diagnostics.lean`.
+
+public import @CALCULUS@.Api
+import all @CALCULUS@.Api
+
+public section

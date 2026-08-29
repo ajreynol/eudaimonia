@@ -1,0 +1,23 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The model semantics of SMT-LIB: what an SMT-LIB term means, defined without
+-- reference to the checker.
+--
+-- This is half of the correctness specification, and it is self-contained -- it
+-- can be read, and used, on its own. It is compiled from the SMT-LIB semantics in
+-- `signature/smt.eos`, which is the same for every calculus over ordinary
+-- SMT-LIB.
+--
+-- In Logos: `Cpc/SmtModel.lean`.
+
+public import @CALCULUS@.SmtValueOrder
+import all @CALCULUS@.SmtValueOrder
+
+public section

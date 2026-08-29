@@ -1,19 +1,30 @@
-import @CALCULUS@
+import @CALCULUS@.Diagnostics
 
 /-!
 The `@EXE@` executable: read a proof in the `@CALCULUS@` calculus and report
 whether it is a refutation.
 
-The checking itself is not written yet -- it is what the Eunoia signature in
-`signature/` compiles to. This file is the shape of the driver: read the one
-path given, hand the text to the checker, and turn the verdict into an exit
-status. The convention the verdicts follow is Logos's:
+Reading the file aside, the work belongs in `@CALCULUS@.Api`: parse the text,
+then run the checks that stand for the hypotheses of the soundness theorem in
+`@CALCULUS@/ApiCorrect.lean`. This file only reads the file, prints the verdict
+and picks an exit status, so that what the theorem is stated about and what the
+executable does are the same function.
+
+The three verdicts, following Logos:
 
 | output       | status | meaning                                              |
 | ------------ | ------ | ---------------------------------------------------- |
 | `correct`    | 0      | the proof's assumptions are unsatisfiable            |
 | `incorrect`  | 1      | the proof is not accepted as a refutation            |
-| `incomplete` | 2      | accepted, but outside what the semantics models      |
+| `incomplete` | 2      | accepted, but it mentions something the semantics does not model, so the theorem does not apply |
+
+`incomplete` is the verdict that keeps the theorem honest: the side conditions
+are checked at run time, and a proof that passes the checker but fails them is
+reported as such rather than as `correct`.
+
+No calculus is compiled in yet, so no verdict can be reached. What is still
+missing, and in what order it is worth building, is the Eudaimonia roadmap in
+its TODO.md.
 -/
 
 def usage : String :=
@@ -24,8 +35,8 @@ def main : List String → IO UInt32
   | [path] => do
     let _input ← IO.FS.readFile path
     IO.eprintln s!"@EXE@: no calculus is installed yet, so {path} cannot be checked."
-    IO.eprintln "Compile a Eunoia signature into signature/ and replace \
-                 @CALCULUS@.Basic with what it produces."
+    IO.eprintln "Compile a Eunoia signature into signature/ to replace the stubs \
+                 under @CALCULUS@/."
     return 1
   | _ => do
     IO.eprintln usage

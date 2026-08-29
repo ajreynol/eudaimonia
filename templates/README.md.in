@@ -9,16 +9,39 @@ can be moved anywhere, or made a repository of its own.
 ## Layout
 
 ```text
-lakefile.toml        the package: the @CALCULUS@ library and the @EXE@ executable
-lean-toolchain       the pinned Lean version
-Main.lean            the executable: read a proof, report a verdict
-@CALCULUS@.lean      the root of the library
-@CALCULUS@/          the calculus: terms, proof rules, semantics, correctness
-  Basic.lean         a placeholder, until a signature is compiled in
-signature/           what the calculus is, and what it means
-  @CALCULUS@.eo      the Eunoia signature
-  @CALCULUS@.eos     what its symbols mean
+lakefile.toml            the package: the @CALCULUS@ library and the @EXE@ executable
+lean-toolchain           the pinned Lean version
+Main.lean                the executable: read a proof, report a verdict
+@CALCULUS@.lean          the root of the library
+@CALCULUS@/
+  SmtEval.lean           G  the primitives the embedding is evaluated over
+  @CHECKER@Term.lean     G  the term datatype of the calculus
+  SmtModelDefs.lean      G  what the model semantics is built from
+  SmtValueOrder.lean     G  the order on values
+  SmtModel.lean          G  the model semantics of SMT-LIB
+  Spec.lean              G  @CALCULUS@ <-> SMT-LIB, and satisfiability
+  @CHECKER@.lean         G  the core checker
+  Parser.lean            G  the operator table for this signature
+  Api.lean               H  what the executable does with a file
+  ApiChecks.lean         H  each check is the component it stands for
+  ApiCorrect.lean        H  the soundness theorem, about the text of a file
+  Diagnostics.lean       H  why a run came back incomplete
+  Proofs/
+    Assumptions.lean     H  the side conditions, and deciding them
+    CheckerCore.lean     H  correctness of the core, rule-agnostic
+    RuleLemmas.lean      G  the dispatcher over the rules
+    Checker.lean         H  the soundness theorem
+    Rules/               one file per rule: statement generated, proof yours
+signature/               what the calculus is, and what it means
+  @CALCULUS@.eo          the Eunoia signature
+  @CALCULUS@.eos         what its symbols mean
+  smt.eos                the SMT-LIB semantics that is written against
 ```
+
+**G** is generated from the signature and is overwritten when one is installed;
+**H** is hand-written and left alone. Each file says which it is in its own
+header. `Proofs/Rules/` is both: a rule's statement is generated with `sorry`
+for its proof, the proof goes in that same file, and a reinstall preserves it.
 
 ## Building
 
@@ -26,11 +49,19 @@ signature/           what the calculus is, and what it means
 lake build
 ```
 
-That builds both targets. Either alone:
+That builds the library and the executable. Either alone:
 
 ```bash
 lake build @CALCULUS@     # the library
 lake build @EXE@          # the executable
+```
+
+`@CALCULUS@.ApiCorrect` is deliberately outside the default target: it depends
+on the whole rule-correctness tree, which is far too expensive to build every
+time. Build it, and so the proofs, explicitly:
+
+```bash
+lake build @CALCULUS@.ApiCorrect
 ```
 
 ## Running
@@ -47,7 +78,10 @@ After a build the executable can be run directly, without Lake:
 
 ## Status
 
-The build infrastructure is in place; the calculus is not. `@CALCULUS@/Basic.lean`
-is a placeholder, and `@EXE@` reports that it has nothing to check with. What
-replaces them is compiled from `signature/@CALCULUS@.eo` against
-`signature/@CALCULUS@.eos`.
+The build infrastructure and the shape of the checker are in place; the content
+is not. Every module under `@CALCULUS@/` is a stub saying what belongs in it,
+and `@EXE@` reports that it has nothing to check with.
+
+What replaces the stubs is compiled from `signature/`. The Eunoia compiler that
+does that is not wired up yet — see the Eudaimonia roadmap, `TODO.md`, for what
+is missing and in what order it is worth building.

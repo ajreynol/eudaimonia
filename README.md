@@ -53,6 +53,15 @@ scripts/new-checker.sh --checker Aletheia --calculus Lra \
   --signature ~/sigs/Lra.eo --semantics ~/sigs/Lra.eos
 ```
 
+A specification is three files, and `--spec` names them at once by convention
+(`<Calculus>.eo`, `<Calculus>.eos`, `smt.eos`). `examples/cpc` is a worked one —
+a snapshot of what Logos compiles — so the generator can be pointed at something
+real:
+
+```bash
+scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
+```
+
 `scripts/new-checker.sh --help` lists the rest. Then build what it wrote:
 
 ```bash
@@ -86,19 +95,47 @@ close once there are proofs to keep.
 
 ## What a run generates
 
+The full set of artifacts Logos's `install/install-cpc.sh` produces, plus the
+hand-written modules it leaves alone — every one a stub describing what belongs
+in it and which Logos file it corresponds to:
+
 ```text
 <Checker>/
-  lakefile.toml        the package: the <Calculus> library and the <checker> executable
-  lean-toolchain       the pinned Lean version
-  Main.lean            the executable: read a proof, report a verdict
-  <Calculus>.lean      the root of the library
-  <Calculus>/          the calculus: terms, proof rules, semantics, correctness
-    Basic.lean         a placeholder, until a signature is compiled in
-  signature/           what the calculus is, and what it means
-    <Calculus>.eo      the Eunoia signature
-    <Calculus>.eos     what its symbols mean
+  lakefile.toml            the package: the <Calculus> library and the <checker> executable
+  lean-toolchain           the pinned Lean version
+  Main.lean                the executable: read a proof, report a verdict
+  <Calculus>.lean          the root of the library
+  <Calculus>/
+    SmtEval.lean           G  the primitives the embedding is evaluated over
+    <Checker>Term.lean     G  the term datatype of the calculus
+    SmtModelDefs.lean      G  what the model semantics is built from
+    SmtValueOrder.lean     G  the order on values
+    SmtModel.lean          G  the model semantics of SMT-LIB
+    Spec.lean              G  calculus <-> SMT-LIB, and satisfiability
+    <Checker>.lean         G  the core checker
+    Parser.lean            G  the operator table for this signature
+    Api.lean               H  what the executable does with a file
+    ApiChecks.lean         H  each check is the component it stands for
+    ApiCorrect.lean        H  the theorem, about the text of a file
+    Diagnostics.lean       H  why a run came back incomplete
+    Proofs/
+      Assumptions.lean     H  the side conditions, and deciding them
+      CheckerCore.lean     H  correctness of the core, rule-agnostic
+      RuleLemmas.lean      G  the dispatcher over the rules
+      Checker.lean         H  the soundness theorem
+      Rules/               G+H  one file per rule: statement generated, proof yours
+  signature/
+    <Calculus>.eo          the Eunoia signature
+    <Calculus>.eos         what its symbols mean
+    smt.eos                the SMT-LIB semantics that is written against
   README.md
 ```
+
+**G** is generated from the signature and overwritten by a regeneration; **H**
+is hand-written and left alone. Each file says which it is in its own header,
+because that distinction is what makes regeneration safe. `Proofs/Rules/` is
+both: the compiler emits each rule's statement with `sorry`, the proof goes in
+that same file, and a reinstall then preserves it.
 
 A signature or semantics file you do not name is written as a commented stub to
 fill in, so the project has the file either way and says in it what it is for.
@@ -111,7 +148,9 @@ still builds and the executable still runs, and both say what is missing.
 config.sh              the settings a run reads
 scripts/new-checker.sh the generator
 templates/             what it renders, one file per generated file
+examples/cpc/          a worked specification: CPC, as Logos compiles it
 checkers/              where runs write, ignored by git
+TODO.md                what Logos has that a generated checker still needs
 ```
 
 Templates are plain files with `@CHECKER@`, `@CALCULUS@`, `@EXE@` and
@@ -120,11 +159,16 @@ a template and one `render` line in the script.
 
 ## Status
 
-What is here is the build infrastructure: a run generates a Lake project that
-builds clean and an executable that runs, with the calculus stubbed out.
+What is here is the build infrastructure and the shape of a checker: a run
+generates a Lake project that builds clean, an executable that runs, and every
+module a checker needs as a stub describing what belongs in it. None of the
+content exists.
 
-Compiling a Eunoia signature into Lean — what `install/` does in Logos, using
-the `ethos-eoc` compiler from [cvc5/ethos](https://github.com/cvc5/ethos) — is
-not part of this yet, and neither is the signature-independent proof
-infrastructure Logos carries in its `Logos/` library. Those are the next steps,
-and how much of Logos can be reused verbatim in them is still open.
+The largest missing piece is the one everything waits on — compiling a Eunoia
+signature into Lean, which is what `install/` does in Logos using the
+`ethos-eoc` compiler from [cvc5/ethos](https://github.com/cvc5/ethos). After
+that: the signature-independent parser library, the core correctness proof, and
+the per-rule proofs (591 files in Logos).
+
+**[TODO.md](TODO.md)** sets all of it out, item by item, against the Logos
+files each item corresponds to.

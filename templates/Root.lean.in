@@ -1,0 +1,28 @@
+module
+
+-- The root of the `@CALCULUS@` library: the calculus `@CHECKER@` checks proofs in.
+--
+-- This module exists to import the rest of the library, so that
+-- `lake build @CALCULUS@` builds all of it.
+--
+-- The comments here are `--` rather than a `/-! -/` module docstring on
+-- purpose: a docstring is a command, so it would end the import section and
+-- the imports below it would not parse.
+public import @CALCULUS@.@CHECKER@
+import all @CALCULUS@.@CHECKER@
+public import @CALCULUS@.SmtEval
+import all @CALCULUS@.SmtEval
+public import @CALCULUS@.SmtModel
+import all @CALCULUS@.SmtModel
+public import @CALCULUS@.Spec
+import all @CALCULUS@.Spec
+public import @CALCULUS@.Api
+import all @CALCULUS@.Api
+public import @CALCULUS@.ApiChecks
+import all @CALCULUS@.ApiChecks
+
+-- `@CALCULUS@.ApiCorrect` is deliberately not imported here: it depends on
+-- `@CALCULUS@.Proofs.Checker`, and so on the whole rule-correctness tree, which
+-- is too expensive to build as part of the default target.
+
+public section

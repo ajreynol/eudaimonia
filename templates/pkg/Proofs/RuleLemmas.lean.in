@@ -1,0 +1,24 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The dispatcher: the case split over every rule of the calculus, discharging
+-- each case with that rule's correctness lemma from `Proofs/Rules/`.
+--
+-- Generated, because the set of rules is the signature's to decide. This is the
+-- file that ties the per-rule proofs to the core, and the one that fails to build
+-- when a rule's statement has changed but its proof has not.
+--
+-- Once a signature is compiled, this imports one module per rule.
+--
+-- In Logos: `Cpc/Proofs/RuleLemmas.lean`, which imports 591 rule modules.
+
+public import @CALCULUS@.Proofs.CheckerCore
+import all @CALCULUS@.Proofs.CheckerCore
+
+public section

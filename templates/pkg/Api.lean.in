@@ -1,0 +1,40 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- It is a stub: what stands here is a description of what belongs in it.
+--
+-- Everything the executable does with a proof file, as one function: parse the
+-- text, then run the checks that stand for the hypotheses of the correctness
+-- theorem.
+--
+-- Keeping it to one function is what lets `ApiCorrect` state the theorem about
+-- the text of a file rather than about an internal term, so that the verdict the
+-- executable prints is the theorem's conclusion.
+--
+-- In Logos: `Cpc/Api.lean`, whose `Eo.logos_check_proof` this corresponds to.
+
+public import @CALCULUS@.@CHECKER@
+import all @CALCULUS@.@CHECKER@
+public import @CALCULUS@.Spec
+import all @CALCULUS@.Spec
+public import @CALCULUS@.Parser
+import all @CALCULUS@.Parser
+public import @CALCULUS@.Proofs.Assumptions
+import all @CALCULUS@.Proofs.Assumptions
+
+public section
+
+namespace @CALCULUS@
+
+-- Placeholders, so that the executable has something to name until there is a
+-- calculus to check with. What belongs here is `check_proof`.
+
+/-- The calculus this checker checks proofs in. -/
+def calculusName : String := "@CALCULUS@"
+
+/-- The checker itself. -/
+def checkerName : String := "@CHECKER@"
+
+end @CALCULUS@

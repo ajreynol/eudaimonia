@@ -1,0 +1,26 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The other half of the correctness specification: the correspondence between the
+-- terms of this calculus and SMT-LIB terms, and what satisfiability means for
+-- one.
+--
+-- Compiled from `signature/@CALCULUS@.eos`, which says what each symbol of the
+-- signature means as a transformation into the embedding `SmtModel` defines. This
+-- is where the two halves meet, so changing what the calculus means changes what
+-- the checker's verdict asserts.
+--
+-- In Logos: `Cpc/Spec.lean`.
+
+public import @CALCULUS@.SmtModel
+import all @CALCULUS@.SmtModel
+public import @CALCULUS@.@CHECKER@Term
+import all @CALCULUS@.@CHECKER@Term
+
+public section

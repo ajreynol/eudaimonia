@@ -1,0 +1,18 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The definitions the SMT-LIB model semantics is built from: the values a model
+-- assigns, and the shapes they are built over.
+--
+-- In Logos: `Cpc/SmtModelDefs.lean`.
+
+public import @CALCULUS@.SmtEval
+import all @CALCULUS@.SmtEval
+
+public section

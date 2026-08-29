@@ -1,0 +1,22 @@
+# Proof rules
+
+One file per proof rule of the calculus: the rule's correctness lemma, and its
+proof.
+
+These are the only generated files that are **preserved** across a
+regeneration. The signature compiler emits each rule as its statement with
+`sorry` for a proof, and the proof then goes in that same file, so a file stops
+being generated code the moment it is worth keeping. A reinstall therefore:
+
+- writes a stub for a rule that has no file yet — a rule newly added to the
+  calculus, appearing as a `sorry` to discharge,
+- leaves an existing file alone, so no proof is ever lost,
+- which means a rule whose *statement* changed keeps its old proof and fails to
+  build. That is the intended signal: build after a regeneration to find the
+  proofs that need attention.
+
+`../RuleLemmas.lean` is the dispatcher that case splits over the rules and
+discharges each case with the lemma from here.
+
+This directory is empty because no signature has been compiled yet. For scale:
+Logos has 591 rule files here.

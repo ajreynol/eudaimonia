@@ -1,0 +1,25 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- It is a stub: what stands here is a description of what belongs in it.
+--
+-- The soundness theorem, stated about the text of a proof file: if the checker
+-- prints `correct` for this input, the assumptions the parser read out of it are
+-- unsatisfiable.
+--
+-- This is the top of the development. It is deliberately kept out of the library
+-- root, because it depends on the whole rule-correctness tree and so on every
+-- proof under `Proofs/Rules/`, which is far too expensive to build as part of the
+-- default target.
+--
+-- In Logos: `Cpc/ApiCorrect.lean`, whose `correct___logos_check_proof` this
+-- corresponds to.
+
+public import @CALCULUS@.ApiChecks
+import all @CALCULUS@.ApiChecks
+public import @CALCULUS@.Proofs.Checker
+import all @CALCULUS@.Proofs.Checker
+
+public section

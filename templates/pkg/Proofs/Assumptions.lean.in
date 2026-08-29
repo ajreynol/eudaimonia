@@ -1,0 +1,25 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- It is a stub: what stands here is a description of what belongs in it.
+--
+-- The side conditions of the correctness theorem: the predicates restricting a
+-- proof to terms the semantics gives a meaning to, together with the `Decidable`
+-- instances that decide them.
+--
+-- Both roles come from this one file on purpose. The conditions the rule proofs
+-- assume and the conditions the executable checks at run time are then a single
+-- definition, written down once, so the two cannot drift apart.
+--
+-- In Logos: `Cpc/Proofs/Assumptions.lean`.
+
+public import @CALCULUS@.Spec
+import all @CALCULUS@.Spec
+public import @CALCULUS@.@CHECKER@
+import all @CALCULUS@.@CHECKER@
+public import @CALCULUS@.SmtModel
+import all @CALCULUS@.SmtModel
+
+public section

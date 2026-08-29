@@ -1,0 +1,27 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The parser configuration for this signature: the operator table that says how
+-- each symbol of the calculus is spelt in the s-expression syntax, and how a
+-- literal becomes a term.
+--
+-- This is data, not a parser. In Logos it plugs into a hand-written,
+-- signature-independent parser library (`Logos/Sexp.lean` and `Logos/Parser.lean`)
+-- that reads the syntax Ethos accepts. That library has no counterpart here yet;
+-- see the Eudaimonia roadmap, TODO.md.
+--
+-- Because a parser is unverified, whatever it reads out of a file is what the
+-- correctness theorem is then stated about.
+--
+-- In Logos: `Cpc/Parser.lean`.
+
+public import @CALCULUS@.@CHECKER@
+import all @CALCULUS@.@CHECKER@
+
+public section

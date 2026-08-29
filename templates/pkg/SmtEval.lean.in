@@ -1,0 +1,19 @@
+module
+
+-- This file is auto-generated from the Eunoia signature in signature/.
+-- Do not edit: installing a signature overwrites it. Change the signature, or
+-- its semantics, instead.
+--
+-- It is a stub. No signature has been compiled yet, so what stands here is a
+-- description of what will.
+--
+-- The primitives the deep embedding is evaluated over: the native operations on
+-- numerals, rationals, strings and bit-vectors that both the checker and the
+-- semantics are written in terms of.
+--
+-- The base of the package -- it imports nothing but `Init`, and everything else
+-- imports it.
+--
+-- In Logos: `Cpc/SmtEval.lean`.
+
+public section

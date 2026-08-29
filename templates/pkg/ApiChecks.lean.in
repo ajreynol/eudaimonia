@@ -1,0 +1,24 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- It is a stub: what stands here is a description of what belongs in it.
+--
+-- The proof that each check `Api` runs gives the component of the correctness
+-- theorem it stands for.
+--
+-- This is the layer that lets the executable be written efficiently without the
+-- theorem being about something else: in Logos it is where folding the assumption
+-- push over the parser's list is proven to build the same state as the recursion
+-- over the corresponding `and`-chain, which is what allows a fold in constant
+-- stack.
+--
+-- In Logos: `Cpc/ApiChecks.lean`.
+
+public import @CALCULUS@.Api
+import all @CALCULUS@.Api
+public import @CALCULUS@.Proofs.Assumptions
+import all @CALCULUS@.Proofs.Assumptions
+
+public section

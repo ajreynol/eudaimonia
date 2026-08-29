@@ -1,0 +1,22 @@
+module
+
+-- This file is hand-written. A signature install leaves it alone, so what is
+-- put here is kept.
+--
+-- It is a stub: what stands here is a description of what belongs in it.
+--
+-- The correctness of the core checker, independent of which rules the calculus
+-- has: that running a proof preserves the invariant relating the proof state to
+-- what is entailed by the assumptions.
+--
+-- This is the largest hand-written piece of the development and the one that is
+-- genuinely reusable across calculi -- it is about the machinery of proof
+-- checking rather than about any particular rule. In Logos it is around 3,000
+-- lines.
+--
+-- In Logos: `Cpc/Proofs/CheckerCore.lean`.
+
+public import @CALCULUS@.Proofs.Assumptions
+import all @CALCULUS@.Proofs.Assumptions
+
+public section

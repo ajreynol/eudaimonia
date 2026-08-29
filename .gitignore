@@ -4,6 +4,10 @@
 # repository: generate it there with --out.
 /checkers/
 
+# Editor scratch files.
+.*.kate-swp
+*~
+
 # Lake build artifacts.
 .lake/
 *.olean
