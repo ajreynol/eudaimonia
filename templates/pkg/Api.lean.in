@@ -3,23 +3,35 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- It is a stub: what stands here is a description of what belongs in it.
+-- Everything the `@EXE@` executable does with a proof file, from its text to a
+-- verdict:
 --
--- Everything the executable does with a proof file, as one function: parse the
--- text, then run the checks that stand for the hypotheses of the correctness
--- theorem.
+--     check_proof : String -> Except String Verdict
 --
--- Keeping it to one function is what lets `ApiCorrect` state the theorem about
--- the text of a file rather than about an internal term, so that the verdict the
--- executable prints is the theorem's conclusion.
+-- `Main.lean` only reads the file, prints the verdict and picks an exit status,
+-- and `ApiCorrect.lean` states the correctness of the executable about this one
+-- function. Keeping it to one function is what lets that theorem be about the
+-- text of a file rather than about some internal term.
 --
--- The `Parser` it imports is the stub, not a generated one: the generated
--- parser configuration plugs into a signature-independent parser library that
--- this checker does not have yet, so installing a signature leaves the stub in
--- place. See the Eudaimonia roadmap, TODO.md.
+-- Two stages. `@CALCULUS@/Parser.lean` -- generated from the signature, reading
+-- the Eunoia proof format through the `Eunoia` library -- turns the text into
+-- assumptions and commands. This stage is unverified, so the theorem is about
+-- the assumptions *as parsed*, whatever they are. `verdict` then runs one check
+-- per component of `correct___eo_is_refutation` (`Proofs/Checker.lean`):
 --
--- In Logos: `Cpc/Api.lean`, whose `Eo.logos_check_proof` this corresponds to.
-
+--   | component of the theorem       | computed here by                |
+--   | ------------------------------ | ------------------------------- |
+--   | the term `F`                   | `assumption_term assums`        |
+--   | `eo_is_refutation F pf`        | `check_refutation assums cmds`  |
+--   | `TranslatableAssumptionList F` | `check_translatableAssumptions` |
+--   | `CmdListTranslationOk pf`      | `check_cmdListTranslationOk`    |
+--
+-- The two side conditions are not re-implemented here: they are the predicates
+-- of `Proofs/Assumptions.lean`, decided by the instances that file derives, so
+-- the executable checks the same conditions the rule proofs assume with no
+-- second copy to keep in step.
+--
+-- In Logos: `Cpc/Api.lean`.
 public import @CALCULUS@.@CHECKER@
 import all @CALCULUS@.@CHECKER@
 public import @CALCULUS@.Spec
@@ -29,17 +41,98 @@ import all @CALCULUS@.Parser
 public import @CALCULUS@.Proofs.Assumptions
 import all @CALCULUS@.Proofs.Assumptions
 
-public section
+@[expose] public section
 
-namespace @CALCULUS@
+namespace Eo
 
--- Placeholders, so that the executable has something to name until there is a
--- calculus to check with. What belongs here is `check_proof`.
+/-! ## The assumptions the parser produced, as one formula -/
 
-/-- The calculus this checker checks proofs in. -/
-def calculusName : String := "@CALCULUS@"
+/-- One link of the assumption chain: `A` conjoined onto what is already read. -/
+def assumption_chain_step (rest A : Term) : Term :=
+  Term.Apply (Term.Apply (Term.UOp UserOp.and) A) rest
 
-/-- The checker itself. -/
-def checkerName : String := "@CHECKER@"
+/--
+The conjunction of the parser\'s assumptions: the term `F` of
+`correct___eo_is_refutation`, and so what the executable\'s correctness is
+ultimately about.
 
-end @CALCULUS@
+The order is not the obvious one. `__eo_invoke_assume_list` consumes an
+`and`-chain by pushing its head *last*, so the head ends up on top of the proof
+stack, while the parser numbers premises against a stack whose first assumption
+is at the bottom. The chain matching that numbering therefore lists the
+assumptions in reverse file order: for `A1 ... An` this builds
+
+    (and An (and A(n-1) ... (and A1 true) ... ))
+
+Building it the other way round could not silently accept a bad proof -- premise
+indices would resolve to the wrong entries and the checker would reject -- but
+it would make the theorem talk about a different `F`.
+-/
+def assumption_term (assums : List Term) : Term :=
+  assums.foldl assumption_chain_step (Term.Boolean true)
+
+/-- The state a run starts in: nothing assumed, nothing proven. -/
+def checker_init_state : CState := CState.nil
+
+/--
+Push one input assumption under the guard `__eo_invoke_assume_list` applies to
+each element of the chain: Boolean-typed and closed, or the state goes `Stuck`.
+
+The guard is not cosmetic. Boolean type is what the checker\'s type invariant
+requires of an `assume` entry, and closedness is what makes the assumption list
+stable, so dropping it puts a run outside the reach of the soundness proof.
+-/
+def invoke_input_assume (s : CState) (A : Term) : CState :=
+  __eo_push_input_assume_check (__eo_and (__eo_is_bool_type A) (__eo_is_closed A)) A s
+
+/-! ## The three checks -/
+
+/--
+The checker run: from the parsed assumptions, `cmds` reaches a closed state that
+has proven `false`. This is `eo_is_refutation (assumption_term assums) cmds`.
+
+A fold rather than a recursion over the chain, so the stack stays constant.
+`ApiChecks.lean` is where the two are proven to agree.
+-/
+def check_refutation (assums : List Term) (cmds : CCmdList) : Bool :=
+  __eo_state_is_refutation
+    (__eo_invoke_cmd_list (assums.foldl invoke_input_assume checker_init_state) cmds)
+
+/-- Every assumption has an SMT-LIB translation: the first side condition. -/
+def check_translatableAssumptions (assums : List Term) : Bool :=
+  assums.all fun A => decide (eoHasSmtTranslation A)
+
+/-- `CmdListTranslationOk cmds`: the second side condition. -/
+def check_cmdListTranslationOk (cmds : CCmdList) : Bool :=
+  decide (CmdListTranslationOk cmds)
+
+/-! ## The verdict -/
+
+/-- What the executable reports about a proof file. -/
+inductive Verdict where
+  /-- The proof\'s assumptions are unsatisfiable, by `correct___check_proof`. -/
+  | correct
+  /-- The proof is not accepted as a refutation. -/
+  | incorrect
+  /--
+  Accepted as a derivation, but a side condition fails: the proof mentions
+  something the SMT-LIB semantics does not model, so the theorem says nothing
+  about it. Reporting this separately is what keeps `correct` from overstating.
+  -/
+  | incomplete
+deriving DecidableEq, Repr, Inhabited
+
+/-- `correct` exactly when all three checks pass. -/
+def verdict (assums : List Term) (cmds : CCmdList) : Verdict :=
+  if !check_refutation assums cmds then Verdict.incorrect
+  else if !check_translatableAssumptions assums then Verdict.incomplete
+  else if !check_cmdListTranslationOk cmds then Verdict.incomplete
+  else Verdict.correct
+
+/-- Parse a proof file and report its verdict: everything `Main.lean` does. -/
+def check_proof (input : String) : Except String Verdict :=
+  match parseProof input with
+  | Except.ok (assums, cmds) => Except.ok (verdict assums cmds)
+  | Except.error e => Except.error e
+
+end Eo

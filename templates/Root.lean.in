@@ -20,6 +20,8 @@ public import @CALCULUS@.Api
 import all @CALCULUS@.Api
 public import @CALCULUS@.ApiChecks
 import all @CALCULUS@.ApiChecks
+public import @CALCULUS@.Diagnostics
+import all @CALCULUS@.Diagnostics
 
 -- `@CALCULUS@.ApiCorrect` is deliberately not imported here: it depends on
 -- `@CALCULUS@.Proofs.Checker`, and so on the whole rule-correctness tree, which

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+# Run the regression proofs. See --help.
+
+set -uo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: test/regress/run.sh [PROOF]...
+
+Run @EXE@ over each regression proof and check the verdict against the
+`.expected` file beside it. With no argument, runs every `*.proof` in this
+directory.
+
+Each `<name>.proof` has a `<name>.expected` holding the verdict it should get:
+one of `correct`, `incorrect`, `incomplete`, or `error` for input the parser
+must reject.
+
+The three verdicts are all worth covering, and `incomplete` most of all: it is
+what keeps `correct` from quietly overstating what the soundness theorem
+covers, so a checker with no `incomplete` test has no evidence that distinction
+still works.
+
+Requires the executable to have been built:
+
+  scripts/build.sh
+USAGE
+}
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "${repo_root}"
+
+EXE="./.lake/build/bin/@EXE@"
+[ -x "${EXE}" ] || {
+  echo "error: ${EXE} is not built. Run scripts/build.sh first." >&2
+  exit 1
+}
+
+proofs=("$@")
+if [ "${#proofs[@]}" -eq 0 ]; then
+  shopt -s nullglob
+  proofs=(test/regress/*.proof)
+  shopt -u nullglob
+fi
+
+if [ "${#proofs[@]}" -eq 0 ]; then
+  echo "==> No regression proofs. Nothing to run."
+  exit 0
+fi
+
+pass=0
+declare -a failures=()
+for proof in "${proofs[@]}"; do
+  expected_file="${proof%.proof}.expected"
+  if [ ! -f "${expected_file}" ]; then
+    echo "  ?? ${proof}: no ${expected_file##*/}, so nothing to compare against"
+    failures+=("${proof}")
+    continue
+  fi
+  expected="$(tr -d '[:space:]' < "${expected_file}")"
+
+  # The verdict is stdout; stderr carries the reason an incomplete run gives.
+  actual="$("${EXE}" "${proof}" 2>/dev/null | tr -d '[:space:]')"
+  status=$?
+  [ -n "${actual}" ] || actual="error"
+
+  if [ "${actual}" = "${expected}" ]; then
+    printf '  ok %-40s %s\n' "${proof##*/}" "${actual}"
+    pass=$((pass + 1))
+  else
+    printf '  FAIL %-38s expected %s, got %s (status %s)\n' \
+      "${proof##*/}" "${expected}" "${actual}" "${status}"
+    failures+=("${proof}")
+  fi
+done
+
+echo
+if [ "${#failures[@]}" -eq 0 ]; then
+  echo "==> ${pass}/${#proofs[@]} regression proofs gave the expected verdict."
+  exit 0
+fi
+echo "==> ${#failures[@]} of ${#proofs[@]} failed: ${failures[*]##*/}"
+exit 1

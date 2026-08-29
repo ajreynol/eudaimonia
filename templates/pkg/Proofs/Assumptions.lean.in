@@ -3,18 +3,29 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- It is a stub: what stands here is a description of what belongs in it.
+-- The side conditions of the soundness theorem: the predicates that restrict a
+-- proof to terms the semantics gives a meaning to, together with the
+-- `Decidable` instances that decide them.
 --
--- The side conditions of the correctness theorem: the predicates restricting a
--- proof to terms the semantics gives a meaning to, together with the `Decidable`
--- instances that decide them.
+-- Both roles come from this one file on purpose. What the rule proofs assume
+-- and what the executable checks at run time are then a single definition,
+-- written down once, so the two cannot drift apart.
 --
--- Both roles come from this one file on purpose. The conditions the rule proofs
--- assume and the conditions the executable checks at run time are then a single
--- definition, written down once, so the two cannot drift apart.
+-- **These are stubs, and they accept nothing.**
+--
+-- That direction is deliberate. A side condition says "the semantics models
+-- this", and until it is written the honest answer is that the semantics
+-- models nothing -- so every proof the checker accepts is reported
+-- `incomplete` rather than `correct`. A fresh checker therefore never claims
+-- more than it has, and the verdict improves as the conditions are written.
+--
+-- Defining them as `True` instead would be the dangerous choice: the
+-- executable would print `correct` while nothing backed it.
+--
+-- Replacing them is part of writing the correctness proof, not separate from
+-- it: the same definitions are what the rule proofs assume.
 --
 -- In Logos: `Cpc/Proofs/Assumptions.lean`.
-
 public import @CALCULUS@.Spec
 import all @CALCULUS@.Spec
 public import @CALCULUS@.@CHECKER@
@@ -22,4 +33,43 @@ import all @CALCULUS@.@CHECKER@
 public import @CALCULUS@.SmtModel
 import all @CALCULUS@.SmtModel
 
-public section
+-- `@[expose]`, because the `Decidable` instances below have to reduce where
+-- `Api.lean` uses `decide` on them.
+@[expose] public section
+
+namespace Eo
+
+/-- That `A` has a counterpart in the SMT-LIB semantics. Stub: no term has one. -/
+def eoHasSmtTranslation (_A : Term) : Prop := False
+
+instance : DecidablePred eoHasSmtTranslation := fun _ => .isFalse id
+
+/-- That the arguments of `c` have counterparts. Stub: no command does. -/
+def cmdTranslationOk (_c : CCmd) : Prop := False
+
+instance : DecidablePred cmdTranslationOk := fun _ => .isFalse id
+
+/--
+Every assumption in the `and`-chain `F` is translatable: the first hypothesis of
+`correct___eo_is_refutation`.
+
+Stub: the empty chain and nothing else. That is not arbitrary -- an empty
+assumption list *is* translatable, there being nothing in it to translate -- so
+this is the honest conservative reading of "no semantics has been written yet",
+rather than a hole. The real version walks the chain and asks
+`eoHasSmtTranslation` of each link.
+-/
+def TranslatableAssumptionList (F : Term) : Prop := F = Term.Boolean true
+
+instance : DecidablePred TranslatableAssumptionList := fun F =>
+  inferInstanceAs (Decidable (F = Term.Boolean true))
+
+/--
+Every command of `pf` has translatable arguments: the second hypothesis of
+`correct___eo_is_refutation`.
+-/
+def CmdListTranslationOk (_pf : CCmdList) : Prop := False
+
+instance : DecidablePred CmdListTranslationOk := fun _ => .isFalse id
+
+end Eo

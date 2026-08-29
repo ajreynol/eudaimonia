@@ -1,0 +1,23 @@
+; HelloWorld: the smallest complete proof in the Eunoia proof format.
+;
+; Two assumptions that contradict each other, and two steps that derive `false`
+; from them. It exercises the whole pipeline -- the s-expression reader, the
+; parser's operator table, the checker's command loop and its refutation test --
+; without needing anything proven about any rule.
+;
+; Expected verdict: incomplete (see hello.expected).
+;
+; The checker accepts it as a derivation of `false`, so it is not `incorrect`.
+; It is not `correct` either, because that would assert the assumptions are
+; unsatisfiable, and the soundness theorem does not apply until the side
+; conditions in Proofs/Assumptions.lean say the semantics models these terms.
+; A fresh checker reports exactly that, and the verdict improves to `correct`
+; when the semantics and the rule proofs are written -- so this test is a
+; live readout of how far the development has got.
+
+(declare-const x Int)
+(declare-const y Int)
+(assume @p0 (= y x))
+(assume @p1 (not (= x y)))
+(step @p2 :rule symm :premises (@p1))
+(step @p3 :rule contra :premises (@p0 @p2))

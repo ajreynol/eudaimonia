@@ -1,0 +1,8 @@
+; A proof that reaches no contradiction: the checker must not accept it.
+;
+; It parses, and every command in it is well formed, so this separates "the
+; parser understood it" from "the checker was convinced by it". A checker that
+; reported anything but `incorrect` here would be accepting proofs of nothing.
+
+(declare-const x Int)
+(assume @p0 (= x x))

@@ -41,6 +41,29 @@ scripts/run-ci.sh hygiene      # just the sorry/admit/axiom check
 makes it worth running constantly: a full proof build is too slow to gate every
 change, so without it an unproven rule could land unnoticed.
 
+### Future work: turn proof hygiene on
+
+It is **not** run by CI yet, and not in the default groups of
+`scripts/run-ci.sh`. A freshly generated checker has one `sorry` per rule of the
+signature, plus the soundness theorem in `@CALCULUS@/Proofs/Checker.lean`, so
+enabling it now would make every build red — and a CI that is red by
+construction is one nobody reads.
+
+Meanwhile it is the work list:
+
+```bash
+scripts/run-ci.sh hygiene      # what is still unproven
+```
+
+Turn it on for good once that list is empty:
+
+1. uncomment the `Proof hygiene` step in `.github/workflows/ci.yml`;
+2. add `hygiene` to the default groups in `scripts/run-ci.sh`.
+
+Do it as soon as the list *is* empty rather than later: the value of the check
+is stopping the first unproven rule from landing, which it can only do if it is
+already running.
+
 `install/install-@CALCLOWER@.sh --check` reports whether `@CALCULUS@/` has
 drifted from the signature it was compiled from, writing nothing.
 

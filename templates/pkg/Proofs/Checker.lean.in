@@ -3,18 +3,44 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- It is a stub: what stands here is a description of what belongs in it.
+-- **The theorem this checker is for.** Everything else exists to state it, to
+-- compute it, or to connect it to what the executable prints.
 --
--- The soundness theorem of the checker: that a proof it accepts implies its
--- assumptions are unsatisfiable, under the side conditions of `Assumptions`.
+-- It is a `sorry`. Discharging it is the work: `CheckerCore.lean` supplies the
+-- rule-agnostic half, `RuleLemmas.lean` the per-rule half, and this is where
+-- they are put together.
 --
--- `CheckerCore` supplies the rule-agnostic half and `RuleLemmas` the per-rule
--- half; this is where they are put together.
+-- `ApiCorrect.lean` restates it about the text of a proof file, and does so by
+-- *referring* to this theorem rather than reproving anything -- so filling this
+-- in is what makes the executable\'s `correct` mean something, with no other
+-- file needing to change.
 --
 -- In Logos: `Cpc/Proofs/Checker.lean`, whose `correct___eo_is_refutation` this
 -- corresponds to.
-
 public import @CALCULUS@.Proofs.RuleLemmas
 import all @CALCULUS@.Proofs.RuleLemmas
 
 public section
+
+namespace Eo
+
+/--
+Soundness: a proof this checker accepts is a refutation of its assumptions.
+
+If `pf` runs from the assumption chain `F` and reaches `false`, and `F` and `pf`
+stay inside the fragment the SMT-LIB semantics models, then `F` is
+unsatisfiable.
+
+The two side conditions are not decoration. The rule proofs only ever interpret
+a term through `__eo_to_smt`, so a proof mentioning something with no SMT-LIB
+counterpart is outside what they establish. They are `Proofs/Assumptions.lean`,
+which is also where the instances that decide them at run time come from.
+-/
+theorem correct___eo_is_refutation (F : Term) (pf : CCmdList) :
+    TranslatableAssumptionList F ->
+    CmdListTranslationOk pf ->
+    eo_is_refutation F pf ->
+    eo_satisfiability F false := by
+  sorry
+
+end Eo

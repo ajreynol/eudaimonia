@@ -73,7 +73,6 @@ typechecking.
 | ------ | ----- | --------------------- |
 | `and` | binary | the soundness statement is about the conjunction of the assumptions |
 | `imp` | binary | discharging an assumption (`scope`) yields an implication |
-| `not`, `eq` | binary | the shared lemma base the rule proofs draw on |
 | `Bool` | type | every assumption and proven term must have EO type `Bool` |
 | `true`, `false` | literals | what a proof entails, and what a refutation reaches |
 
@@ -122,18 +121,24 @@ After a build the executable can be run directly, without Lake:
 
 ## Status
 
-Freshly generated, every module under `@CALCULUS@/` is a stub saying what
-belongs in it, and `@EXE@` reports that it has nothing to check with. Running
-`install/install-@CALCLOWER@.sh` replaces the generated ones with the calculus
-compiled from `install/defs/`.
+After `install/install-@CALCLOWER@.sh`, this is a **working checker**: it parses
+the Eunoia proof format, runs the calculus, and reports one of three verdicts.
+`test/regress/run.sh` exercises all three, and `scripts/run-ci.sh` passes.
 
-Two things are missing after that, and both are expected:
+What it is not yet is a *verified* checker. Every proof it accepts comes back
+`incomplete` rather than `correct`, and that is the design:
 
-- **The rule proofs.** Each rule arrives as a `sorry` stub, so
-  `scripts/check-proof-hygiene.sh` fails until they are discharged. That
-  failure is the work list.
-- **The parser.** The generated parser configuration is an operator table that
-  plugs into a signature-independent parser library, and this checker has none,
-  so `install-@CALCLOWER@.sh` leaves `Parser.lean` as its stub. `--parser`
-  installs the generated one, which will not build until there is a library for
-  it to plug into.
+- **The soundness theorem is a `sorry`.** `@CALCULUS@/Proofs/Checker.lean` holds
+  `correct___eo_is_refutation`, and everything above it —
+  `@CALCULUS@/ApiCorrect.lean`, which states correctness about the text of a
+  file — is already wired to it. Discharging it is what makes the executable\'s
+  verdict mean something; no other file has to change.
+- **The rule proofs are `sorry` stubs**, one per rule of the signature.
+  `scripts/run-ci.sh hygiene` lists them.
+- **The side conditions model nothing yet.**
+  `@CALCULUS@/Proofs/Assumptions.lean` says so conservatively, which is why
+  every accepted proof is `incomplete`. Writing them is what lets a proof come
+  back `correct`.
+
+So the verdict is a live readout of how far the development has got, and it can
+only improve — a fresh checker never claims more than it has.

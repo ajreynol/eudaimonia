@@ -44,12 +44,9 @@ Options:
   --rules R...         compile only these rules, rather than the whole
                        signature. The package is built around only these, so
                        this makes a reduced calculus and not a partial refresh
-  --parser             install the generated parser configuration. Off by
-                       default: the generated parser is an operator table that
-                       plugs into a signature-independent parser library, and
-                       this checker has none yet, so installing it gives a
-                       package that does not build
-  --no-parser          the default; leaves @CALCULUS@/Parser.lean alone
+  --parser             the default; install the generated operator table
+  --no-parser          do not install it, leaving @CALCULUS@/Parser.lean as it
+                       is. The package then has no parser for this signature
   --check              install nothing; report whether @CALCULUS@/ is up to
                        date with the signature, exiting 1 if it is not
   --no-record          do not copy a signature given by path into
@@ -95,11 +92,9 @@ SMT_SEMANTICS=""
 JOBS=""
 CHECK=0
 RECORD=1
-# The generated Parser.lean imports a signature-independent parser library
-# (`Logos.Sexp` and `Logos.Parser` in Logos) that this checker does not have.
-# Installing it would give a package that does not build, so it is off until
-# there is a library for it to plug into.
-NO_PARSER=1
+# The generated Parser.lean is the operator table of this signature; it plugs
+# into the Eunoia library, which this checker has. Installed by default.
+NO_PARSER=0
 RULES=()
 RULES_GIVEN=0
 
@@ -425,6 +420,16 @@ for name in "${LEAN_OUTPUTS[@]}"; do
   [ "${CHECK}" = "1" ] || echo "    ${PACKAGE}/${name}"
   mkdir -p "$(dirname "${DEST_DIR}/${name}")"
   cp "${LEAN_DIR}/${name}" "${DEST_DIR}/${name}"
+  # The compiler names the parser library `Logos`, after the checker it was
+  # written for. Here that library is `Eunoia`, named for the proof format it
+  # reads rather than for a checker, since the checker's own name is this
+  # project's to choose. The rewrite is on the module path, so it cannot touch
+  # a calculus module that happens to share the name.
+  if [ "${name}" = "Parser.lean" ]; then
+    sed -i.bak -e 's/\bLogos\.Parser\b/Eunoia.Parser/g' \
+               -e 's/\bLogos\.Sexp\b/Eunoia.Sexp/g' "${DEST_DIR}/${name}"
+    rm -f "${DEST_DIR}/${name}.bak"
+  fi
   prepend_header "${DEST_DIR}/${name}"
 done
 

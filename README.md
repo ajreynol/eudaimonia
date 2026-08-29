@@ -55,9 +55,14 @@ these names does not merely lose a feature — the core proofs stop typechecking
 | ------ | ----- | --------------------- |
 | `and` | binary | The soundness statement is about the *conjunction* of a proof's assumptions. The assumption term is literally `(and A rest)`, and the state invariants are stated over it. |
 | `imp` | binary | Discharging an assumption — `scope` — yields an implication, so the state invariants are stated over it too. |
-| `not`, `eq` | binary | The shared lemma base the rule proofs draw on. |
 | `Bool` | type | The checker's guard: every assumption and every proven term must have EO type `Bool`. |
 | `true`, `false` | literals | What a proof is checked to entail, and what a refutation reaches. |
+
+That is the whole list. It is deliberately short, and Logos has been shortening
+it: `not` and `eq` were on it until recently and are not any more. Two
+connectives are what the *statement* of soundness needs — a conjunction to hold
+the assumptions and an implication to discharge one — and everything else a
+calculus has is its own business.
 
 Declaring an operator with the right *name* is necessary but not sufficient: it
 must also **mean** what the SMT-LIB semantics says it means. A signature whose
@@ -222,13 +227,17 @@ and documentation about its own calculus. The shape is Logos's.
     README.md              what regeneration overwrites, and what it preserves
   scripts/                 build.sh, check-proof-hygiene.sh, run-ci.sh
   docs/                    calculus.md, development.md
-  test/regress/            proofs to check, and the verdict each should get
+  test/regress/            proofs to check, the verdict each should get, and a
+                           runner; populated from <spec>/test/ if it has one
   .github/workflows/ci.yml
   .gitignore
   lakefile.toml
   lean-toolchain
   Main.lean
   <Calculus>.lean
+  Eunoia.lean
+  Eunoia/                  reading the Eunoia proof format: hand-written,
+                           calculus-independent, ~1,080 lines
   <Calculus>/              the package: 17 modules, G generated and H hand-written
     ...
     Proofs/Rules/          one file per rule: statement generated, proof yours
@@ -253,11 +262,20 @@ cd checkers/Logos
 install/get-eo-compiler.sh
 install/install-cpc.sh
 scripts/build.sh
+test/regress/run.sh
 ```
 
-That compiles the CPC signature into 8 signature-wide modules and 591 rule
-stubs, and builds them. The generated Lean is byte-identical to what Logos
-carries, modulo the header naming which installer wrote it.
+That compiles the CPC signature into 9 signature-wide modules and 591 rule
+stubs, builds them, and runs the regression proofs:
+
+```
+  ok hello.proof                              incomplete
+  ok malformed.proof                          error
+  ok no-refutation.proof                      incorrect
+```
+
+The generated Lean is byte-identical to what Logos carries, modulo the header
+naming which installer wrote it. `scripts/run-ci.sh` passes.
 
 Any signature reachable on the machine can be compiled instead, including one
 sitting in a tree of includes:
@@ -269,6 +287,25 @@ install/install-cpc.sh ~/cvc5/proofs/eo/cpc/Cpc.eo
 That also **records** it — flattening the tree into `install/defs/Cpc.eo` as
 one self-contained file — so the checker carries the signature it was built
 from and can be regenerated without that tree.
+
+### What a fresh checker can and cannot say
+
+It parses the Eunoia proof format, runs the calculus, and reports one of three
+verdicts. What it does not do is claim more than it has: every proof it accepts
+comes back `incomplete`, never `correct`.
+
+That is deliberate. `correct` would assert the assumptions are unsatisfiable,
+which is the conclusion of a soundness theorem that is still a `sorry` — and
+whose side conditions have not been written, so the semantics models nothing
+yet. The generated `Proofs/Assumptions.lean` says so conservatively rather than
+accepting everything, which is what keeps the verdict honest.
+
+Everything above that theorem is already wired to it. `ApiCorrect.lean` states
+correctness about the *text* of a proof file and derives it from the theorem in
+`Proofs/Checker.lean`, so discharging that one theorem is what turns the
+executable\'s verdict into a claim — no other file changes. The verdict is
+therefore a live readout of how far the development has got, and it can only
+improve.
 
 A signature or semantics file you do not name is written as a commented stub to
 fill in, so the project has the file either way and says in it what it is for.

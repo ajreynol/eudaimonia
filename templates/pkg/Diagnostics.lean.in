@@ -3,15 +3,47 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- It is a stub: what stands here is a description of what belongs in it.
---
 -- What the executable prints besides the verdict: which assumption or command
--- took a proof outside the fragment the semantics models, so that an `incomplete`
--- run says why it was incomplete rather than only that it was.
+-- took a proof outside the fragment the semantics models, so that an
+-- `incomplete` run says *why* it was incomplete.
+--
+-- Nothing here has a role in the correctness statement. It runs only after
+-- `Api.verdict` has already returned `incomplete`.
 --
 -- In Logos: `Cpc/Diagnostics.lean`.
-
 public import @CALCULUS@.Api
 import all @CALCULUS@.Api
 
 public section
+
+namespace Eo
+
+/-- The first assumption with no SMT-LIB translation, with its position in file order. -/
+def untranslatable_assumption (assums : List Term) : Option (Nat × Term) :=
+  go 0 assums
+where
+  go : Nat -> List Term -> Option (Nat × Term)
+    | _, [] => none
+    | i, A :: rest => if eoHasSmtTranslation A then go (i + 1) rest else some (i, A)
+
+/-- The first command whose arguments fail their side condition, with its position. -/
+def untranslatable_cmd (cmds : CCmdList) : Option (Nat × CCmd) :=
+  go 0 cmds
+where
+  go : Nat -> CCmdList -> Option (Nat × CCmd)
+    | _, CCmdList.nil => none
+    | i, CCmdList.cons c rest => if cmdTranslationOk c then go (i + 1) rest else some (i, c)
+
+/-- A line saying why a run came back `incomplete`. -/
+def incomplete_reason (assums : List Term) (cmds : CCmdList) : String :=
+  match untranslatable_assumption assums with
+  | some (i, _) =>
+    s!"assumption {i} mentions something the SMT-LIB semantics does not model"
+  | none =>
+    match untranslatable_cmd cmds with
+    | some (i, _) =>
+      s!"command {i} mentions something the SMT-LIB semantics does not model"
+    | none =>
+      "a side condition of the soundness theorem failed"
+
+end Eo

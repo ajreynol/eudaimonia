@@ -1,0 +1,7 @@
+; Unbalanced parentheses: the s-expression reader must reject this outright.
+;
+; Parse failure is not a verdict about the proof -- there is no proof to have a
+; verdict about -- so the checker exits 1 without printing one, and the runner
+; records that as `error`.
+
+(declare-const x Int

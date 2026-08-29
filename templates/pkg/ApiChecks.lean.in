@@ -3,22 +3,173 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- It is a stub: what stands here is a description of what belongs in it.
+-- That each check `Api.lean` runs really is the component of
+-- `correct___eo_is_refutation` it stands for.
 --
--- The proof that each check `Api` runs gives the component of the correctness
--- theorem it stands for.
+-- This is the layer that lets the executable be written for speed without the
+-- theorem quietly becoming about something else. `check_refutation` folds over
+-- the parser\'s list in constant stack, where the theorem is stated about a
+-- recursion over the corresponding `and`-chain; `invoke_assume_list_eq_fold`
+-- below is what makes those the same run.
 --
--- This is the layer that lets the executable be written efficiently without the
--- theorem being about something else: in Logos it is where folding the assumption
--- push over the parser's list is proven to build the same state as the recursion
--- over the corresponding `and`-chain, which is what allows a fold in constant
--- stack.
+-- These are proven. They are about the plumbing -- folds, guards and `decide`
+-- -- rather than about the calculus, so they hold whatever the signature is,
+-- and nothing here needs revisiting when the rules are written.
+--
+-- The two side-condition lemmas are trivial only because
+-- `Proofs/Assumptions.lean` currently defines those conditions as `True`.
+-- Replacing the stubs there is what gives them content; the statements below
+-- do not change.
 --
 -- In Logos: `Cpc/ApiChecks.lean`.
-
 public import @CALCULUS@.Api
 import all @CALCULUS@.Api
 public import @CALCULUS@.Proofs.Assumptions
 import all @CALCULUS@.Proofs.Assumptions
 
 public section
+
+namespace Eo
+
+/--
+Consuming a chain built by `assumption_chain_step` is folding the guarded push
+over the list it was built from.
+
+Induction on the list, generalised over the state and the seed of the chain,
+which is what makes the step go through: one `assumption_chain_step` on the
+right of the chain is one `invoke_input_assume` on the state.
+-/
+private theorem invoke_assume_list_foldl (assums : List Term) :
+    ∀ (s : CState) (F : Term),
+      __eo_invoke_assume_list s (assums.foldl assumption_chain_step F)
+        = assums.foldl invoke_input_assume (__eo_invoke_assume_list s F) := by
+  induction assums with
+  | nil => intro s F; rfl
+  | cons A rest ih =>
+    intro s F
+    show __eo_invoke_assume_list s (rest.foldl assumption_chain_step (assumption_chain_step F A))
+      = rest.foldl invoke_input_assume (invoke_input_assume (__eo_invoke_assume_list s F) A)
+    rw [ih]
+    rfl
+
+/--
+Folding the guarded push over the parser\'s list builds the same state as
+`__eo_invoke_assume_list` on the corresponding `and`-chain.
+
+This is what licenses the fold in `check_refutation`: the executable walks a
+list in constant stack, the theorem talks about a recursion over a chain, and
+this says the two are the same run.
+-/
+theorem invoke_assume_list_eq_fold (assums : List Term) :
+    assums.foldl invoke_input_assume checker_init_state
+      = __eo_invoke_assume_list CState.nil (assumption_term assums) := by
+  show assums.foldl invoke_input_assume CState.nil
+    = __eo_invoke_assume_list CState.nil (assums.foldl assumption_chain_step (Term.Boolean true))
+  rw [invoke_assume_list_foldl]
+  rfl
+
+/-- What the executable computes is what the checker\'s own refutation test does. -/
+theorem check_refutation_eq_checker (assums : List Term) (cmds : CCmdList) :
+    check_refutation assums cmds
+      = __eo_checker_is_refutation (assumption_term assums) cmds := by
+  show __eo_state_is_refutation
+        (__eo_invoke_cmd_list (assums.foldl invoke_input_assume checker_init_state) cmds)
+    = __eo_state_is_refutation
+        (__eo_invoke_cmd_list (__eo_invoke_assume_list CState.nil (assumption_term assums)) cmds)
+  rw [invoke_assume_list_eq_fold]
+
+/-- `check_refutation` returning `true` is `eo_is_refutation` of the same terms. -/
+theorem refutation_of_check (assums : List Term) (cmds : CCmdList) :
+    check_refutation assums cmds = true ->
+    eo_is_refutation (assumption_term assums) cmds := by
+  intro h
+  refine eo_is_refutation.intro _ _ ?_
+  rw [← check_refutation_eq_checker]
+  exact h
+
+/--
+The first side condition, from its check.
+
+`decide` on the predicate of `Proofs/Assumptions.lean`, so this is just
+`of_decide_eq_true`. It stays that way whatever those predicates become, which
+is the point of deciding them there rather than reimplementing them in the
+executable.
+-/
+theorem cmdListTranslationOk_of_check (cmds : CCmdList) :
+    check_cmdListTranslationOk cmds = true ->
+    CmdListTranslationOk cmds := by
+  intro h
+  exact of_decide_eq_true h
+
+/--
+The second side condition, from its check.
+
+Case analysis on the list, which is all the stub in `Proofs/Assumptions.lean`
+needs: the empty list gives the empty chain, and a non-empty one fails the check
+because the stub `eoHasSmtTranslation` holds of nothing. Replacing that stub
+turns this into a real induction over the chain; the statement does not change.
+-/
+theorem translatableAssumptionList_of_check (assums : List Term) :
+    check_translatableAssumptions assums = true ->
+    TranslatableAssumptionList (assumption_term assums) := by
+  cases assums with
+  | nil => intro _; rfl
+  | cons A rest =>
+    intro h
+    exfalso
+    have hA : decide (eoHasSmtTranslation A) = true := by
+      have h' : (decide (eoHasSmtTranslation A) && rest.all fun B => decide (eoHasSmtTranslation B)) = true := h
+      exact (Bool.and_eq_true _ _ |>.mp h').left
+    exact of_decide_eq_true hA
+
+/-! ## Reading the checks back out of a `correct` verdict
+
+`verdict` reports `correct` only when all three passed, so a `correct` run
+yields each of them. These are what `ApiCorrect.lean` applies.
+-/
+
+private theorem verdict_correct_of_check_proof {input : String}
+    {assums : List Term} {cmds : CCmdList}
+    (hParse : parseProof input = Except.ok (assums, cmds))
+    (hCorrect : check_proof input = Except.ok Verdict.correct) :
+    verdict assums cmds = Verdict.correct := by
+  unfold check_proof at hCorrect
+  rw [hParse] at hCorrect
+  exact Except.ok.inj hCorrect
+
+theorem check_refutation_of_correct {input : String}
+    {assums : List Term} {cmds : CCmdList}
+    (hParse : parseProof input = Except.ok (assums, cmds))
+    (hCorrect : check_proof input = Except.ok Verdict.correct) :
+    check_refutation assums cmds = true := by
+  have h := verdict_correct_of_check_proof hParse hCorrect
+  unfold verdict at h
+  by_cases hr : check_refutation assums cmds = true
+  · exact hr
+  · simp [hr] at h
+
+theorem check_translatableAssumptions_of_correct {input : String}
+    {assums : List Term} {cmds : CCmdList}
+    (hParse : parseProof input = Except.ok (assums, cmds))
+    (hCorrect : check_proof input = Except.ok Verdict.correct) :
+    check_translatableAssumptions assums = true := by
+  have h := verdict_correct_of_check_proof hParse hCorrect
+  unfold verdict at h
+  by_cases ht : check_translatableAssumptions assums = true
+  · exact ht
+  · by_cases hr : check_refutation assums cmds = true <;> simp [hr, ht] at h
+
+theorem check_cmdListTranslationOk_of_correct {input : String}
+    {assums : List Term} {cmds : CCmdList}
+    (hParse : parseProof input = Except.ok (assums, cmds))
+    (hCorrect : check_proof input = Except.ok Verdict.correct) :
+    check_cmdListTranslationOk cmds = true := by
+  have h := verdict_correct_of_check_proof hParse hCorrect
+  unfold verdict at h
+  by_cases hc : check_cmdListTranslationOk cmds = true
+  · exact hc
+  · by_cases hr : check_refutation assums cmds = true <;>
+      by_cases ht : check_translatableAssumptions assums = true <;>
+      simp [hr, ht, hc] at h
+
+end Eo

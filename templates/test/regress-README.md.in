@@ -1,18 +1,44 @@
 # Regression proofs
 
-Proofs to run the checker over, with the verdict each should get.
+Proofs to run the checker over, each with the verdict it should get.
 
 ```bash
-lake exe @EXE@ test/regress/<proof>
+scripts/build.sh          # the runner needs the executable
+test/regress/run.sh
 ```
 
-Three verdicts are worth covering, not two:
+`run.sh` runs `@EXE@` over every `*.proof` here and compares what it prints
+against the `.expected` file beside it. `scripts/run-ci.sh` runs it as the
+`regress` group.
 
-| verdict | status | what a test here would show |
-| ------- | ------ | --------------------------- |
-| `correct` | 0 | a refutation the checker accepts |
-| `incorrect` | 1 | something it must reject |
-| `incomplete` | 2 | a proof it accepts that the semantics does not model |
+## The convention
 
-The third is the one that is easy to forget and most worth having: it is what
-keeps `correct` from quietly overstating what the soundness theorem covers.
+`<name>.proof` is a proof in the Eunoia proof format; `<name>.expected` holds
+one word:
+
+| expected | meaning | exit |
+| -------- | ------- | ---- |
+| `correct` | the assumptions are unsatisfiable | 0 |
+| `incorrect` | not accepted as a refutation | 1 |
+| `incomplete` | accepted, but outside what the semantics models | 2 |
+| `error` | the parser must reject the input; no verdict is printed | 1 |
+
+## Cover all three verdicts, not two
+
+`incomplete` is the one that is easy to leave out and the most worth having. It
+is what keeps `correct` from quietly overstating what the soundness theorem
+covers, so a checker with no `incomplete` test has no evidence that the
+distinction still works.
+
+A freshly generated checker returns `incomplete` for **every** proof it
+accepts, because the side conditions in `@CALCULUS@/Proofs/Assumptions.lean`
+are stubs that model nothing yet. So an `incomplete` test passing today is
+weak evidence; it gets strong exactly when those stubs are replaced and other
+proofs start coming back `correct`. Watching a test move from `incomplete` to
+`correct` is a good way to see the semantics land.
+
+## Where these came from
+
+Proofs copied out of the specification directory the checker was generated
+from — a proof is written in the calculus its signature declares, so it travels
+with the signature. Add more here directly.

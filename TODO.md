@@ -90,13 +90,26 @@ has a `signature/` directory and no way to turn it into Lean.
 
 ## 2. Reading proofs
 
-This is now the blocking item for a usable checker — confirmed by building
-one: everything generated compiles except `Parser.lean`, which fails with
-`unknown module prefix 'Logos'`. The installer therefore leaves `Parser.lean`
-as its stub by default, and `--parser` installs the generated one for whoever
-has a library to plug it into.
+- [x] **A signature-independent parser library.** A generated checker carries
+      `Eunoia/` — an s-expression reader and a table-driven parser for the
+      Eunoia proof format, adapted from Logos\'s `Logos/Sexp.lean` and
+      `Logos/Parser.lean`, ~1,080 lines. Named for the format rather than for a
+      checker, since the checker\'s own name is the user\'s to choose. The
+      installer rewrites the compiler\'s `Logos.Parser`/`Logos.Sexp` imports
+      onto it.
+- [x] **Delivery decided: vendored.** A generated project stays self-contained
+      and movable, which is worth more here than letting fixes propagate from a
+      shared dependency. Revisit if several checkers ever exist at once.
+- [x] **The parser is wired to the correctness statement.** `Api.lean` is one
+      function from file text to verdict; `ApiChecks.lean` proves each check is
+      the component of `correct___eo_is_refutation` it stands for — including
+      that the constant-stack fold over the parser\'s list is the same run as
+      the recursion over the `and`-chain — and `ApiCorrect.lean` states
+      soundness about the text of a file, deriving it from the one theorem the
+      user fills in. All of it proven except that theorem.
 
-- [ ] **A signature-independent parser library.** Logos's `Logos/Sexp.lean`
+- [ ] **Superseded:** the note that once stood here said the parser was the
+      blocking item for a usable checker. It is done. Logos's `Logos/Sexp.lean`
       (an s-expression reader, ~156 lines) and `Logos/Parser.lean` (a
       table-driven proof parser, ~913 lines) are genuinely calculus-agnostic:
       the generated `Cpc/Parser.lean` is only the operator table that plugs into
@@ -106,7 +119,8 @@ has a library to plug it into.
       a Lake dependency the generated `lakefile.toml` requires. A dependency
       keeps generated projects thin and lets fixes propagate; vendoring keeps
       them self-contained, which is what they are today.
-- [ ] **Document the accepted syntax**, as Logos does in `docs/parser.md`.
+- [ ] **Document the accepted syntax**, as Logos does in `docs/parser.md`. The
+      generated `docs/calculus.md` has a placeholder section for it.
 
 Note that the parser is *unverified* in Logos, deliberately: the soundness
 theorem is stated about whatever the parser read out of the file. That is a
@@ -208,7 +222,10 @@ necessity — worth separating before drawing conclusions from any single row.
 - [ ] **Extract the invariant core** once the model is stable. The core checker
       proof (`Checker.lean`, `CheckerCore.lean`, `CheckerState.lean`,
       `Invariants/`, `Common.lean` — about 4,900 lines) depends on the signature
-      through exactly four operators: `and`, `imp`, `eq`, `not`. `Checker.lean`
+      through exactly **two** operators, `and` and `imp`. It was four; Logos
+      has since removed the dependence on `eq` and `not`, which is evidence
+      that the remaining two are close to irreducible — they are what the
+      *statement* of soundness needs, not what any rule needs. `Checker.lean`
       alone references **no** `UserOp` and **no** `CRule`.
 - [ ] **Add a third file category to this template: L, library.** It currently
       splits files into G (generated, overwritten) and H (hand-written,
@@ -280,7 +297,7 @@ deliberately rather than drifted into.
 
 Tracked, but **overkill for now**. These earn their cost once a checker is
 being developed in earnest; before that they are infrastructure for work that
-is not happening yet.
+is not happening yet, or polish on work that has not started.
 
 - [ ] **A mini calculus alongside the full one.** Logos generates `CpcMini`
       from the same signature with five rules and no parser, so that proofs can
@@ -295,8 +312,6 @@ is not happening yet.
       calculus-independent: two packages from one signature, differing only in
       rules, is a controlled experiment. That is a reason to want it eventually
       (see §4b), not yet.
-
-## 7. Later
 
 - [ ] **A native proof format** — Logos's second executable, `logos-native`
       (`MainNative.lean`, `Cpc/Native/`), reading an internal format instead of

@@ -3,23 +3,56 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- It is a stub: what stands here is a description of what belongs in it.
+-- **What `@EXE@` printing `correct` means**, stated about the text of a proof
+-- file rather than about anything internal.
 --
--- The soundness theorem, stated about the text of a proof file: if the checker
--- prints `correct` for this input, the assumptions the parser read out of it are
--- unsatisfiable.
+-- This file proves nothing about the calculus. It only carries
+-- `correct___eo_is_refutation` (`Proofs/Checker.lean`) across the two stages of
+-- `Api.check_proof`, so that the theorem the user discharges there is the
+-- theorem the executable reports. Fill that one in and this becomes true with
+-- no change here.
 --
--- This is the top of the development. It is deliberately kept out of the library
--- root, because it depends on the whole rule-correctness tree and so on every
--- proof under `Proofs/Rules/`, which is far too expensive to build as part of the
--- default target.
+-- Deliberately outside the library root: it depends on `Proofs/Checker.lean`
+-- and so on every per-rule proof, which is far too expensive to build as part
+-- of the default target. Ask for it by name.
 --
--- In Logos: `Cpc/ApiCorrect.lean`, whose `correct___logos_check_proof` this
--- corresponds to.
-
+-- In Logos: `Cpc/ApiCorrect.lean`.
 public import @CALCULUS@.ApiChecks
 import all @CALCULUS@.ApiChecks
 public import @CALCULUS@.Proofs.Checker
 import all @CALCULUS@.Proofs.Checker
 
 public section
+
+namespace Eo
+
+/--
+Soundness of the executable: if the parser reads `assums` out of `input`, and
+`@EXE@` reports `correct` for `input`, then the conjunction of those assumptions
+is unsatisfiable.
+
+Read it as: `correct` on the terminal means *the formulas this file `assume`s,
+as the parser read them, cannot all hold at once*.
+
+What is deliberately not claimed: the parser is unverified and nothing compares
+`assums` against an original input problem, so this speaks about the assumptions
+as parsed and not about what the file was meant to say.
+
+The proof is the two steps of `check_proof` and nothing else -- `ApiChecks.lean`
+turns each check into the component of `correct___eo_is_refutation` it stands
+for, and that theorem does the rest.
+-/
+theorem correct___check_proof (input : String) (assums : List Term) (cmds : CCmdList)
+    (hParse : parseProof input = Except.ok (assums, cmds))
+    (hCorrect : check_proof input = Except.ok Verdict.correct) :
+    eo_satisfiability (assumption_term assums) false := by
+  have hRefutation : eo_is_refutation (assumption_term assums) cmds :=
+    refutation_of_check assums cmds (check_refutation_of_correct hParse hCorrect)
+  exact correct___eo_is_refutation (assumption_term assums) cmds
+    (translatableAssumptionList_of_check assums
+      (check_translatableAssumptions_of_correct hParse hCorrect))
+    (cmdListTranslationOk_of_check cmds
+      (check_cmdListTranslationOk_of_correct hParse hCorrect))
+    hRefutation
+
+end Eo

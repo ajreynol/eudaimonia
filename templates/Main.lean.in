@@ -1,43 +1,58 @@
 import @CALCULUS@.Diagnostics
 
 /-!
-The `@EXE@` executable: read a proof in the `@CALCULUS@` calculus and report
-whether it is a refutation.
+The `@EXE@` executable: read a proof in the Eunoia proof format and report
+whether it is a refutation of its assumptions.
 
-Reading the file aside, the work belongs in `@CALCULUS@.Api`: parse the text,
-then run the checks that stand for the hypotheses of the soundness theorem in
-`@CALCULUS@/ApiCorrect.lean`. This file only reads the file, prints the verdict
-and picks an exit status, so that what the theorem is stated about and what the
-executable does are the same function.
-
-The three verdicts, following Logos:
+Reading the file aside, all of the work is `Eo.check_proof`
+(`@CALCULUS@/Api.lean`): it parses the text and runs the three checks that make
+up `correct___eo_is_refutation`. `correct___check_proof`
+(`@CALCULUS@/ApiCorrect.lean`) is stated about that function, so what this file
+prints is the conclusion of a theorem rather than an informal claim about one.
 
 | output       | status | meaning                                              |
 | ------------ | ------ | ---------------------------------------------------- |
 | `correct`    | 0      | the proof's assumptions are unsatisfiable            |
-| `incorrect`  | 1      | the proof is not accepted as a refutation            |
+| `incorrect`  | 1      | not accepted as a refutation                         |
 | `incomplete` | 2      | accepted, but it mentions something the semantics does not model, so the theorem does not apply |
 
-`incomplete` is the verdict that keeps the theorem honest: the side conditions
-are checked at run time, and a proof that passes the checker but fails them is
-reported as such rather than as `correct`.
+`incomplete` is what keeps `correct` honest: the side conditions are checked at
+run time, and a proof that passes the checker but fails them is reported as
+such rather than as `correct`.
 
-No calculus is compiled in yet, so no verdict can be reached. What is still
-missing, and in what order it is worth building, is the Eudaimonia roadmap in
-its TODO.md.
+The verdict is computed in the two steps `Eo.check_proof` is defined as -- parse,
+then `Eo.verdict` -- so that the `incomplete` case can name the assumption or
+command at fault.
 -/
 
+open Eo
+
 def usage : String :=
-  s!"usage: @EXE@ <proof>\n\n\
-     Check a proof in the {@CALCULUS@.calculusName} calculus."
+  "usage: @EXE@ <proof>\n\n\
+   Check a proof in the @CALCULUS@ calculus, in the Eunoia proof format."
 
 def main : List String → IO UInt32
   | [path] => do
-    let _input ← IO.FS.readFile path
-    IO.eprintln s!"@EXE@: no calculus is installed yet, so {path} cannot be checked."
-    IO.eprintln "Compile a Eunoia signature into signature/ to replace the stubs \
-                 under @CALCULUS@/."
-    return 1
+    unless (← System.FilePath.pathExists path) do
+      IO.eprintln s!"@EXE@: {path}: no such file"
+      return 1
+    let input ← IO.FS.readFile path
+    match parseProof input with
+    | Except.error e =>
+      IO.eprintln s!"@EXE@: {path}: {e}"
+      return 1
+    | Except.ok (assums, cmds) =>
+      match verdict assums cmds with
+      | Verdict.correct =>
+        IO.println "correct"
+        return 0
+      | Verdict.incorrect =>
+        IO.println "incorrect"
+        return 1
+      | Verdict.incomplete =>
+        IO.println "incomplete"
+        IO.eprintln s!"@EXE@: {incomplete_reason assums cmds}"
+        return 2
   | _ => do
     IO.eprintln usage
     return 1

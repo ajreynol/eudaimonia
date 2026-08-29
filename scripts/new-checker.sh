@@ -246,7 +246,7 @@ echo "    executable  ${EXE}"
 echo "    toolchain   ${TOOLCHAIN}"
 
 rm -rf "${DEST}"
-mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/install/defs" \
+mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/install/defs" "${DEST}/Eunoia" \
          "${DEST}/scripts" "${DEST}/docs" "${DEST}/test/regress" \
          "${DEST}/.github/workflows"
 
@@ -265,6 +265,12 @@ render README.md.in       "${DEST}/README.md"
 # Two of them are named after the checker rather than fixed, because that is
 # what they are: the core checker and the term datatype it is written over.
 # Logos calls them Cpc/Logos.lean and Cpc/LogosTerm.lean.
+# Reading the Eunoia proof format. Hand-written, calculus-independent, and the
+# thing the generated operator table plugs into.
+render eunoia/Root.lean.in    "${DEST}/Eunoia.lean"
+render eunoia/Sexp.lean.in    "${DEST}/Eunoia/Sexp.lean"
+render eunoia/Parser.lean.in  "${DEST}/Eunoia/Parser.lean"
+
 render pkg/SmtEval.lean.in        "${DEST}/${CALCULUS}/SmtEval.lean"
 render pkg/Term.lean.in           "${DEST}/${CALCULUS}/${CHECKER}Term.lean"
 render pkg/SmtModelDefs.lean.in   "${DEST}/${CALCULUS}/SmtModelDefs.lean"
@@ -301,7 +307,8 @@ render docs/development.md.in  "${DEST}/docs/development.md"
 
 render gitignore.in            "${DEST}/.gitignore"
 render ci/ci.yml.in            "${DEST}/.github/workflows/ci.yml"
-render test/regress-README.md.in "${DEST}/test/regress/README.md"
+render     test/regress-README.md.in "${DEST}/test/regress/README.md"
+render_exe test/run.sh.in              "${DEST}/test/regress/run.sh"
 
 echo "==> Installing the specification into install/defs"
 install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/install/defs/${CALCULUS}.eo"
@@ -309,6 +316,18 @@ install_or_stub "${SEMANTICS}"     semantics.eos.in "${DEST}/install/defs/${CALC
 # The SMT-LIB semantics is the one file with no stub: leaving it out means the
 # calculus is written against whatever base semantics the toolchain supplies,
 # which is a choice rather than something left to fill in.
+if [ -n "${SPEC_DIR}" ] && [ -d "${SPEC_DIR}/test" ]; then
+  # A proof is written in the calculus its signature declares, so regression
+  # proofs belong with the specification rather than with the generator.
+  copied=0
+  for f in "${SPEC_DIR}"/test/*; do
+    [ -f "${f}" ] || continue
+    cp "${f}" "${DEST}/test/regress/"
+    copied=$((copied + 1))
+  done
+  [ "${copied}" = "0" ] || echo "    $(rel "${DEST}/test/regress")  <- ${SPEC_DIR}/test (${copied} file(s))"
+fi
+
 if [ -n "${SMT_SEMANTICS}" ]; then
   cp "${SMT_SEMANTICS}" "${DEST}/install/defs/smt.eos"
   echo "    $(rel "${DEST}/install/defs/smt.eos")  <- ${SMT_SEMANTICS}"

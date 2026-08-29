@@ -23,12 +23,24 @@ jobs:
       - name: Build
         run: scripts/build.sh
 
-      # Textual, builds nothing. This is what stops an unproven rule landing
-      # silently given that CI does not build every proof. Expected to fail
-      # while rules are still stubs -- drop continue-on-error once they are not.
-      - name: Proof hygiene
-        continue-on-error: true
-        run: scripts/check-proof-hygiene.sh
+      # Proof hygiene is deliberately not run yet.
+      #
+      # `scripts/check-proof-hygiene.sh` rejects `sorry`, `admit` and `axiom`
+      # textually, without building. That is what stops an unproven rule
+      # landing silently, given that CI does not build every proof -- so it is
+      # worth turning on, and worth turning on early.
+      #
+      # It cannot run from the first commit: a freshly generated checker has
+      # one `sorry` per rule of the signature, plus the soundness theorem in
+      # @CALCULUS@/Proofs/Checker.lean, so it would fail every build. A CI that
+      # is red by construction is one nobody reads.
+      #
+      # TO ENABLE, once the rule proofs are discharged: uncomment the step
+      # below, and add `hygiene` to the default groups in scripts/run-ci.sh.
+      # Run `scripts/run-ci.sh hygiene` meanwhile to see what is left.
+      #
+      # - name: Proof hygiene
+      #   run: scripts/check-proof-hygiene.sh
 
       # Needs the Eunoia compiler, which is a C++ build; enable once the
       # signature is settled and the cost is worth it.
