@@ -100,6 +100,110 @@ informal argument about it.
 - [ ] **Diagnostics** (`Cpc/Diagnostics.lean`): say *which* assumption or
       command took a proof outside the modelled fragment.
 
+## 4b. Modularizing Logos — what is actually reusable
+
+Notes from measuring the Logos tree, for whoever works on making a second
+checker cheap. **`Cpc/Proofs/` is 97.7% of the package** (734,867 of 751,808
+lines, 816 files), so this is where the question lives.
+
+### The prerequisite: a stable core model
+
+The obvious approach — grep for signature vocabulary, call the files that
+mention none of it reusable — **does not work**, and it is worth writing down
+why, because the metric is seductive.
+
+Compilation *configures the model*. Diffing the `CpcMini` package against `Cpc`,
+both compiled from the same signature, one with five rules:
+
+| generated module | CpcMini | Cpc |
+| ---------------- | ------- | --- |
+| `SmtModel.lean` | 743 | 2,186 |
+| `Spec.lean` | 105 | 475 |
+| `SmtModelDefs.lean` | 171 | 297 |
+| `LogosTerm.lean` | 135 | 312 |
+| `SmtEval.lean` | 74 | 175 |
+| `SmtValueOrder.lean` | 156 | 156 (identical) |
+
+So a proof file that never names an operator is still *stated about* a
+`SmtModel` that varies with the signature. Syntactic independence is not
+semantic independence, and only `SmtValueOrder` is invariant outright.
+
+- [ ] **Stabilize the SMT-LIB model as a fixed base that signatures extend**,
+      rather than a per-signature emission. This is the prerequisite for
+      everything below it: until the model is fixed, a "generic" proof about it
+      is generic only by coincidence.
+
+### What that would unlock
+
+Measured the same way — diffing `CpcMini` against `Cpc` — parts of the
+hand-written proof tree are already invariant, and parts are not:
+
+| file | CpcMini | Cpc | differing lines |
+| ---- | ------- | --- | --------------- |
+| `Canonical/TypeDefaultBasic.lean` | 228 | 228 | **0** |
+| `TypePreservation/Datatypes.lean` | 1,334 | 1,334 | **0** |
+| `TypePreservation/Common.lean` | 529 | 529 | 4 |
+| `TypePreservation/Nonvacuity.lean` | 104 | 104 | 2 |
+| `TypePreservation/Model.lean` | 203 | 208 | 15 |
+| `Invariants/Stability.lean` | 488 | 550 | 108 |
+| `TypePreservation/Base.lean` | 411 | 832 | 521 |
+| `TypePreservation/Support.lean` | 95 | 957 | 862 |
+| `TypePreservation/CoreArith.lean` | 255 | 1,203 | 1,092 |
+| `Translation/Apply.lean` | 120 | 17,003 | 17,033 |
+
+`TypePreservation/` is roughly half invariant and half configured;
+`Translation/` is thoroughly per-calculus. The two packages also maintain these
+by hand in parallel, so some of the difference is duplication rather than
+necessity — worth separating before drawing conclusions from any single row.
+
+- [ ] **Extract the invariant core** once the model is stable. The core checker
+      proof (`Checker.lean`, `CheckerCore.lean`, `CheckerState.lean`,
+      `Invariants/`, `Common.lean` — about 4,900 lines) depends on the signature
+      through exactly four operators: `and`, `imp`, `eq`, `not`. `Checker.lean`
+      alone references **no** `UserOp` and **no** `CRule`.
+- [ ] **Add a third file category to this template: L, library.** It currently
+      splits files into G (generated, overwritten) and H (hand-written,
+      preserved). What the above produces is neither: files a generated project
+      *inherits* rather than writes. That distinction is the difference between
+      a scaffold and a framework.
+
+### What makes it tractable, and what to watch
+
+`Term` has **no per-operator constructors**. Operators live in the
+`UserOp`/`UserOp1`/`UserOp2`/`UserOp3` enums and `Term` is uniform (`UOp`,
+`Apply`, plus core), so the core proofs never pattern-match an individual
+operator. Parameterizing `Term` over the op enums with a small class supplying
+the four required operators is therefore far cheaper than abstracting the term
+algebra.
+
+The risk to price first: the proofs lean on `simp` over concrete constructors,
+and abstraction routinely breaks that automation. Try it on
+`Invariants/Stability.lean` — 319 lines, one operator — before committing the
+other 4,600.
+
+### What not to chase
+
+`Spec.lean` (180 distinct `UserOp`), `TermCompat.lean` (189), `Translation/`
+(179), `Closed/` (174), `Assumptions.lean` (32 rules), the 591-way dispatch in
+`Logos.lean`, and `Rules/` itself. These are per-calculus because the calculus
+is what they are about.
+
+And keep the economics in view: `Rules/` (279,000 lines, 591 files) plus
+`RuleSupport/` (352,727 lines) is **84% of the tree**. Modularizing the core
+buys architecture, not volume — it makes a second checker *conceivable*, not
+*affordable*. The only lever on the 84% is making the operator vocabulary
+itself shared, so that a calculus over the same theories inherits their support
+libraries. `RuleSupport/` is already organized by theory, which is the right
+axis; that is a much deeper change than the above and should be decided
+deliberately rather than drifted into.
+
+### Validating a signature
+
+- [ ] **Check the required builtins at generation time.** `and`, `imp`, `eq`,
+      `not`, `Bool`, `true`, `false` — see the README. Failing at `lake build`
+      with a typeclass error, deep inside a generated file, is a bad way to
+      learn that a signature is missing a connective.
+
 ## 5. Build and CI
 
 - [ ] **A build script with a toolchain fallback.** Logos's `scripts/build.sh`

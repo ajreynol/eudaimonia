@@ -38,6 +38,58 @@ run generates, and no part of it is vendored here. The default names in
 `config.sh` are placeholders — `MyChecker` and `MyCalculus` — chosen so that a
 generated project is never mistaken for an existing checker.
 
+## What a calculus must provide
+
+The template generalizes *the calculus*, not the proof format. A signature it
+can generate a checker for has to meet the framework where it stands, in two
+ways.
+
+### Required builtins
+
+The correctness development is not neutral about vocabulary. It is stated in
+terms of specific operators, referenced as constructors of the `UserOp` enum
+the signature compiles to, so a signature that does not declare them under
+these names does not merely lose a feature — the core proofs stop typechecking.
+
+| symbol | arity | why the core needs it |
+| ------ | ----- | --------------------- |
+| `and` | binary | The soundness statement is about the *conjunction* of a proof's assumptions. The assumption term is literally `(and A rest)`, and the state invariants are stated over it. |
+| `imp` | binary | Discharging an assumption — `scope` — yields an implication, so the state invariants are stated over it too. |
+| `not`, `eq` | binary | The shared lemma base the rule proofs draw on. |
+| `Bool` | type | The checker's guard: every assumption and every proven term must have EO type `Bool`. |
+| `true`, `false` | literals | What a proof is checked to entail, and what a refutation reaches. |
+
+Declaring an operator with the right *name* is necessary but not sufficient: it
+must also **mean** what the SMT-LIB semantics says it means. A signature whose
+`and` is not conjunction will compile and then fail to prove.
+
+Everything else about the vocabulary is yours. The embedding supplies the rest
+of the structure — `Apply`, `UOp`, `Stuck`, `Type`, the Eunoia list — and the
+signature supplies the theory.
+
+### The proof format is fixed
+
+Only the calculus varies. Every checker this generates:
+
+- is a **Eunoia** signature: rules are Eunoia rules, with side conditions as
+  Eunoia programs and computed premises. A rule shape Eunoia cannot express is
+  out of scope.
+- accepts **Ethos s-expression proofs** — `assume`, `step :rule :premises`,
+  `declare-const`. Which rules exist is yours; the shape of a proof is not.
+  Alethe, DRAT/LRAT or any non-Eunoia certificate needs a different front end.
+- is verified against **SMT-LIB model semantics**. A calculus over something
+  that is not SMT-LIB needs a replacement `smt.eos`, which is the hardest part
+  of the specification rather than a flag.
+- uses a **deep embedding with untyped rules**: one `Term` type, rules as
+  syntactic manipulations. The calculus is not typed at the Lean level.
+- answers one question: **is this a refutation?** `correct` means the
+  assumptions are unsatisfiable. Not equivalence, not model finding.
+- keeps an **unverified parser** in the trusted base, deliberately, and does not
+  check the proof against an original input problem.
+
+If your calculus is a Eunoia signature over SMT-LIB, this is the right tool. If
+it is not, the honest answer is that it is not.
+
 ## Usage
 
 Edit `config.sh`, then generate:

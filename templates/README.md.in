@@ -43,6 +43,26 @@ signature/               what the calculus is, and what it means
 header. `Proofs/Rules/` is both: a rule's statement is generated with `sorry`
 for its proof, the proof goes in that same file, and a reinstall preserves it.
 
+## What @CALCULUS@ must provide
+
+The correctness development is not neutral about vocabulary: it is stated in
+terms of specific operators, referenced as constructors of the `UserOp` enum
+that `signature/@CALCULUS@.eo` compiles to. A signature that does not declare
+them under these names does not lose a feature — the core proofs stop
+typechecking.
+
+| symbol | arity | why the core needs it |
+| ------ | ----- | --------------------- |
+| `and` | binary | the soundness statement is about the conjunction of the assumptions |
+| `imp` | binary | discharging an assumption (`scope`) yields an implication |
+| `not`, `eq` | binary | the shared lemma base the rule proofs draw on |
+| `Bool` | type | every assumption and proven term must have EO type `Bool` |
+| `true`, `false` | literals | what a proof entails, and what a refutation reaches |
+
+The right name is necessary but not sufficient: each must also **mean** what
+the SMT-LIB semantics says. A signature whose `and` is not conjunction compiles
+and then fails to prove.
+
 ## Building
 
 ```bash
