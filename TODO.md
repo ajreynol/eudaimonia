@@ -375,12 +375,24 @@ and a re-check at install time where compiled output can settle it.
       `SmtValueOrder.lean` is *identical* between `Cpc` and `CpcMini`, so the
       compiler emits the same ordering whatever the signature. The question is
       about the semantics you write, not about what is generated.
-- [ ] **Make `no` answers do more than document.** Today the profile drives
-      documentation and the install-time report. The obvious next step is
-      scaffolding: `binders=no` should point the extra-invariant slot at `True`
-      (per Logos's `docs/modularity.md`, that is exactly what `CpcMini` does and
-      it costs nothing), and `scopes=no` should mark the step-pop preservation
-      obligations vacuous.
+- [x] **Corrected: `datatypes` was a vacuous check.** It grepped for
+      `DatatypeDecl`, which `plugins/lean_meta/lean_meta_checker_term.lean`
+      declares unconditionally — so it could only ever answer `yes`. It is now
+      *declared* rather than *derived*, with the reason recorded. `binders` and
+      `value-ordering` are declared for the same underlying reason: the
+      machinery is template-fixed in eoc.
+- [ ] **None of the profile is a feature switch, and datatypes should be.**
+      What a generated checker contains is decided by the signature and by eoc;
+      only `--no-parser` changes anything. Trimming datatype machinery for a
+      calculus without datatypes needs compiler work — about 330 lines of a
+      generated package mention datatypes, and the cost is not the lines but the
+      translation and type-preservation proofs owed for cases the calculus never
+      uses. Written up in [docs/eoc-requests.md](docs/eoc-requests.md) §1.
+- [ ] **Make `no` answers do more than document, once eoc can.**
+      `binders=no` should point the extra-invariant slot at `True` (per Logos's
+      `docs/modularity.md`, that is what `CpcMini` does and it costs nothing),
+      and `scopes=no` should mark the step-pop preservation obligations vacuous.
+      These two are template-side and do not wait on the compiler.
 - [ ] **Ship what `logos-smt=yes` earns.** The digest tells a generated checker
       that its SMT-LIB semantics is Logos's, unmodified. Results Logos proves
       about SMT-LIB itself are then candidates to reuse rather than reprove —
@@ -403,6 +415,12 @@ and a re-check at install time where compiled output can settle it.
       checker calls `incomplete` is agreement, not a disagreement — the script
       knows this, and a checker that reported `incorrect` there would not be
       excused.
+- [ ] **Notes for the eoc developer.** [docs/eoc-requests.md](docs/eoc-requests.md)
+      collects what a template needs from the compiler, with the evidence for
+      each: conditional feature emission, `--calc-name`/`--smt-semantics` on
+      `main`, a diagnostic for a premise-list operator with no nil, generated
+      `cmdTranslationOk`, seeding the checker layer, and stabilizing the
+      SMT-LIB model. Keep it current as things land.
 - [ ] **Use ethos on the signature itself, not only on proofs.** It parses and
       type-checks a `.eo` directly, so it could report a malformed signature
       before the compiler is even run — a faster and clearer failure than

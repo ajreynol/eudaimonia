@@ -49,6 +49,7 @@ Options:
   --[no-]binders        binder-sensitive rules (instantiate, skolemize, ...)
   --[no-]value-ordering a semantics leaning on a total order on values
   --[no-]parser         install the generated parser configuration
+  --indexed-ops N       greatest number of indices an operator takes (0-3)
   --force               regenerate an existing project directory. It is
                         deleted and written again, so this replaces the
                         scaffolding and nothing is carried across. It refuses
@@ -101,6 +102,7 @@ PROFILE_DATATYPES="${PROFILE_DATATYPES:-yes}"
 PROFILE_BINDERS="${PROFILE_BINDERS:-yes}"
 PROFILE_VALUE_ORDERING="${PROFILE_VALUE_ORDERING:-yes}"
 PROFILE_PARSER="${PROFILE_PARSER:-yes}"
+PROFILE_INDEXED_OPS="${PROFILE_INDEXED_OPS:-3}"
 # shellcheck source=../config.sh
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
 
@@ -132,6 +134,8 @@ while [ $# -gt 0 ]; do
     --no-binders) PROFILE_BINDERS=no; shift ;;
     --value-ordering) PROFILE_VALUE_ORDERING=yes; shift ;;
     --no-value-ordering) PROFILE_VALUE_ORDERING=no; shift ;;
+    --indexed-ops) PROFILE_INDEXED_OPS="${2:?--indexed-ops requires a value}"; shift 2 ;;
+    --indexed-ops=*) PROFILE_INDEXED_OPS="${1#*=}"; shift ;;
     --parser) PROFILE_PARSER=yes; shift ;;
     --no-parser) PROFILE_PARSER=no; shift ;;
     --spec) SPEC_DIR="${2:?--spec requires a value}"; shift 2 ;;
@@ -391,10 +395,15 @@ sed -i.bak \
   -e "s|^PROFILE_BINDERS=.*|PROFILE_BINDERS=${PROFILE_BINDERS}|" \
   -e "s|^PROFILE_VALUE_ORDERING=.*|PROFILE_VALUE_ORDERING=${PROFILE_VALUE_ORDERING}|" \
   -e "s|^PROFILE_LOGOS_SMT=.*|PROFILE_LOGOS_SMT=${PROFILE_LOGOS_SMT}|" \
+  -e "s|^PROFILE_INDEXED_OPS=.*|PROFILE_INDEXED_OPS=${PROFILE_INDEXED_OPS}|" \
   -e "s|^PROFILE_PARSER=.*|PROFILE_PARSER=${PROFILE_PARSER}|" \
   "${DEST}/install/defs/profile.conf"
 rm -f "${DEST}/install/defs/profile.conf.bak"
-for k in SCOPES LIST_PREMISES DATATYPES BINDERS VALUE_ORDERING LOGOS_SMT PARSER; do
+case "${PROFILE_INDEXED_OPS}" in
+  0|1|2|3) ;;
+  *) echo "error: --indexed-ops must be 0, 1, 2 or 3 (eoc's ladder stops at 3)." >&2; exit 2 ;;
+esac
+for k in SCOPES LIST_PREMISES DATATYPES BINDERS VALUE_ORDERING INDEXED_OPS LOGOS_SMT PARSER; do
   eval "v=\${PROFILE_${k}}"
   printf '    %-22s %s\n' "$(printf '%s' "${k}" | tr 'A-Z_' 'a-z-')" "${v}"
 done

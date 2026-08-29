@@ -68,6 +68,10 @@ PROFILE_BINDERS="yes"
 # A semantics that leans on a total order on values.
 PROFILE_VALUE_ORDERING="yes"
 
+# The greatest number of indices an operator takes (0-3; eoc's ladder stops
+# at 3). Unused arities are still emitted, holding a placeholder constructor.
+PROFILE_INDEXED_OPS="3"
+
 # The generated parser configuration.
 PROFILE_PARSER="yes"
 

@@ -9,36 +9,50 @@
 # line here changes what the documentation says and what install-@CALCLOWER@.sh
 # checks; it does not change the calculus.
 #
-# Each answer is one of two kinds:
+# Each answer is one of two kinds, and the difference is not cosmetic:
 #
-#   verified  install-@CALCLOWER@.sh can tell from what the compiler emitted
+#   derived   install-@CALCLOWER@.sh can tell from what the compiler emitted
 #             whether the answer is right, and says so when it is not.
 #   declared  nothing in the compiled output distinguishes the answers, so this
-#             is taken on trust and used for documentation and scaffolding.
+#             is taken on trust and used only for documentation.
+#
+# **None of these is a feature switch.** What a generated checker contains is
+# decided by the signature and by the eoc compiler; nothing here trims anything,
+# and there is no eoc option that would. Several of the declared answers are
+# declared precisely because the machinery they name lives in a fixed eoc
+# template, so a calculus with the feature and one without compile to the same
+# thing.
 
 # Do rules discharge assumptions -- a `scope`-like rule, compiling to step-pop?
 # Such a rule turns an assumption into an implication, so the calculus needs an
 # implication and the checker's state machine needs its pop case.
-# verified: whether any rule dispatches to __eo_cmd_step_pop_proven.
+# derived: whether any rule dispatches to __eo_cmd_step_pop_proven. The
+# function is template-fixed but its arms are emitted per rule, so this varies.
 PROFILE_SCOPES=yes
 
 # Do rules gather `:list` premises? Those build their premise list through
 # __eo_nil, so the gathering operator must carry a nil -- for `and`, that is
 # `:right-assoc-nil true`.
-# verified: whether the core calls __eo_mk_premise_list, and whether a nil exists.
+# derived: whether the core calls __eo_mk_premise_list, which is emitted per
+# rule, and whether a nil exists for the operator it gathers with.
 PROFILE_LIST_PREMISES=yes
 
-# Does the calculus have algebraic datatypes? They add sort declarations,
-# constructors, selectors and testers to the parser and to type preservation.
-# verified: whether the term datatype carries datatype declarations.
+# Does the calculus have algebraic datatypes?
+# declared: eoc declares `Term` and `DatatypeDecl` in a fixed template
+# (plugins/lean_meta/lean_meta_checker_term.lean), so every signature gets the
+# datatype machinery whether or not it has datatypes. Roughly 330 lines of a
+# generated package mention datatypes, and none of it can be trimmed today.
+# Recording the answer is worth doing anyway: it is the honest description of
+# the calculus, and it is what a future eoc able to trim would key on.
 PROFILE_DATATYPES=yes
 
 # Are any rules binder-sensitive -- instantiation, skolemization, alpha
 # equivalence? These need premise truth in a *variable-variant* model, which is
 # what the extra-invariant slot in Proofs/Invariants/ is for. A calculus with no
 # such rules points that slot at `True` and pays nothing for it.
-# declared: a binder in the signature does not imply a rule that reasons under
-# one, and only the latter needs the invariant.
+# declared, twice over: a binder in the signature does not imply a rule that
+# reasons under one, and only the latter needs the invariant -- and the binder
+# machinery in the term datatype is template-fixed regardless.
 PROFILE_BINDERS=yes
 
 # Does the semantics need a total order on values -- to pick a representative,
@@ -52,10 +66,26 @@ PROFILE_VALUE_ORDERING=yes
 # Is the SMT-LIB semantics in install/defs/smt.eos the one Logos is verified
 # against, unmodified? If so, results Logos has proven about SMT-LIB itself are
 # candidates to reuse rather than reprove.
-# verified: by digest against the copy recorded below.
+# derived: by digest.
 PROFILE_LOGOS_SMT=@PROFILE_LOGOS_SMT@
+
+# How many indices do the calculus's operators take, at most? Eunoia's indexed
+# operators -- `(_ extract 3 0)` and the like -- become Term.UOp1/UOp2/UOp3,
+# with an enum per arity.
+#
+# derived: an arity the calculus does not use still gets its enum, holding a
+# single placeholder `| None`, because the inductive has to be non-empty for the
+# `deriving` clause. So the highest arity with a *real* constructor is exactly
+# the answer, and it can be read off the emitted term module.
+#
+# Nothing is trimmed either way, and the ladder stops at 3: eoc's fixed template
+# declares UserOp1, UserOp2 and UserOp3 and there is no UserOp4. A calculus
+# needing four indices cannot be expressed today. See docs/eoc-requests.md in
+# Eudaimonia.
+PROFILE_INDEXED_OPS=3
 
 # Should the generated parser configuration be installed? A checker driven
 # programmatically rather than from proof files does not need one.
-# verified: whether Parser.lean was installed.
+# derived, and the one entry that is also a choice: --no-parser really does
+# change what is installed.
 PROFILE_PARSER=yes

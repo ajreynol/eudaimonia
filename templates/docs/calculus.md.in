@@ -47,22 +47,28 @@ without them costs nothing.
 ## The profile
 
 `install/defs/profile.conf` records the high-level facts about @CALCULUS@ that
-this checker is scaffolded and documented against. `install-@CALCLOWER@.sh`
-re-checks the ones the compiled output can settle, and reports any that
-disagree.
+this checker is documented against. `install-@CALCLOWER@.sh` re-checks the ones
+the compiled output can settle.
 
-| question | flag | checked |
-| -------- | ---- | ------- |
-| Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | verified — whether any rule dispatches through step-pop |
-| Do rules gather `:list` premises? | `--[no-]list-premises` | verified — whether the core builds premise lists, and whether a nil exists for the operator it uses |
-| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | verified — whether the term datatype carries datatype declarations |
-| Are any rules binder-sensitive (instantiate, skolemize, alpha-equivalence)? | `--[no-]binders` | declared — a binder in the signature does not imply a rule reasoning under one, and only the latter needs the variable-stability invariant |
-| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | declared — the compiler emits the same `SmtValueOrder` for every signature, so nothing in the output distinguishes the answers |
-| Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | verified — by digest |
-| Should the generated parser be installed? | `--[no-]parser` | verified — whether `Parser.lean` was installed |
+| question | flag | kind |
+| -------- | ---- | ---- |
+| Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | **derived** — the step-pop dispatch arms are emitted per rule |
+| Do rules gather `:list` premises? | `--[no-]list-premises` | **derived** — the premise-list calls are emitted per rule, and the nil for the gathering operator either exists or does not |
+| Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | **derived** — by digest |
+| How many indices do operators take, at most? | `--indexed-ops N` | **derived** — an unused arity still gets an enum, but holding a placeholder `\| None`, so a real constructor is the signal |
+| Should the generated parser be installed? | `--[no-]parser` | **derived**, and the only entry that is also a *choice*: `--no-parser` really does change what is installed |
+| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | **declared** — eoc emits the datatype machinery for every signature |
+| Are any rules binder-sensitive? | `--[no-]binders` | **declared** — likewise unconditional, and a binder in the signature does not imply a rule reasoning under one |
+| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | **declared** — eoc emits the same `SmtValueOrder` either way |
 
-Keep it accurate as the calculus grows: it is what the documentation here and
-the scripts assume.
+**None of these trims anything.** What this package contains is decided by
+`install/defs/@CALCULUS@.eo` and by the eoc compiler; the profile describes the
+calculus rather than configuring it. The declared entries are declared because
+the machinery they name is emitted by eoc unconditionally, so nothing in the
+output tells the answers apart.
+
+Keep it accurate as the calculus grows: it is what the documentation here
+assumes.
 
 ## Cross-checking with ethos
 

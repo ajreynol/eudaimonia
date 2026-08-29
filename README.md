@@ -71,31 +71,51 @@ refuses before installing anything, naming what is missing.
 
 A second kind of question, distinct from the contract above: the contract is
 what a signature *must* satisfy, while these are facts about the calculus that
-change what a checker needs, what it has to prove, and what it can inherit.
-They are one category and are treated uniformly — each is a yes/no flag of
+describe what a checker needs, must prove, and can inherit. They are one
+category and treated uniformly — each is a yes/no flag of
 `scripts/new-checker.sh`, each is recorded in the generated
 `install/defs/profile.conf`, and each is re-checked at install time where the
 compiled output can settle it.
 
-| question | flag | checked |
-| -------- | ---- | ------- |
-| Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | verified — whether any rule dispatches through step-pop |
-| Do rules gather `:list` premises? | `--[no-]list-premises` | verified — whether the core builds premise lists, and whether a nil exists for the operator it uses |
-| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | verified — whether the term datatype carries datatype declarations |
-| Are any rules binder-sensitive (instantiate, skolemize, alpha-equivalence)? | `--[no-]binders` | declared — a binder in the signature does not imply a rule reasoning under one, and only the latter needs the variable-stability invariant |
-| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | declared — the compiler emits the same `SmtValueOrder` for every signature, so nothing in the output distinguishes the answers |
-| Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | verified — by digest |
-| Should the generated parser be installed? | `--[no-]parser` | verified — whether `Parser.lean` was installed |
+**None of them is a feature switch.** What a generated checker contains is
+decided by the signature and by the eoc compiler. Nothing here trims anything,
+and there is no eoc option that would — the only entry that changes what is
+installed is `--no-parser`. The profile describes the calculus; it does not
+configure it.
 
-Defaults are the conservative answers — assume the calculus has the feature, so
-nothing is quietly left out. Answering wrongly does not break a build: the
-calculus is whatever the signature says. What goes wrong is that the
-documentation and scaffolding stop being true, which is why
-`install-<calc>.sh` prints declared against detected and says which disagree.
+| question | flag | kind |
+| -------- | ---- | ---- |
+| Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | **derived** — the step-pop dispatch arms are emitted per rule |
+| Do rules gather `:list` premises? | `--[no-]list-premises` | **derived** — the premise-list calls are emitted per rule, and the nil for the gathering operator either exists or does not |
+| Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | **derived** — by digest |
+| How many indices do operators take, at most? | `--indexed-ops N` | **derived** — an unused arity still gets an enum, but holding a placeholder `\| None`, so a real constructor is the signal |
+| Should the generated parser be installed? | `--[no-]parser` | **derived**, and the only entry that is also a *choice*: `--no-parser` really does change what is installed |
+| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | **declared** — eoc emits the datatype machinery for every signature |
+| Are any rules binder-sensitive? | `--[no-]binders` | **declared** — likewise unconditional, and a binder in the signature does not imply a rule reasoning under one |
+| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | **declared** — eoc emits the same `SmtValueOrder` either way |
 
-The split between **verified** and **declared** is deliberate and is itself a
-finding: two of these are choices about the calculus that leave no trace in
-compiled output, so claiming to check them would be a lie.
+The **derived / declared** split is not cosmetic, and it is the reason this list
+is honest rather than aspirational. Three of these are declared because the
+machinery they name lives in a *fixed eoc template* rather than being generated
+from the signature — `plugins/lean_meta/lean_meta_checker_term.lean` declares
+`Term` and `DatatypeDecl` unconditionally, for instance — so a calculus with
+datatypes and one without compile to the same thing. Claiming to verify them
+would be checking something that can only ever answer one way.
+
+Indexed operators are the sharpest example that the compiler already knows more
+than it acts on: the ladder is fixed at exactly three arities, an unused one is
+emitted holding a placeholder constructor, and four indices cannot be expressed
+at all — yet the answer is readable straight off the emitted code.
+
+Datatypes are still worth recording, and worth targeting: about 330 lines of a
+generated package mention them, none of it trimmable today. Making that
+conditional is compiler work, written up for whoever does it in
+**[docs/eoc-requests.md](docs/eoc-requests.md)**.
+
+Defaults are the conservative answers. Answering wrongly does not break a build
+— the calculus is whatever the signature says — it makes the documentation
+wrong, which is why `install-<calc>.sh` prints declared against derived and
+names any that disagree.
 
 ### The proof format is fixed
 
@@ -371,6 +391,7 @@ scripts/get-eo-compiler.sh fetches and builds the Eunoia compiler, pinned
 templates/                 what it renders, one file per generated file
   pkg/ install/ scripts/  the checker's package, installer and dev scripts
   docs/ ci/ test/         its documentation, CI workflow and test layout
+docs/eoc-requests.md       what a template needs from the eoc compiler
 examples/cpc/              a worked specification: CPC, as Logos compiles it
 checkers/                  where runs write, ignored by git
 deps/                      the Ethos tree and ethos-eoc, ignored by git

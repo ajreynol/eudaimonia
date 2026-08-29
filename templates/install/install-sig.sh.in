@@ -421,8 +421,16 @@ if [ -f "${PROFILE_FILE}" ]; then
   d_scopes="$(detect "sed -n '/^def __eo_cmd_step_pop_proven/,/^\$/p' '${LEAN_DIR}/@CHECKER@.lean' | grep -q 'CRule\\.'")"
   # A rule with :list premises builds the list through __eo_mk_premise_list.
   d_list="$(detect "grep -q '__eo_mk_premise_list (Term.UOp' '${LEAN_DIR}/@CHECKER@.lean'")"
-  # Datatypes show up as declarations carried by the term datatype.
-  d_dt="$(detect "grep -q 'DatatypeDecl' '${LEAN_DIR}/@CHECKER@Term.lean'")"
+  # The highest index arity the calculus actually uses. An arity it does not
+  # use still gets an enum, holding a single `| None` placeholder, so a real
+  # constructor is the signal.
+  d_idx=0
+  for n in 1 2 3; do
+    real="$(sed -n "/^inductive UserOp${n} : Type where/,/^deriving/p" \
+      "${LEAN_DIR}/@CHECKER@Term.lean" 2>/dev/null | grep -E '^[[:space:]]+\\|' | grep -vc 'None : ')"
+    [ "${real:-0}" = "0" ] || d_idx="${n}"
+  done
+
   # The parser is installed unless it was turned off for this run.
   if [ "${NO_PARSER}" = "0" ]; then d_parser=yes; else d_parser=no; fi
   # Logos's SMT-LIB semantics, by digest of the file this compiled against.
@@ -444,12 +452,19 @@ if [ -f "${PROFILE_FILE}" ]; then
   }
   report scopes        "${PROFILE_SCOPES:-yes}"        "${d_scopes}"
   report list-premises "${PROFILE_LIST_PREMISES:-yes}" "${d_list}"
-  report datatypes     "${PROFILE_DATATYPES:-yes}"     "${d_dt}"
   report parser        "${PROFILE_PARSER:-yes}"        "${d_parser}"
+  report indexed-ops   "${PROFILE_INDEXED_OPS:-3}"     "${d_idx}"
   report logos-smt     "${PROFILE_LOGOS_SMT:-no}"      "${d_logos}"
-  printf '    %-16s %-4s  (declared; not visible in compiled output)\n' \
+  # The rest are declared, not derived, and each for the same reason: the
+  # machinery is in a fixed eoc template rather than generated from the
+  # signature, so a calculus that has the feature and one that does not compile
+  # to the same thing. Nothing distinguishes the answers, and nothing is
+  # trimmed either way. See TODO in the Eudaimonia roadmap.
+  printf '    %-16s %-4s  (declared; eoc emits datatype machinery for every signature)\n' \
+    "datatypes" "${PROFILE_DATATYPES:-yes}"
+  printf '    %-16s %-4s  (declared; the binder machinery is likewise unconditional)\n' \
     "binders" "${PROFILE_BINDERS:-yes}"
-  printf '    %-16s %-4s  (declared; the compiler emits the same ordering either way)\n' \
+  printf '    %-16s %-4s  (declared; eoc emits the same SmtValueOrder either way)\n' \
     "value-ordering" "${PROFILE_VALUE_ORDERING:-yes}"
 
   if [ "${profile_mismatch}" = "1" ]; then
