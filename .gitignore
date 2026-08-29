@@ -4,6 +4,11 @@
 # repository: generate it there with --out.
 /checkers/
 
+# The Ethos tree and ethos-eoc, downloaded and built by
+# scripts/get-eo-compiler.sh. Reproducible from the pin in that script, so what
+# is kept in git is the pin and not what it fetches.
+/deps/
+
 # Editor scratch files.
 .*.kate-swp
 *~

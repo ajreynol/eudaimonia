@@ -1,5 +1,10 @@
 # Roadmap
 
+> ⚠️ **This repository is in development mode.**
+> `scripts/get-eo-compiler.sh` builds the head of the `ethosEoc3` branch rather
+> than a pinned commit, so **builds are not reproducible**. Temporary and
+> deliberate; see [Leave development mode](#1-compiling-the-signature) below.
+
 What [Logos](https://github.com/cvc5/logos) has that a generated checker will
 need. Each item names the Logos files it corresponds to, so that what is being
 generalized is always in view.
@@ -15,14 +20,37 @@ The ordering is roughly the order in which the items unblock each other.
 The whole point, and the thing everything else waits on. A generated project
 has a `signature/` directory and no way to turn it into Lean.
 
-- [ ] **Fetch and pin the Eunoia compiler.** `ethos-eoc` is built from the
-      `plugins/` project of an [Ethos](https://github.com/cvc5/ethos) checkout
-      and reads its templates out of that tree, so the tree is a dependency and
-      not just the binary. Logos pins the commit in `ETHOS_VERSION` in
-      `install/get-eo-compiler.sh` and records what it built in
-      `install/deps/eoc-env.sh`, so a compile only has to be told the signature.
-      Pinning by commit is deliberate: what the compiler emits then changes only
-      when someone moves the pin.
+- [x] **Fetch and pin the Eunoia compiler.** `scripts/get-eo-compiler.sh`.
+      `ethos-eoc` is built from the `plugins/` project of an
+      [Ethos](https://github.com/cvc5/ethos) checkout and reads its templates
+      out of that tree, so the tree is the dependency, not just the binary.
+      Builds from `ethosEoc3`, where the compiler is developed; paths recorded
+      in `deps/eoc-env.sh`. Either a fixed commit or the branch head, per
+      `DEV_MODE` — see the next item. Whichever it gets, it checks the fetched
+      tree for `--calc-name`, `--smt-semantics`, `--semantics` and
+      `--no-parser` before building, so a commit without them fails there
+      rather than inside a later compile.
+- [ ] **⚠️ LEAVE DEVELOPMENT MODE.** `scripts/get-eo-compiler.sh` has
+      `DEV_MODE=1`, so it builds the *head* of `ethosEoc3` resolved at run
+      time, not a fixed commit. **Builds are therefore not reproducible**: two
+      runs on different days build different compilers, and a checker generated
+      today cannot be regenerated identically later. This is deliberate for now
+      — the compiler is under active development on that branch and tracking it
+      is the point — but it has to end before anyone else relies on this
+      repository, and before any claim that a generated checker can be
+      reproduced.
+
+      To leave: set `DEV_MODE=0` and set `ETHOS_VERSION` to the commit last
+      built. A tip run prints both lines at the end, and `deps/eoc-env.sh`
+      records `EOC_ETHOS_VERSION` and `EOC_DEV_MODE` for whatever needs to know
+      which it got. Pinning what was just built changes nothing about the
+      compiler — only whether the next run is allowed to move.
+- [ ] **Move the pin to `main` when it can carry one.** The pin is on a
+      development branch, whose head moves. Main's `driver.py` has
+      `--semantics` but not `--calc-name` or `--smt-semantics`, which are the
+      configurable calculus name and the third specification file — the two
+      things that make this a template rather than a copy of Logos. Logos
+      carries the same workaround and the same TODO.
 - [ ] **Run the compiler and install what it publishes.** Logos's
       `install/install-sig.sh` drives `tools/eoc/driver.py lean` with
       `--semantics`, `--smt-semantics` and `--calc-name`, then places the

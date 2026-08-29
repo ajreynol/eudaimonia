@@ -120,6 +120,66 @@ scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
 cd checkers/Aletheia && lake build
 ```
 
+## The Eunoia compiler
+
+Turning a signature into Lean needs `ethos-eoc`, built from
+[cvc5/ethos](https://github.com/cvc5/ethos). Fetch and build it once:
+
+```bash
+scripts/get-eo-compiler.sh
+```
+
+It lands in `deps/`, which is not kept in git, and records its paths in
+`deps/eoc-env.sh`.
+
+> **Currently in development mode.** The script builds the *head* of
+> `ethosEoc3`, resolved at run time, rather than a fixed commit. That build is
+> **not reproducible**: two runs on different days build different compilers,
+> and a checker generated now cannot be regenerated identically later. This is
+> temporary — see [Leaving development mode](#leaving-development-mode).
+
+The Eunoia compiler is developed on the **`ethosEoc3`** branch of cvc5/ethos;
+that is where the latest one is. `main` lags it, and its `driver.py` lacks two
+options this template is built on:
+
+| option | what building from `main` would give up |
+| ------ | --------------------------------------- |
+| `--calc-name` | the calculus name becomes the user's to choose, instead of being derived from the signature's file name |
+| `--smt-semantics` | the SMT-LIB semantics is the user's to supply — the third of the three files a specification is |
+
+So `main` is not an option today: it would cost exactly the two things that
+make this a template. The script does not take the branch on faith — it checks
+whatever it fetched for those options before building, so a commit without them
+fails there, naming the missing option, rather than failing later inside a
+compile.
+
+### Choosing a commit
+
+Two modes, set by `DEV_MODE` in the script and overridable per run:
+
+```bash
+scripts/get-eo-compiler.sh            # DEV_MODE as set in the script
+scripts/get-eo-compiler.sh --tip      # build the branch head, resolved now
+scripts/get-eo-compiler.sh --pinned   # build the recorded ETHOS_VERSION
+```
+
+A tip build still resolves to one concrete commit before doing anything, and
+records it in `deps/eoc-env.sh` along with `EOC_DEV_MODE=1`. So what was built
+is always *known*, even when it is not reproducible.
+
+### Leaving development mode
+
+A tip build ends by printing the two lines to paste back:
+
+```
+DEV_MODE=0
+ETHOS_VERSION="<the commit it just built>"
+```
+
+Pinning what was just built changes nothing about the compiler — only whether
+the next run is allowed to move. Do this before anyone else relies on the
+repository.
+
 ## Where a run writes
 
 By default, under `checkers/` in this repository, which is **not kept in git**.
@@ -197,12 +257,14 @@ still builds and the executable still runs, and both say what is missing.
 ## Repository layout
 
 ```text
-config.sh              the settings a run reads
-scripts/new-checker.sh the generator
-templates/             what it renders, one file per generated file
-examples/cpc/          a worked specification: CPC, as Logos compiles it
-checkers/              where runs write, ignored by git
-TODO.md                what Logos has that a generated checker still needs
+config.sh                  the settings a run reads
+scripts/new-checker.sh     the generator
+scripts/get-eo-compiler.sh fetches and builds the Eunoia compiler, pinned
+templates/                 what it renders, one file per generated file
+examples/cpc/              a worked specification: CPC, as Logos compiles it
+checkers/                  where runs write, ignored by git
+deps/                      the Ethos tree and ethos-eoc, ignored by git
+TODO.md                    what Logos has that a generated checker still needs
 ```
 
 Templates are plain files with `@CHECKER@`, `@CALCULUS@`, `@EXE@` and
@@ -211,16 +273,19 @@ a template and one `render` line in the script.
 
 ## Status
 
-What is here is the build infrastructure and the shape of a checker: a run
-generates a Lake project that builds clean, an executable that runs, and every
-module a checker needs as a stub describing what belongs in it. None of the
-content exists.
+**In development mode**: the Eunoia compiler is built from the head of
+`ethosEoc3` rather than a pinned commit, so builds are not reproducible. See
+[Leaving development mode](#leaving-development-mode).
 
-The largest missing piece is the one everything waits on — compiling a Eunoia
-signature into Lean, which is what `install/` does in Logos using the
-`ethos-eoc` compiler from [cvc5/ethos](https://github.com/cvc5/ethos). After
-that: the signature-independent parser library, the core correctness proof, and
-the per-rule proofs (591 files in Logos).
+What is here is the build infrastructure, the shape of a checker, and the
+compiler that will fill it in: a run generates a Lake project that builds
+clean, an executable that runs, and every module a checker needs as a stub
+describing what belongs in it. `scripts/get-eo-compiler.sh` builds `ethos-eoc`.
+What does not exist yet is the step between them — driving the compiler over a
+signature and installing the Lean it publishes over the stubs.
+
+After that: the signature-independent parser library, the core correctness
+proof, and the per-rule proofs (591 files in Logos).
 
 **[TODO.md](TODO.md)** sets all of it out, item by item, against the Logos
 files each item corresponds to.
