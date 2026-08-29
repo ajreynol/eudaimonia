@@ -21,8 +21,10 @@ run time, and a proof that passes the checker but fails them is reported as
 such rather than as `correct`.
 
 The verdict is computed in the two steps `Eo.check_proof` is defined as -- parse,
-then `Eo.verdict` -- so that the `incomplete` case can name the assumption or
-command at fault.
+then `Eo.verdict` -- so that a rejecting run can say more than that it rejected.
+Both rejections are localized, by `@CALCULUS@/Diagnostics.lean`: `incorrect`
+replays the proof and names the command that got stuck, and `incomplete` names
+what the semantics does not model. Neither can change the verdict.
 -/
 
 open Eo
@@ -48,6 +50,7 @@ def main : List String → IO UInt32
         return 0
       | Verdict.incorrect =>
         IO.println "incorrect"
+        IO.eprintln s!"@EXE@: {checker_failure_detail input assums cmds}"
         return 1
       | Verdict.incomplete =>
         IO.println "incomplete"

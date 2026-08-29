@@ -426,6 +426,39 @@ and a re-check at install time where compiled output can settle it.
       before the compiler is even run — a faster and clearer failure than
       anything downstream.
 
+## 4e. Two verdicts or three
+
+A scaffolding choice, not a fact about the calculus, and a bigger fork than it
+looks: it decides whether the soundness theorem has side conditions at all.
+
+`incomplete` exists because `correct___eo_is_refutation` takes
+`TranslatableAssumptionList F` and `CmdListTranslationOk pf` as hypotheses. Not
+checking them at run time leaves two possibilities: claim `correct` without
+establishing them, which is unsound reporting; or **have a theorem with no such
+hypotheses**, which holds exactly when `__eo_to_smt` is total — every term the
+calculus can express has an SMT-LIB meaning. The second is the coherent
+two-verdict design.
+
+What a two-verdict project would drop:
+
+- `Proofs/Assumptions.lean` entirely;
+- two of the three checks in `Api.lean`, and `verdict` down to two branches;
+- the two side-condition bridge lemmas in `ApiChecks.lean`;
+- the hypotheses of `correct___eo_is_refutation`;
+- the `incomplete` half of `Diagnostics.lean`, and any regression proof whose
+  expected verdict is `incomplete`.
+
+What it keeps, and this is worth being clear about: **the replay that localizes
+a failing step**. That answers "where did this proof break", which has nothing
+to do with how many verdicts there are — a checker with no semantics still wants
+it. Earlier drafts of this roadmap said diagnostics would go entirely; that was
+wrong.
+
+- [ ] **Implement `--verdicts 2|3`.** It is a second set of templates rather
+      than a flag, since the theorem statement itself changes. Worth doing for
+      calculi whose translation is total, where a permanently-unreachable
+      `incomplete` is a verdict that can only mislead.
+
 ## 5. Build and CI
 
 - [ ] **A build script with a toolchain fallback.** Logos's `scripts/build.sh`
@@ -461,19 +494,13 @@ Tracked, but **overkill for now**. These earn their cost once a checker is
 being developed in earnest; before that they are infrastructure for work that
 is not happening yet, or polish on work that has not started.
 
-- [ ] **A mini calculus alongside the full one.** Logos generates `CpcMini`
-      from the same signature with five rules and no parser, so that proofs can
-      be developed against something that builds in seconds rather than
-      minutes. The installer already takes `--rules`, so the missing part is
-      only generating and wiring a second package — but a second package is a
-      second thing to keep in step, and its whole value is shortening a
-      proof-development loop that has not started. Revisit when the build time
-      of the full package is actually in the way.
-
-      It is also the cheapest way to test whether a proof file is genuinely
-      calculus-independent: two packages from one signature, differing only in
-      rules, is a controlled experiment. That is a reason to want it eventually
-      (see §4b), not yet.
+- [x] **A mini calculus alongside the full one.** `--mini` generates
+      `<Calculus>Mini` and `install-<calc>.sh --mini` compiles the signature
+      into it with `--rules` and no parser. Measured on CPC: **8s against 83s**,
+      2,130 lines against 20,350, 5 rule files against 591. The rule subset
+      comes from `--mini-rules` or a `mini-rules` file in the specification
+      directory. The profile check is skipped for it, since the profile
+      describes the calculus and a reduced package is not it.
 
 - [ ] **A native proof format** — Logos's second executable, `logos-native`
       (`MainNative.lean`, `Cpc/Native/`), reading an internal format instead of

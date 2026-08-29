@@ -11,6 +11,7 @@ DEPS_DIR="${script_dir}/deps"
 DEFS_DIR="${script_dir}/defs"
 PACKAGE="@CALCULUS@"
 PACKAGE_DIR="${repo_root}/${PACKAGE}"
+MINI_PACKAGE="@MINI@"
 
 usage() {
   cat <<'USAGE'
@@ -47,6 +48,12 @@ Options:
   --parser             the default; install the generated operator table
   --no-parser          do not install it, leaving @CALCULUS@/Parser.lean as it
                        is. The package then has no parser for this signature
+  --mini               install the reduced package @MINI@ instead: the same
+                       signature compiled with only the rules named by
+                       --rules (or MINI_RULES in this script), and no parser.
+                       Nothing about the calculus changes -- it is the same
+                       one with fewer rules, which is what makes a proof
+                       developed there worth moving to the full package
   --check              install nothing; report whether @CALCULUS@/ is up to
                        date with the signature, exiting 1 if it is not
   --no-record          do not copy a signature given by path into
@@ -92,6 +99,10 @@ SMT_SEMANTICS=""
 JOBS=""
 CHECK=0
 RECORD=1
+MINI=0
+# The rules the reduced package keeps. Chosen when this project was generated;
+# edit here to change them, then re-run with --mini.
+MINI_RULES="@MINI_RULES@"
 # The generated Parser.lean is the operator table of this signature; it plugs
 # into the Eunoia library, which this checker has. Installed by default.
 NO_PARSER=0
@@ -106,6 +117,7 @@ while [ $# -gt 0 ]; do
     --smt-semantics=*) SMT_SEMANTICS="${1#*=}"; shift ;;
     --jobs) JOBS="${2:?--jobs requires a value}"; shift 2 ;;
     --jobs=*) JOBS="${1#*=}"; shift ;;
+    --mini) MINI=1; shift ;;
     --check) CHECK=1; shift ;;
     --no-record) RECORD=0; shift ;;
     --no-parser) NO_PARSER=1; shift ;;
@@ -128,6 +140,31 @@ SMT_SEMANTICS="$(expand_tilde "${SMT_SEMANTICS}")"
 DEFAULT_SIGNATURE="${DEFS_DIR}/@CALCULUS@.eo"
 if [ -n "${SIGNATURE}" ]; then SIGNATURE_GIVEN=1; else SIGNATURE_GIVEN=0; fi
 SIGNATURE="${SIGNATURE:-${DEFAULT_SIGNATURE}}"
+
+# --mini is this same install with the package renamed, the rule set cut down
+# and no parser. The compiler takes the name through --calc-name, so the
+# generated modules import each other under it and nothing has to be rewritten.
+if [ "${MINI}" = "1" ]; then
+  PACKAGE="@MINI@"
+  PACKAGE_DIR="${repo_root}/${PACKAGE}"
+  NO_PARSER=1
+  RECORD=0
+  if [ "${RULES_GIVEN}" = "0" ]; then
+    if [ -z "${MINI_RULES}" ]; then
+      echo "error: --mini needs to know which rules the reduced package keeps," >&2
+      echo "and none are set." >&2
+      echo >&2
+      echo "Name them with --rules, or set MINI_RULES near the top of this" >&2
+      echo "script. Pick a handful that exercise the checker rather than the" >&2
+      echo "theories: an assumption-discharging rule, a transitivity, a" >&2
+      echo "contradiction. scripts/rule-status.sh lists what the signature has." >&2
+      exit 2
+    fi
+    # shellcheck disable=SC2206
+    RULES=(${MINI_RULES})
+    RULES_GIVEN=1
+  fi
+fi
 SEMANTICS="${SEMANTICS:-${DEFS_DIR}/@CALCULUS@.eos}"
 SMT_SEMANTICS="${SMT_SEMANTICS:-${DEFS_DIR}/smt.eos}"
 
@@ -410,8 +447,11 @@ LEAN_DIR="${OUT_DIR}/lean"
 #
 # A disagreement is reported, not fatal. The calculus is whatever the signature
 # says; what is wrong in that case is the record of it.
+# Not for a reduced package: the profile describes the calculus, and a package
+# built from a handful of its rules is not it. Checking one against the other
+# would report disagreements that are the point of the reduction.
 PROFILE_FILE="${DEFS_DIR}/profile.conf"
-if [ -f "${PROFILE_FILE}" ]; then
+if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   # shellcheck source=/dev/null
   . "${PROFILE_FILE}"
 

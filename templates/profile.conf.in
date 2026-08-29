@@ -38,9 +38,10 @@ PROFILE_SCOPES=yes
 PROFILE_LIST_PREMISES=yes
 
 # Does the calculus have algebraic datatypes?
-# declared: eoc declares `Term` and `DatatypeDecl` in a fixed template
-# (plugins/lean_meta/lean_meta_checker_term.lean), so every signature gets the
-# datatype machinery whether or not it has datatypes. Roughly 330 lines of a
+# declared: eoc declares `DatatypeDecl`, `Datatype` and `DatatypeCons` with
+# literal constructors in a fixed template
+# (plugins/lean_meta/lean_meta_checker_term.lean), so every signature carries
+# them whether or not it has datatypes. Roughly 330 lines of a
 # generated package mention datatypes, and none of it can be trimmed today.
 # Recording the answer is worth doing anyway: it is the honest description of
 # the calculus, and it is what a future eoc able to trim would key on.

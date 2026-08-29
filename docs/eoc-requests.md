@@ -29,12 +29,16 @@ inductive DatatypeDecl : Type where
   | cons : native_String -> Datatype -> DatatypeDecl -> DatatypeDecl
 ```
 
-unconditionally, and `DatatypeDecl` also appears in the fixed
-`lean_meta_smt_model_defs.lean`, `lean_meta_smt_value_order.lean` and
-`lean_meta_parser.lean`. So **every** signature gets the datatype machinery,
-whether or not it declares a datatype. `CpcMini` — the same signature reduced to
-five rules — carries exactly as much of it as `Cpc` (6 `DatatypeDecl`
-occurrences in `LogosTerm.lean` for both).
+unconditionally — `DatatypeDecl`, `Datatype` and `DatatypeCons` are written out
+with literal constructors, not behind a placeholder — and they appear again in
+the fixed `lean_meta_smt_model_defs.lean`, `lean_meta_smt_value_order.lean` and
+`lean_meta_parser.lean`.
+
+To be precise about what is and is not conditional: `Term`'s own constructor
+list *is* a placeholder (`$LEAN_TERM_DEF$`), so whether `Term.DatatypeType` is
+emitted for a datatype-free signature is untested here — there was no such
+signature to hand. The three support inductives above are unconditional
+regardless, and so is everything downstream that matches on them.
 
 Roughly 330 lines of a generated CPC package mention datatypes:
 

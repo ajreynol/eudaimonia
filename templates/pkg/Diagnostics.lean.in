@@ -3,16 +3,30 @@ module
 -- This file is hand-written. A signature install leaves it alone, so what is
 -- put here is kept.
 --
--- What the executable prints besides the verdict: which assumption or command
--- took a proof outside the fragment the semantics models, so that an
--- `incomplete` run says *why* it was incomplete.
+-- What the executable prints besides the verdict. Two independent questions,
+-- one per rejecting verdict:
 --
--- Nothing here has a role in the correctness statement. It runs only after
--- `Api.verdict` has already returned `incomplete`.
+--   `incorrect`   *where* the checker got stuck -- which assumption or which
+--                 proof command, named as it appears in the file. Found by a
+--                 replay that stops at the first stuck state.
+--   `incomplete`  *what* took the proof outside the fragment the semantics
+--                 models.
 --
--- In Logos: `Cpc/Diagnostics.lean`.
+-- The first is the one that matters on a real proof: "incorrect" about a
+-- thousand-step derivation, with no location, is close to useless.
+--
+-- Note that these are orthogonal to each other and to the verdict count. A
+-- checker with no semantics -- and so no `incomplete` -- still wants the replay.
+--
+-- Nothing here has a role in the correctness statement. Both run only after
+-- `Api.verdict` has already decided, and neither can change its answer.
+--
+-- In Logos: `Cpc/Diagnostics.lean` is the replay; the translation diagnostics
+-- live at the end of `Cpc/Api.lean`.
 public import @CALCULUS@.Api
 import all @CALCULUS@.Api
+public import Eunoia.Parser
+import all Eunoia.Parser
 
 public section
 
@@ -33,6 +47,103 @@ where
   go : Nat -> CCmdList -> Option (Nat × CCmd)
     | _, CCmdList.nil => none
     | i, CCmdList.cons c rest => if cmdTranslationOk c then go (i + 1) rest else some (i, c)
+
+/-! ## Where the checker got stuck: the `incorrect` case -/
+
+/-- What a diagnostic replay found. -/
+inductive CheckerFailure where
+  /-- Loading this input assumption made the state stuck. -/
+  | assumption (index : Nat) (term : Term)
+  /-- Running this proof command made the state stuck. -/
+  | command (index : Nat) (cmd : CCmd)
+  /-- Nothing got stuck, but the final state does not prove `false`. -/
+  | finalCheck
+
+/-- Push assumptions until one makes the state stuck. -/
+private def runAssumptions (assums : List Term) : Except (Nat × Term) CState :=
+  go 0 checker_init_state assums
+where
+  go (i : Nat) (state : CState) : List Term -> Except (Nat × Term) CState
+    | [] => .ok state
+    | A :: rest =>
+      let state := invoke_input_assume state A
+      match state with
+      | .Stuck => .error (i, A)
+      | state => go (i + 1) state rest
+
+/-- Run commands until one makes the state stuck. -/
+private def runCommands (state : CState) (cmds : CCmdList) : Except (Nat × CCmd) CState :=
+  go 0 state cmds
+where
+  go (i : Nat) (state : CState) : CCmdList -> Except (Nat × CCmd) CState
+    | .nil => .ok state
+    | .cons cmd rest =>
+      let state := __eo_invoke_cmd state cmd
+      match state with
+      | .Stuck => .error (i, cmd)
+      | state => go (i + 1) state rest
+
+/--
+Why the checker rejected a proof, found by replaying it.
+
+A replay rather than a check: `Api.check_refutation` answers yes or no in one
+pass and keeps no record of where it went wrong, so this runs the same steps
+again and stops at the first stuck state. It cannot disagree with the verdict --
+it is the same state machine -- and nothing depends on it.
+-/
+def checker_failure (assums : List Term) (cmds : CCmdList) : Option CheckerFailure :=
+  match runAssumptions assums with
+  | .error (i, A) => some (.assumption i A)
+  | .ok state =>
+    match runCommands state cmds with
+    | .error (i, cmd) => some (.command i cmd)
+    | .ok state => if __eo_state_is_refutation state then none else some .finalCheck
+
+/--
+The labels the proof file gives its commands, in the order the commands appear.
+
+Re-reads the file, because the parser does not keep source labels: they are of
+no use to the checker and carrying them would put them in the trusted base for
+nothing. Only the proof-stack commands are kept, so the positions line up with
+the `CCmdList` a run was over.
+-/
+private def proofCommandLabels (proof : String) : List String :=
+  match Eunoia.Sexp.Parser.manySexps!.run proof with
+  | .error _ => []
+  | .ok ss => (Eunoia.Parser.unwrapProof ss).filterMap label?
+where
+  label? : Eunoia.Sexp -> Option String
+    | .expr (.atom "assume-push" :: .atom name :: _) => some s!"assume-push {name}"
+    | .expr (.atom "step" :: .atom name :: _) => some s!"step {name}"
+    | .expr (.atom "step-pop" :: .atom name :: _) => some s!"step-pop {name}"
+    | _ => none
+
+/-- Keep a diagnostic readable when the term it names is large. -/
+private def abbreviate (s : String) : String :=
+  if s.length ≤ 400 then s else String.ofList (s.toList.take 400) ++ " ..."
+
+/-- Where the checker got stuck, said in terms of the file. -/
+def checker_failure_detail (proof : String) (assums : List Term) (cmds : CCmdList) : String :=
+  let labels := proofCommandLabels proof
+  match checker_failure assums cmds with
+  | some (.assumption i A) =>
+    s!"the checker became stuck loading assumption {i + 1}:\n  {abbreviate (toString (repr A))}"
+  | some (.command i cmd) =>
+    let location := match labels[i]? with
+      | some label => label
+      | none => s!"proof command {i + 1}"
+    s!"the checker became stuck at {location} (proof command {i + 1}):\n  \
+       {abbreviate (toString (repr cmd))}"
+  | some .finalCheck =>
+    let after := match labels.reverse.head? with
+      | some label => s!" after {label}"
+      | none => ""
+    s!"every command ran without getting stuck, but the final state{after} is not a \
+       closed proof of false"
+  | none =>
+    "the proof was rejected, but the diagnostic replay found nothing stuck"
+
+/-! ## What the semantics does not model: the `incomplete` case -/
 
 /-- A line saying why a run came back `incomplete`. -/
 def incomplete_reason (assums : List Term) (cmds : CCmdList) : String :=

@@ -15,7 +15,7 @@ name = "Eunoia"
 name = "@CALCULUS@"
 moreLeanArgs = ["-DwarningAsError=true"]
 
-# The checker: the executable that reads a proof and reports a verdict.
+@MINI_LIB@# The checker: the executable that reads a proof and reports a verdict.
 [[lean_exe]]
 name = "@EXE@"
 root = "Main"

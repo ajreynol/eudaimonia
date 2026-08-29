@@ -253,6 +253,32 @@ the generated checker calls `incomplete` is agreement, not a disagreement.
 
 `install/get-eo-compiler.sh --no-ethos` skips building it.
 
+### Development scaffolding
+
+Two options are about what the generated project *contains*, rather than about
+the calculus:
+
+```bash
+scripts/new-checker.sh --mini              # also generate <Calculus>Mini
+scripts/new-checker.sh --hygiene-ci        # CI rejects `sorry` from day one
+```
+
+**`--mini`** generates a second package: the same signature compiled with a
+handful of rules and no parser, refreshed by
+`install/install-<calc>.sh --mini`. On the CPC example it builds in **8 seconds
+against 83**, from 2,130 lines against 20,350. A proof about the checker does
+not depend on how many rules the calculus has, so it can be developed there and
+moved. Which rules it keeps comes from `--mini-rules`, or from a `mini-rules`
+file in the specification directory — as `examples/cpc` has.
+
+**`--hygiene-ci`** decides whether `scripts/check-proof-hygiene.sh` runs in CI
+from the first commit. It greps for `sorry`, `admit` and `axiom`, builds
+nothing, and exists to stop an unproven rule landing silently — which matters
+because CI cannot afford to build every proof. Off by default: a checker
+scaffolded from a large signature starts with one `sorry` per rule and would be
+red from the start. Turn it on for a small calculus proved as it grows, or once
+the stubs are discharged.
+
 ## Where a run writes
 
 By default, under `checkers/` in this repository, which is **not kept in git**.
@@ -365,11 +391,18 @@ translatable when the semantics gives it a type, so `incomplete` means what it
 says:
 
 ```
-  ok hello.proof        correct        two contradictory assumptions, refuted
-  ok no-refutation.proof incorrect     nothing derived
-  ok unmodeled.proof    incomplete     a sort constructor the semantics has no counterpart for
-  ok malformed.proof    error          the parser rejects it
+  ok hello.proof         correct      two contradictory assumptions, refuted
+  ok no-refutation.proof incorrect    nothing derived
+  ok stuck-step.proof    incorrect    a step the checker gets stuck on, localized
+  ok unmodeled.proof     incomplete   a sort constructor the semantics has no counterpart for
+  ok malformed.proof     error        the parser rejects it
 ```
+
+A rejection says *where*, not just that it rejected. `incorrect` replays the
+proof and names the command that got stuck — `the checker became stuck at step
+@p3 (proof command 2)` — which is the difference between a usable diagnostic and
+a verdict on a thousand-step derivation. `incomplete` names what the semantics
+does not model.
 
 What a fresh checker cannot say is that any of this has been *proven*.
 `Proofs/Checker.lean` holds the soundness theorem and it is a `sorry`, as is

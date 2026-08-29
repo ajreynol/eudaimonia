@@ -1,0 +1,23 @@
+; A proof whose derivation breaks at a specific step.
+;
+; `contra` needs a formula and its negation; here it is given one premise, so
+; the checker gets stuck at that step rather than merely failing overall.
+;
+; Expected verdict: incorrect (see stuck-step.expected).
+;
+; What this covers is not the verdict -- no-refutation.proof already covers
+; `incorrect` -- but the *diagnostic*. A checker that says only "incorrect"
+; about a thousand-step proof has told you almost nothing. The replay in
+; Cpc/Diagnostics.lean names the command:
+;
+;   the checker became stuck at step @p3 (proof command 2)
+;
+; The replay cannot disagree with the verdict: it is the same state machine run
+; again, and nothing depends on its answer.
+
+(declare-const x Int)
+(declare-const y Int)
+(assume @p0 (= y x))
+(assume @p1 (not (= x y)))
+(step @p2 :rule symm :premises (@p1))
+(step @p3 :rule contra :premises (@p2))

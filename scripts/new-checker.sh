@@ -50,6 +50,16 @@ Options:
   --[no-]value-ordering a semantics leaning on a total order on values
   --[no-]parser         install the generated parser configuration
   --indexed-ops N       greatest number of indices an operator takes (0-3)
+
+ Development scaffolding -- what the generated project contains, rather than
+ facts about the calculus:
+
+  --[no-]mini           also generate <CALCULUS>Mini: the same calculus reduced
+                        to a few rules, so proofs about the checker can be
+                        developed against something that builds in seconds
+  --mini-rules "A B"    the rules that reduced package keeps. Taken from
+                        <spec>/mini-rules when a --spec directory has one
+  --[no-]hygiene-ci     whether CI rejects `sorry` from the first commit
   --force               regenerate an existing project directory. It is
                         deleted and written again, so this replaces the
                         scaffolding and nothing is carried across. It refuses
@@ -103,6 +113,9 @@ PROFILE_BINDERS="${PROFILE_BINDERS:-yes}"
 PROFILE_VALUE_ORDERING="${PROFILE_VALUE_ORDERING:-yes}"
 PROFILE_PARSER="${PROFILE_PARSER:-yes}"
 PROFILE_INDEXED_OPS="${PROFILE_INDEXED_OPS:-3}"
+MINI="${MINI:-no}"
+MINI_RULES="${MINI_RULES:-}"
+HYGIENE_CI="${HYGIENE_CI:-no}"
 # shellcheck source=../config.sh
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
 
@@ -136,6 +149,12 @@ while [ $# -gt 0 ]; do
     --no-value-ordering) PROFILE_VALUE_ORDERING=no; shift ;;
     --indexed-ops) PROFILE_INDEXED_OPS="${2:?--indexed-ops requires a value}"; shift 2 ;;
     --indexed-ops=*) PROFILE_INDEXED_OPS="${1#*=}"; shift ;;
+    --mini) MINI=yes; shift ;;
+    --no-mini) MINI=no; shift ;;
+    --mini-rules) MINI_RULES="${2:?--mini-rules requires a value}"; MINI=yes; shift 2 ;;
+    --mini-rules=*) MINI_RULES="${1#*=}"; MINI=yes; shift ;;
+    --hygiene-ci) HYGIENE_CI=yes; shift ;;
+    --no-hygiene-ci) HYGIENE_CI=no; shift ;;
     --parser) PROFILE_PARSER=yes; shift ;;
     --no-parser) PROFILE_PARSER=no; shift ;;
     --spec) SPEC_DIR="${2:?--spec requires a value}"; shift 2 ;;
@@ -185,6 +204,12 @@ if [ -n "${SPEC_DIR}" ]; then
   fi
 fi
 
+# Which rules a reduced package keeps is a fact about the calculus, so a
+# specification directory can name them, as it can carry its own tests.
+if [ -z "${MINI_RULES}" ] && [ -n "${SPEC_DIR}" ] && [ -f "${SPEC_DIR}/mini-rules" ]; then
+  MINI_RULES="$(tr '\n' ' ' < "${SPEC_DIR}/mini-rules" | tr -s ' ')"
+fi
+
 for named in "${SIGNATURE}" "${SEMANTICS}" "${SMT_SEMANTICS}"; do
   [ -z "${named}" ] || [ -f "${named}" ] || {
     echo "error: ${named} not found." >&2
@@ -209,6 +234,7 @@ LOGOS_SMT_DIGEST="dc24e2490ab4cf6a13e570788b37474b"
 
 EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
 CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
+MINI_CALC="${CALCULUS}Mini"
 # checkers/ here unless told otherwise; see the note on --out in config.sh.
 OUT_DIR="${OUT_DIR:-${repo_root}/checkers}"
 DEST="${OUT_DIR}/${CHECKER}"
@@ -255,6 +281,8 @@ render() {
       -e "s|@CALCULUS@|${CALCULUS}|g" \
       -e "s|@EXE@|${EXE}|g" \
       -e "s|@CALCLOWER@|${CALCLOWER}|g" \
+      -e "s|@MINI@|${MINI_CALC}|g" \
+      -e "s|@MINI_RULES@|${MINI_RULES}|g" \
       -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
       "${template}" > "${out}"
 }
@@ -290,7 +318,31 @@ mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/${CALCULUS}/Proofs/RuleSupp
          "${DEST}/scripts" "${DEST}/docs" "${DEST}/test/regress" \
          "${DEST}/.github/workflows"
 
+# The reduced package is a second library, and only when there is one.
+if [ "${MINI}" = "yes" ]; then
+  MINI_LIB="$(printf '%s\n' \
+    "# The reduced calculus: the same signature with a few rules, for developing" \
+    "# proofs against something that builds in seconds. See ${MINI_CALC}.lean." \
+    "[[lean_lib]]" \
+    "name = \"${MINI_CALC}\"" \
+    "moreLeanArgs = [\"-DwarningAsError=true\"]" \
+    "")"
+  MINI_TARGET=", \"${MINI_CALC}\""
+else
+  MINI_LIB=""
+  MINI_TARGET=""
+fi
 render lakefile.toml.in   "${DEST}/lakefile.toml"
+# Substituted after rendering: the value is multi-line, which sed cannot carry
+# through a s|| replacement.
+python3 - "${DEST}/lakefile.toml" "${MINI_LIB}" "${MINI_TARGET}" <<'PYLAKE'
+import sys, pathlib
+path, lib, target = sys.argv[1], sys.argv[2], sys.argv[3]
+p = pathlib.Path(path); t = p.read_text()
+t = t.replace("@MINI_LIB@", lib)
+t = t.replace('defaultTargets = ["Eunoia", ', 'defaultTargets = ["Eunoia"%s, ' % target)
+p.write_text(t)
+PYLAKE
 render lean-toolchain.in  "${DEST}/lean-toolchain"
 render Main.lean.in       "${DEST}/Main.lean"
 render Root.lean.in       "${DEST}/${CALCULUS}.lean"
@@ -336,6 +388,39 @@ render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.
 # the compiler that regenerates it, the scripts that build and check it, and
 # the documentation of its own calculus. A generated directory is a project to
 # work in, not only a package to build.
+if [ "${MINI}" = "yes" ]; then
+  echo "==> Generating ${MINI_CALC}, the reduced package"
+  mkdir -p "${DEST}/${MINI_CALC}/Proofs/Rules" "${DEST}/${MINI_CALC}/Proofs/RuleSupport"
+  render MiniRoot.lean.in "${DEST}/${MINI_CALC}.lean"
+  # The same modules as the full package, under the reduced name. Api*, Parser
+  # and Diagnostics are left out: nothing here reads a proof file.
+  for spec in \
+    "pkg/SmtEval.lean.in:SmtEval.lean" \
+    "pkg/Term.lean.in:${CHECKER}Term.lean" \
+    "pkg/SmtModelDefs.lean.in:SmtModelDefs.lean" \
+    "pkg/SmtValueOrder.lean.in:SmtValueOrder.lean" \
+    "pkg/SmtModel.lean.in:SmtModel.lean" \
+    "pkg/Spec.lean.in:Spec.lean" \
+    "pkg/Checker.lean.in:${CHECKER}.lean" \
+    "pkg/Proofs/Assumptions.lean.in:Proofs/Assumptions.lean" \
+    "pkg/Proofs/CheckerCore.lean.in:Proofs/CheckerCore.lean" \
+    "pkg/Proofs/RuleLemmas.lean.in:Proofs/RuleLemmas.lean" \
+    "pkg/Proofs/Checker.lean.in:Proofs/Checker.lean" \
+    "pkg/Proofs/RuleSupport/Support.lean.in:Proofs/RuleSupport/Support.lean" \
+    "pkg/Proofs/Rules/README.md.in:Proofs/Rules/README.md" ; do
+    src="${spec%%:*}"; dst="${spec#*:}"
+    mkdir -p "$(dirname "${DEST}/${MINI_CALC}/${dst}")"
+    sed -e "s|@CHECKER@|${CHECKER}|g" \
+        -e "s|@CALCULUS@|${MINI_CALC}|g" \
+        -e "s|@EXE@|${EXE}|g" \
+        -e "s|@CALCLOWER@|${CALCLOWER}|g" \
+        -e "s|@MINI@|${MINI_CALC}|g" \
+        -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
+        "${templates_dir}/${src}" > "${DEST}/${MINI_CALC}/${dst}"
+  done
+  echo "    ${MINI_CALC}/ (rules: ${MINI_RULES:-none chosen yet})"
+fi
+
 render     install/README.md.in           "${DEST}/install/README.md"
 render_exe install/get-eo-compiler.sh.in  "${DEST}/install/get-eo-compiler.sh"
 render_exe install/install-sig.sh.in      "${DEST}/install/install-${CALCLOWER}.sh"
@@ -343,6 +428,14 @@ render_exe install/install-sig.sh.in      "${DEST}/install/install-${CALCLOWER}.
 render_exe scripts/build.sh.in                "${DEST}/scripts/build.sh"
 render_exe scripts/check-proof-hygiene.sh.in  "${DEST}/scripts/check-proof-hygiene.sh"
 render_exe scripts/run-ci.sh.in               "${DEST}/scripts/run-ci.sh"
+# Whether an unproven rule can land silently. Off by default because a freshly
+# generated checker has one `sorry` per rule of the signature, so a project that
+# starts with hundreds of stubs would start red.
+if [ "${HYGIENE_CI}" = "yes" ]; then
+  sed -i.bak -e 's|^CI_GROUPS=(build regress ethos regeneration)|CI_GROUPS=(build regress ethos hygiene regeneration)|' \
+    "${DEST}/scripts/run-ci.sh"
+  rm -f "${DEST}/scripts/run-ci.sh.bak"
+fi
 render_exe scripts/build-rules.sh.in          "${DEST}/scripts/build-rules.sh"
 render_exe scripts/rule-status.sh.in          "${DEST}/scripts/rule-status.sh"
 render_exe scripts/check-with-ethos.sh.in     "${DEST}/scripts/check-with-ethos.sh"
