@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+# Cross-check the regression proofs against ethos. See --help.
+
+set -uo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/check-with-ethos.sh [PROOF]...
+
+Check each regression proof with **ethos**, the reference proof checker for
+Eunoia, and compare its answer with @EXE@'s.
+
+Ethos reads install/defs/@CALCULUS@.eo directly. Nothing is generated and no
+Lean is involved, so this works from the first day of writing a signature --
+long before the Lean development can say anything -- and it keeps working as a
+second opinion afterwards.
+
+Both are asked the same question, with `--require-proof-of-false`: does this
+proof refute its assumptions?
+
+What a disagreement means:
+
+  ethos accepts, @EXE@ says `correct`      agreement
+  ethos accepts, @EXE@ says `incomplete`   expected, not a disagreement: the
+                                           proof is a valid derivation that
+                                           mentions something the SMT-LIB
+                                           semantics does not model. Ethos has
+                                           no semantics and cannot see this
+  ethos accepts, @EXE@ says `incorrect`    a real disagreement -- the compiled
+                                           calculus rejects a derivation the
+                                           signature accepts
+  ethos rejects, @EXE@ says `correct`      a real disagreement, and the serious
+                                           direction: @EXE@ accepted something
+                                           the reference does not
+
+**Ethos is not verified.** It is not an oracle and agreeing with it proves
+nothing. It is a fast, independent implementation of the same signature, which
+makes it very good at catching a compiled calculus that has drifted from what
+the signature says.
+
+Requires install/get-eo-compiler.sh to have been run without --no-ethos, and
+scripts/build.sh for @EXE@.
+USAGE
+}
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+ENV_FILE="install/deps/eoc-env.sh"
+if [ ! -f "${ENV_FILE}" ]; then
+  echo "==> ethos is not available: install/get-eo-compiler.sh has not been run."
+  exit 0
+fi
+# shellcheck source=/dev/null
+. "${ENV_FILE}"
+
+if [ -z "${EOC_ETHOS_BIN:-}" ] || [ ! -x "${EOC_ETHOS_BIN}" ]; then
+  echo "==> ethos is not available: it was not built."
+  echo "    Re-run install/get-eo-compiler.sh without --no-ethos."
+  exit 0
+fi
+
+EXE="./.lake/build/bin/@EXE@"
+[ -x "${EXE}" ] || {
+  echo "error: ${EXE} is not built. Run scripts/build.sh first." >&2
+  exit 1
+}
+
+SIGNATURE="install/defs/@CALCULUS@.eo"
+[ -f "${SIGNATURE}" ] || { echo "error: ${SIGNATURE} is not there." >&2; exit 1; }
+
+proofs=("$@")
+if [ "${#proofs[@]}" -eq 0 ]; then
+  shopt -s nullglob
+  proofs=(test/regress/*.proof)
+  shopt -u nullglob
+fi
+[ "${#proofs[@]}" -gt 0 ] || { echo "==> No regression proofs."; exit 0; }
+
+disagreements=()
+for proof in "${proofs[@]}"; do
+  ours="$("${EXE}" "${proof}" 2>/dev/null | tr -d '[:space:]')"
+  [ -n "${ours}" ] || ours="error"
+
+  # Ethos reports a failed check by aborting. The shell announces a child that
+  # died on a signal, and it does so on its own stderr -- which redirecting the
+  # command does not cover, so the brace group is redirected instead.
+  ethos_status=0
+  { "${EOC_ETHOS_BIN}" --require-proof-of-false --include="${SIGNATURE}" \
+      "${proof}" >/dev/null 2>&1 || ethos_status=$?; } 2>/dev/null
+  if [ "${ethos_status}" = "0" ]; then theirs="accepts"; else theirs="rejects"; fi
+
+  verdict="ok"
+  case "${theirs}:${ours}" in
+    accepts:correct|accepts:incomplete) ;;
+    rejects:incorrect|rejects:error) ;;
+    *) verdict="DISAGREE"; disagreements+=("${proof}") ;;
+  esac
+  printf '  %-8s %-26s ethos %-8s %s\n' "${verdict}" "${proof##*/}" "${theirs}" "${ours}"
+done
+
+echo
+if [ "${#disagreements[@]}" -eq 0 ]; then
+  echo "==> ethos and @EXE@ agree on all ${#proofs[@]} proof(s)."
+  exit 0
+fi
+echo "==> ${#disagreements[@]} disagreement(s): ${disagreements[*]##*/}"
+echo "    Either the compiled calculus has drifted from install/defs/@CALCULUS@.eo,"
+echo "    or the two are answering different questions -- see --help."
+exit 1

@@ -88,12 +88,11 @@ theorem refutation_of_check (assums : List Term) (cmds : CCmdList) :
   exact h
 
 /--
-The first side condition, from its check.
+The second side condition, from its check.
 
 `decide` on the predicate of `Proofs/Assumptions.lean`, so this is just
-`of_decide_eq_true`. It stays that way whatever those predicates become, which
-is the point of deciding them there rather than reimplementing them in the
-executable.
+`of_decide_eq_true`. It stays that way however that predicate is strengthened,
+which is the point of deciding it there rather than reimplementing it here.
 -/
 theorem cmdListTranslationOk_of_check (cmds : CCmdList) :
     check_cmdListTranslationOk cmds = true ->
@@ -102,25 +101,37 @@ theorem cmdListTranslationOk_of_check (cmds : CCmdList) :
   exact of_decide_eq_true h
 
 /--
-The second side condition, from its check.
+Translatability is carried along the chain as it is folded.
 
-Case analysis on the list, which is all the stub in `Proofs/Assumptions.lean`
-needs: the empty list gives the empty chain, and a non-empty one fails the check
-because the stub `eoHasSmtTranslation` holds of nothing. Replacing that stub
-turns this into a real induction over the chain; the statement does not change.
+Generalised over the seed, which is what makes the step go through: one
+`assumption_chain_step` adds one `and` link, and `TranslatableAssumptionList` of
+that link is exactly the conjunct for the new assumption together with the rest.
+-/
+private theorem translatable_foldl (assums : List Term) :
+    ∀ F : Term, TranslatableAssumptionList F ->
+      (∀ A ∈ assums, eoHasSmtTranslation A) ->
+      TranslatableAssumptionList (assums.foldl assumption_chain_step F) := by
+  induction assums with
+  | nil => intro F hF _; exact hF
+  | cons A rest ih =>
+    intro F hF hall
+    refine ih (assumption_chain_step F A) ?_ ?_
+    · exact ⟨hall A (List.mem_cons_self ..), hF⟩
+    · intro B hB; exact hall B (List.mem_cons_of_mem A hB)
+
+/--
+The first side condition, from its check.
+
+The executable checks each assumption in the parser's list; the theorem is
+stated about the chain those are folded into. This carries one to the other.
 -/
 theorem translatableAssumptionList_of_check (assums : List Term) :
     check_translatableAssumptions assums = true ->
     TranslatableAssumptionList (assumption_term assums) := by
-  cases assums with
-  | nil => intro _; rfl
-  | cons A rest =>
-    intro h
-    exfalso
-    have hA : decide (eoHasSmtTranslation A) = true := by
-      have h' : (decide (eoHasSmtTranslation A) && rest.all fun B => decide (eoHasSmtTranslation B)) = true := h
-      exact (Bool.and_eq_true _ _ |>.mp h').left
-    exact of_decide_eq_true hA
+  intro h
+  refine translatable_foldl assums (Term.Boolean true) trivial ?_
+  intro A hA
+  exact of_decide_eq_true (List.all_eq_true.mp h A hA)
 
 /-! ## Reading the checks back out of a `correct` verdict
 

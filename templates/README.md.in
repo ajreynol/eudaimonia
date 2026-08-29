@@ -123,23 +123,24 @@ After a build the executable can be run directly, without Lake:
 
 After `install/install-@CALCLOWER@.sh`, this is a **working checker**: it parses
 the Eunoia proof format, runs the calculus, and reports one of three verdicts.
-`test/regress/run.sh` exercises all three, and `scripts/run-ci.sh` passes.
+`test/regress/run.sh` exercises all of them and `scripts/run-ci.sh` passes.
 
-What it is not yet is a *verified* checker. Every proof it accepts comes back
-`incomplete` rather than `correct`, and that is the design:
+Two axes, reported separately on purpose:
 
-- **The soundness theorem is a `sorry`.** `@CALCULUS@/Proofs/Checker.lean` holds
-  `correct___eo_is_refutation`, and everything above it —
-  `@CALCULUS@/ApiCorrect.lean`, which states correctness about the text of a
-  file — is already wired to it. Discharging it is what makes the executable\'s
-  verdict mean something; no other file has to change.
-- **The rule proofs are `sorry` stubs**, one per rule of the signature.
-  `scripts/rule-status.sh` counts them and `scripts/build-rules.sh` builds the
-  ones that get written.
-- **The side conditions model nothing yet.**
-  `@CALCULUS@/Proofs/Assumptions.lean` says so conservatively, which is why
-  every accepted proof is `incomplete`. Writing them is what lets a proof come
-  back `correct`.
+**What the checks find** — the verdict. `@CALCULUS@/Proofs/Assumptions.lean` is
+real, not a stub: a term is translatable when the semantics gives it a type. So
+`correct`, `incorrect` and `incomplete` all mean what they say, and
+`incomplete` is reachable for the right reason — a proof mentioning something
+outside the formalization.
 
-So the verdict is a live readout of how far the development has got, and it can
-only improve — a fresh checker never claims more than it has.
+**How far the proof has got** — everything else.
+`@CALCULUS@/Proofs/Checker.lean` holds `correct___eo_is_refutation` and it is a
+`sorry`; each rule under `@CALCULUS@/Proofs/Rules/` is a `sorry`; and
+`@CALCULUS@/Proofs/RuleSupport/Support.lean` is the stub they are all stated
+against.
+
+So a verdict of `correct` today says *the checks passed*, not *this has been
+proven*. `@CALCULUS@/ApiCorrect.lean` is already wired to the theorem, so
+discharging it is what closes the gap — no other file changes. Watch
+`scripts/rule-status.sh` and `scripts/run-ci.sh hygiene` for that, not the
+verdict.

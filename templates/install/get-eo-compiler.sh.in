@@ -18,8 +18,18 @@ the resulting paths are recorded in install/deps/eoc-env.sh, which
 install/install-@CALCLOWER@.sh reads so that it only has to be told the
 signature.
 
-This sets up the compiler and nothing else. The signature it compiles is
-install/defs/@CALCULUS@.eo; run install/install-@CALCLOWER@.sh for that.
+It also builds **ethos** itself from the same tree, unless --no-ethos. Ethos is
+the reference proof checker for Eunoia: it reads install/defs/@CALCULUS@.eo
+directly and checks proofs against it, with no Lean involved and nothing
+generated. That makes it useful from the first day of writing a signature, long
+before the Lean development can say anything, and it gives
+scripts/check-with-ethos.sh a second opinion to compare verdicts against.
+
+It is not a substitute for @CHECKER@: ethos is unverified. It is a fast, honest
+cross-check.
+
+The signature it all compiles is install/defs/@CALCULUS@.eo; run
+install/install-@CALCLOWER@.sh for that.
 
 The Eunoia compiler is developed on the ethosEoc3 branch of cvc5/ethos, which
 is where the latest one is; main lags it and lacks options this template needs.
@@ -36,6 +46,7 @@ DEV_MODE is currently 1, and is meant to be temporary.
 Options:
   --deps-dir DIR       where to put everything (default: install/deps)
   --jobs N             parallel compile jobs (default: all processors)
+  --no-ethos           do not also build the ethos proof checker
   --keep-tmp           keep the downloaded archive instead of deleting it
   --tip                build the head of the development branch, resolved now
   --pinned             build the recorded commit instead
@@ -94,6 +105,7 @@ REQUIRED_DRIVER_OPTIONS=(--calc-name --smt-semantics --semantics --no-parser)
 DEPS_DIR=""
 JOBS=""
 KEEP_TMP=0
+WITH_ETHOS=1
 
 expand_tilde() {
   case "$1" in
@@ -110,6 +122,8 @@ while [ $# -gt 0 ]; do
     --jobs) JOBS="${2:?--jobs requires a value}"; shift 2 ;;
     --jobs=*) JOBS="${1#*=}"; shift ;;
     --keep-tmp) KEEP_TMP=1; shift ;;
+    --no-ethos) WITH_ETHOS=0; shift ;;
+    --with-ethos) WITH_ETHOS=1; shift ;;
     --tip) DEV_MODE=1; shift ;;
     --pinned) DEV_MODE=0; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -245,6 +259,23 @@ ETHOS_EOC="${BUILD_DIR}/ethos-eoc"
 # The binary stays where it was built on purpose: it resolves its templates
 # against the source tree that configured it.
 
+# Ethos itself, from the same tree. Its own CMake project, so a separate build
+# directory; the eoc build under plugins/ does not produce it.
+ETHOS_BIN=""
+if [ "${WITH_ETHOS}" = "1" ]; then
+  echo "==> Building ethos, the reference proof checker"
+  ETHOS_BUILD="${ETHOS_DIR}/build-ethos"
+  if cmake -S "${ETHOS_DIR}" -B "${ETHOS_BUILD}" -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1 &&
+     cmake --build "${ETHOS_BUILD}" --parallel "${JOBS}" --target ethos >/dev/null 2>&1 &&
+     [ -x "${ETHOS_BUILD}/src/ethos" ]; then
+    ETHOS_BIN="${ETHOS_BUILD}/src/ethos"
+    echo "    ${ETHOS_BIN}"
+  else
+    echo "    warning: ethos did not build. The Eunoia compiler is unaffected," >&2
+    echo "    and scripts/check-with-ethos.sh will report it as unavailable." >&2
+  fi
+fi
+
 echo "==> Recording what was installed in ${DEPS_DIR}/eoc-env.sh"
 cat > "${DEPS_DIR}/eoc-env.sh" <<ENV
 # Written by install/get-eo-compiler.sh. Read by install/install-@CALCLOWER@.sh
@@ -256,6 +287,9 @@ EOC_BUILD_DIR="${BUILD_DIR}"
 EOC_DRIVER="${DRIVER}"
 EOC_ETHOS_VERSION="${ETHOS_VERSION}"
 EOC_ETHOS_BRANCH="${ETHOS_BRANCH}"
+# The reference proof checker, if it was built. Read by
+# scripts/check-with-ethos.sh.
+EOC_ETHOS_BIN="${ETHOS_BIN}"
 # 1 when this was a tip build, so whatever reads this can say that what it is
 # working with is not reproducible.
 EOC_DEV_MODE="${DEV_MODE}"
@@ -269,6 +303,7 @@ cat <<DONE
 
   ethos      ${ETHOS_DIR} (${ETHOS_VERSION})
   ethos-eoc  ${ETHOS_EOC}
+  checker    ${ETHOS_BIN:-(not built)}
   recorded   ${DEPS_DIR}/eoc-env.sh
 DONE
 

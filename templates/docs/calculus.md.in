@@ -44,6 +44,40 @@ Everything else in the vocabulary is yours. `not`, `=` and `imp` are **not**
 required by the checker — they are used only by rule proofs, so a calculus
 without them costs nothing.
 
+## The profile
+
+`install/defs/profile.conf` records the high-level facts about @CALCULUS@ that
+this checker is scaffolded and documented against. `install-@CALCLOWER@.sh`
+re-checks the ones the compiled output can settle, and reports any that
+disagree.
+
+| question | flag | checked |
+| -------- | ---- | ------- |
+| Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | verified — whether any rule dispatches through step-pop |
+| Do rules gather `:list` premises? | `--[no-]list-premises` | verified — whether the core builds premise lists, and whether a nil exists for the operator it uses |
+| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | verified — whether the term datatype carries datatype declarations |
+| Are any rules binder-sensitive (instantiate, skolemize, alpha-equivalence)? | `--[no-]binders` | declared — a binder in the signature does not imply a rule reasoning under one, and only the latter needs the variable-stability invariant |
+| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | declared — the compiler emits the same `SmtValueOrder` for every signature, so nothing in the output distinguishes the answers |
+| Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | verified — by digest |
+| Should the generated parser be installed? | `--[no-]parser` | verified — whether `Parser.lean` was installed |
+
+Keep it accurate as the calculus grows: it is what the documentation here and
+the scripts assume.
+
+## Cross-checking with ethos
+
+`install/get-eo-compiler.sh` also builds ethos, the reference checker for
+Eunoia. It reads `install/defs/@CALCULUS@.eo` directly, so it works before any
+of the Lean development does:
+
+```bash
+scripts/check-with-ethos.sh
+```
+
+Ethos is unverified, so agreement proves nothing. It is a fast, independent
+implementation of the same signature, which makes it good at catching a
+compiled calculus that has drifted from the signature it came from.
+
 ## The rules
 
 One file per rule under `@CALCULUS@/Proofs/Rules/`, each with the rule's

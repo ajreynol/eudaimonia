@@ -37,6 +37,18 @@ Options:
   --smt-semantics PATH  the SMT-LIB semantics it is written against (.eos)
   --toolchain VERSION   the Lean toolchain the project pins
   --out DIR             where to write the project (default: checkers/ here)
+
+ The calculus profile -- high-level facts about the calculus that decide what
+ the generated checker needs, what it must prove, and what it can inherit. Each
+ is recorded in install/defs/profile.conf, and install-<calc>.sh re-checks the
+ ones visible in compiled output. Defaults are the conservative answers.
+
+  --[no-]scopes         rules that discharge assumptions (`scope`/step-pop)
+  --[no-]list-premises  rules that gather `:list` premises
+  --[no-]datatypes      algebraic datatypes
+  --[no-]binders        binder-sensitive rules (instantiate, skolemize, ...)
+  --[no-]value-ordering a semantics leaning on a total order on values
+  --[no-]parser         install the generated parser configuration
   --force               regenerate an existing project directory. It is
                         deleted and written again, so this replaces the
                         scaffolding and nothing is carried across. It refuses
@@ -83,6 +95,12 @@ SMT_SEMANTICS=""
 TOOLCHAIN=""
 OUT_DIR=""
 SPEC_DIR=""
+PROFILE_SCOPES="${PROFILE_SCOPES:-yes}"
+PROFILE_LIST_PREMISES="${PROFILE_LIST_PREMISES:-yes}"
+PROFILE_DATATYPES="${PROFILE_DATATYPES:-yes}"
+PROFILE_BINDERS="${PROFILE_BINDERS:-yes}"
+PROFILE_VALUE_ORDERING="${PROFILE_VALUE_ORDERING:-yes}"
+PROFILE_PARSER="${PROFILE_PARSER:-yes}"
 # shellcheck source=../config.sh
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
 
@@ -104,6 +122,18 @@ while [ $# -gt 0 ]; do
     --toolchain=*) TOOLCHAIN="${1#*=}"; shift ;;
     --out) OUT_DIR="${2:?--out requires a value}"; shift 2 ;;
     --out=*) OUT_DIR="${1#*=}"; shift ;;
+    --scopes) PROFILE_SCOPES=yes; shift ;;
+    --no-scopes) PROFILE_SCOPES=no; shift ;;
+    --list-premises) PROFILE_LIST_PREMISES=yes; shift ;;
+    --no-list-premises) PROFILE_LIST_PREMISES=no; shift ;;
+    --datatypes) PROFILE_DATATYPES=yes; shift ;;
+    --no-datatypes) PROFILE_DATATYPES=no; shift ;;
+    --binders) PROFILE_BINDERS=yes; shift ;;
+    --no-binders) PROFILE_BINDERS=no; shift ;;
+    --value-ordering) PROFILE_VALUE_ORDERING=yes; shift ;;
+    --no-value-ordering) PROFILE_VALUE_ORDERING=no; shift ;;
+    --parser) PROFILE_PARSER=yes; shift ;;
+    --no-parser) PROFILE_PARSER=no; shift ;;
     --spec) SPEC_DIR="${2:?--spec requires a value}"; shift 2 ;;
     --spec=*) SPEC_DIR="${1#*=}"; shift ;;
     --force) FORCE=1; shift ;;
@@ -167,6 +197,11 @@ rel() {
     *) printf '%s\n' "$1" ;;
   esac
 }
+
+# The digest of the SMT-LIB semantics Logos is verified against, so a generated
+# checker can tell whether the one it was given is that file unmodified. If it
+# is, results Logos proves about SMT-LIB itself are candidates to reuse.
+LOGOS_SMT_DIGEST="dc24e2490ab4cf6a13e570788b37474b"
 
 EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
 CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
@@ -306,6 +341,7 @@ render_exe scripts/check-proof-hygiene.sh.in  "${DEST}/scripts/check-proof-hygie
 render_exe scripts/run-ci.sh.in               "${DEST}/scripts/run-ci.sh"
 render_exe scripts/build-rules.sh.in          "${DEST}/scripts/build-rules.sh"
 render_exe scripts/rule-status.sh.in          "${DEST}/scripts/rule-status.sh"
+render_exe scripts/check-with-ethos.sh.in     "${DEST}/scripts/check-with-ethos.sh"
 
 render docs/calculus.md.in     "${DEST}/docs/calculus.md"
 render docs/development.md.in  "${DEST}/docs/development.md"
@@ -337,6 +373,31 @@ if [ -n "${SMT_SEMANTICS}" ]; then
   cp "${SMT_SEMANTICS}" "${DEST}/install/defs/smt.eos"
   echo "    $(rel "${DEST}/install/defs/smt.eos")  <- ${SMT_SEMANTICS}"
 fi
+
+# Whether the SMT-LIB semantics is Logos's is a property of the file, so it is
+# measured rather than asked. Anything else -- absent, or modified -- is `no`.
+PROFILE_LOGOS_SMT="no"
+if [ -f "${DEST}/install/defs/smt.eos" ] && command -v md5sum >/dev/null 2>&1; then
+  [ "$(md5sum < "${DEST}/install/defs/smt.eos" | cut -d' ' -f1)" != "${LOGOS_SMT_DIGEST}" ] \
+    || PROFILE_LOGOS_SMT="yes"
+fi
+
+echo "==> Recording the calculus profile"
+render profile.conf.in "${DEST}/install/defs/profile.conf"
+sed -i.bak \
+  -e "s|^PROFILE_SCOPES=.*|PROFILE_SCOPES=${PROFILE_SCOPES}|" \
+  -e "s|^PROFILE_LIST_PREMISES=.*|PROFILE_LIST_PREMISES=${PROFILE_LIST_PREMISES}|" \
+  -e "s|^PROFILE_DATATYPES=.*|PROFILE_DATATYPES=${PROFILE_DATATYPES}|" \
+  -e "s|^PROFILE_BINDERS=.*|PROFILE_BINDERS=${PROFILE_BINDERS}|" \
+  -e "s|^PROFILE_VALUE_ORDERING=.*|PROFILE_VALUE_ORDERING=${PROFILE_VALUE_ORDERING}|" \
+  -e "s|^PROFILE_LOGOS_SMT=.*|PROFILE_LOGOS_SMT=${PROFILE_LOGOS_SMT}|" \
+  -e "s|^PROFILE_PARSER=.*|PROFILE_PARSER=${PROFILE_PARSER}|" \
+  "${DEST}/install/defs/profile.conf"
+rm -f "${DEST}/install/defs/profile.conf.bak"
+for k in SCOPES LIST_PREMISES DATATYPES BINDERS VALUE_ORDERING LOGOS_SMT PARSER; do
+  eval "v=\${PROFILE_${k}}"
+  printf '    %-22s %s\n' "$(printf '%s' "${k}" | tr 'A-Z_' 'a-z-')" "${v}"
+done
 
 cat <<DONE
 

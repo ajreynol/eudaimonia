@@ -67,6 +67,36 @@ text — the name an operator compiles to need not be its spelling, and the
 attribute is only visible in what it generates. `install/install-<calc>.sh`
 refuses before installing anything, naming what is missing.
 
+### The calculus profile
+
+A second kind of question, distinct from the contract above: the contract is
+what a signature *must* satisfy, while these are facts about the calculus that
+change what a checker needs, what it has to prove, and what it can inherit.
+They are one category and are treated uniformly — each is a yes/no flag of
+`scripts/new-checker.sh`, each is recorded in the generated
+`install/defs/profile.conf`, and each is re-checked at install time where the
+compiled output can settle it.
+
+| question | flag | checked |
+| -------- | ---- | ------- |
+| Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | verified — whether any rule dispatches through step-pop |
+| Do rules gather `:list` premises? | `--[no-]list-premises` | verified — whether the core builds premise lists, and whether a nil exists for the operator it uses |
+| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | verified — whether the term datatype carries datatype declarations |
+| Are any rules binder-sensitive (instantiate, skolemize, alpha-equivalence)? | `--[no-]binders` | declared — a binder in the signature does not imply a rule reasoning under one, and only the latter needs the variable-stability invariant |
+| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | declared — the compiler emits the same `SmtValueOrder` for every signature, so nothing in the output distinguishes the answers |
+| Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | verified — by digest |
+| Should the generated parser be installed? | `--[no-]parser` | verified — whether `Parser.lean` was installed |
+
+Defaults are the conservative answers — assume the calculus has the feature, so
+nothing is quietly left out. Answering wrongly does not break a build: the
+calculus is whatever the signature says. What goes wrong is that the
+documentation and scaffolding stop being true, which is why
+`install-<calc>.sh` prints declared against detected and says which disagree.
+
+The split between **verified** and **declared** is deliberate and is itself a
+finding: two of these are choices about the calculus that leave no trace in
+compiled output, so claiming to check them would be a lie.
+
 ### The proof format is fixed
 
 Only the calculus varies. Every checker this generates:
@@ -180,6 +210,29 @@ Pinning what was just built changes nothing about the compiler — only whether
 the next run is allowed to move. Do this before anyone else relies on the
 repository.
 
+### Ethos is already there
+
+Building the compiler also builds **ethos** itself — the reference proof checker
+for Eunoia, from the same source tree. That matters more than it sounds:
+
+- **It reads your signature directly.** No Lean, nothing generated. So from the
+  first day of writing a `.eo` you can check proofs against it, long before the
+  Lean development can say anything at all.
+- **It gives the generated checker a second opinion.**
+  `scripts/check-with-ethos.sh` asks both the same question — with ethos's
+  `--require-proof-of-false` — and compares. `scripts/run-ci.sh` runs it as the
+  `ethos` group.
+
+Ethos is *not* verified, so agreeing with it proves nothing. What it is good at
+is catching a compiled calculus that has drifted from the signature it came
+from, which is the failure a generated checker is most exposed to.
+
+One asymmetry the cross-check knows about: ethos has no SMT-LIB semantics, so it
+cannot see the difference between `correct` and `incomplete`. Accepting a proof
+the generated checker calls `incomplete` is agreement, not a disagreement.
+
+`install/get-eo-compiler.sh --no-ethos` skips building it.
+
 ## Where a run writes
 
 By default, under `checkers/` in this repository, which is **not kept in git**.
@@ -286,26 +339,28 @@ from and can be regenerated without that tree.
 ### What a fresh checker can and cannot say
 
 It parses the Eunoia proof format, runs the calculus, and reports one of three
-verdicts. What it does not do is claim more than it has: every proof it accepts
-comes back `incomplete`, never `correct`.
+verdicts — and all three are reachable for the right reasons, because the side
+conditions in `Proofs/Assumptions.lean` are real rather than stubbed. A term is
+translatable when the semantics gives it a type, so `incomplete` means what it
+says:
 
-That is deliberate. `correct` would assert the assumptions are unsatisfiable,
-which is the conclusion of a soundness theorem that is still a `sorry` — and
-whose side conditions have not been written, so the semantics models nothing
-yet. The generated `Proofs/Assumptions.lean` says so conservatively rather than
-accepting everything, which is what keeps the verdict honest.
+```
+  ok hello.proof        correct        two contradictory assumptions, refuted
+  ok no-refutation.proof incorrect     nothing derived
+  ok unmodeled.proof    incomplete     a sort constructor the semantics has no counterpart for
+  ok malformed.proof    error          the parser rejects it
+```
 
-Everything above that theorem is already wired to it. `ApiCorrect.lean` states
-correctness about the *text* of a proof file and derives it from the theorem in
-`Proofs/Checker.lean`, so discharging that one theorem is what turns the
-executable\'s verdict into a claim — no other file changes. The verdict is
-therefore a live readout of how far the development has got, and it can only
-improve.
+What a fresh checker cannot say is that any of this has been *proven*.
+`Proofs/Checker.lean` holds the soundness theorem and it is a `sorry`, as is
+every rule. So `correct` reports that the checks passed, not that the
+assumptions are provably unsatisfiable.
 
-A signature or semantics file you do not name is written as a commented stub to
-fill in, so the project has the file either way and says in it what it is for.
-That is the expected state before a calculus has been settled on: the project
-still builds and the executable still runs, and both say what is missing.
+Those are separate axes and are reported separately on purpose. Everything above
+the theorem is already wired to it — `ApiCorrect.lean` states correctness about
+the *text* of a proof file and derives it from `Proofs/Checker.lean` — so
+discharging that one theorem closes the gap with no other file changing.
+`scripts/rule-status.sh` is where progress shows, not the verdict.
 
 ## Repository layout
 

@@ -36,5 +36,43 @@ SMT_SEMANTICS=""
 # involved in it at all.
 OUT_DIR=""
 
+# ---------------------------------------------------------------------------
+# The calculus profile.
+#
+# High-level facts about the calculus that decide what a generated checker
+# needs, what it has to prove, and what it can inherit. Each is a yes/no
+# question, each is also a --flag of scripts/new-checker.sh, and each is written
+# into the generated project as install/defs/profile.conf.
+#
+# Answering `no` where the truth is `yes` does not break the build -- the
+# calculus is what the signature says it is -- it makes the documentation and
+# the scaffolding wrong. install-<calc>.sh re-checks the ones that are visible
+# in compiled output and reports any disagreement.
+#
+# The defaults are the conservative answers: assume the calculus has the
+# feature, so nothing is quietly left out.
+# ---------------------------------------------------------------------------
+
+# Rules that discharge assumptions (`scope`, compiling to step-pop).
+PROFILE_SCOPES="yes"
+
+# Rules that gather `:list` premises.
+PROFILE_LIST_PREMISES="yes"
+
+# Algebraic datatypes.
+PROFILE_DATATYPES="yes"
+
+# Binder-sensitive rules, needing the variable-stability invariant.
+PROFILE_BINDERS="yes"
+
+# A semantics that leans on a total order on values.
+PROFILE_VALUE_ORDERING="yes"
+
+# The generated parser configuration.
+PROFILE_PARSER="yes"
+
+# Whether install/defs/smt.eos is Logos's, unmodified, is not set here: it is
+# a fact about the file, so the generator computes it.
+
 # The Lean toolchain the generated project pins.
 TOOLCHAIN="leanprover/lean4:v4.33.0"

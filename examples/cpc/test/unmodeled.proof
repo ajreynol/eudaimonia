@@ -1,0 +1,23 @@
+; A proof the checker accepts but the semantics does not model.
+;
+; `U` is a sort *constructor* -- a sort of arity 1 -- and the SMT-LIB
+; formalization has no counterpart for one applied to a sort. So the terms here
+; have no translation, the first side condition of the soundness theorem fails,
+; and the theorem says nothing about this proof.
+;
+; Expected verdict: incomplete (see unmodeled.expected).
+;
+; This is the verdict most worth having a test for. The derivation itself is
+; fine -- the same shape as hello.proof, which comes back `correct` -- so the
+; only thing separating them is whether the specification covers the terms. A
+; checker that collapsed `incomplete` into `correct` would claim the soundness
+; theorem applied here when it does not, and nothing else in the suite would
+; notice.
+
+(declare-sort U 1)
+(declare-const a (U Int))
+(declare-const b (U Int))
+(assume @p0 (= a b))
+(assume @p1 (not (= b a)))
+(step @p2 :rule symm :premises (@p0))
+(step @p3 :rule contra :premises (@p2 @p1))

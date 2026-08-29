@@ -284,12 +284,24 @@ packages. From inside, the maintainer can say what the diff *means*:
   model, and agrees the same text about two different types is what
   byte-identity buys — so stabilizing the SMT-LIB model comes first.
 
-- [ ] **Seed `Proofs/Assumptions.lean` from CpcMini\'s 44-line version**, whose
-      `cmdTranslationOk` is generic (`| CCmd.step _ args _ => cArgListTranslationOk args`)
-      and names no rule. Cpc\'s 257-line version is a hand-maintained
-      specialization naming 32 rules — the only hand-written non-rule file that
-      mentions a rule at all. The template\'s current stub has the right verdict
-      behaviour but not this shape.
+- [x] **Seeded `Proofs/Assumptions.lean` from CpcMini's generic version.** It
+      is now real rather than a stub: a term is translatable when the semantics
+      gives it a type, a command when its arguments do. Nothing in it names a
+      rule or an operator, which is why it works for any signature. `Decidable`
+      instances added so `Api.lean` can keep deciding them, and both bridge
+      lemmas in `ApiChecks.lean` are proven against the real predicates.
+
+      Consequence worth knowing: the verdicts became accurate, so the
+      HelloWorld proof now returns `correct` rather than `incomplete`. A
+      separate regression proof covers `incomplete` genuinely — a sort
+      constructor applied to a sort, which the formalization has no counterpart
+      for, the same case Logos uses.
+- [ ] **Strengthen `cmdTranslationOk` per rule as proofs are written.** Cpc's
+      257-line version names 32 rules because some need more than "the
+      arguments translate", and which kind a rule needs is discovered while
+      proving it. Logos's roadmap (TODO 1 there) wants that table generated from
+      the rule files rather than hand-maintained; worth tracking, since it is
+      the only hand-written non-rule file in Logos that mentions a rule.
 - [ ] **Track the checker layer as it becomes seedable.** The report\'s TODO 2
       proposes promoting `Checker.lean`, `CheckerState.lean`,
       `RuleSupport/Contract.lean` and a generic `Assumptions.lean` to eoc
@@ -331,10 +343,70 @@ deliberately rather than drifted into.
       name an operator compiles to need not be its spelling, and the attribute
       is only visible in what it generates.
 
-      This implements TODO 8 of `~/logos/docs/modularity.md`, including the two
-      seams that document records as unchecked — the nil attribute and the
-      translation of `and` — both of which turn out to be greppable in what the
-      compiler emits.
+      This implements TODO 8 of `~/logos/docs/modularity.md`, and refines it.
+      The report lists `:right-assoc-nil true` as a flat requirement; measuring
+      it showed the restriction is narrower. Compiling CPC with `and` declared
+      as a plain binary operator leaves `__eo_invoke_assume_list`, the
+      refutation test and the SMT translation **byte-identical** — the core does
+      not use the attribute at all. What changes is that the parser stops
+      accepting n-ary `(and a b c)`, which is surface syntax, and that
+      `__eo_nil` loses its `and` arm.
+
+      That arm matters only where premise lists are gathered with `and`, which
+      is a per-rule declaration: CPC has 11 such call sites, another calculus
+      may have none. So the check is conditional — it errors only when the
+      generated core calls `__eo_mk_premise_list (Term.UOp UserOp.and)` and no
+      nil exists for it. A calculus with binary `and` and no `and`-gathered
+      premise lists is accepted, correctly.
+
+## 4c. The calculus profile
+
+High-level facts about a calculus that decide what a checker needs, what it must
+prove, and what it can inherit. Implemented as one uniform category: a flag on
+`scripts/new-checker.sh`, a line in the generated `install/defs/profile.conf`,
+and a re-check at install time where compiled output can settle it.
+
+- [x] **Seven questions, five verified and two declared.** scopes,
+      list-premises, datatypes, parser and logos-smt are checked against what
+      the compiler emitted; binders and value-ordering are recorded on trust,
+      because nothing in the output distinguishes the answers. The installer
+      prints declared against detected and names any that disagree.
+- [x] **`value-ordering` is declared, not verified — and that is a finding.**
+      `SmtValueOrder.lean` is *identical* between `Cpc` and `CpcMini`, so the
+      compiler emits the same ordering whatever the signature. The question is
+      about the semantics you write, not about what is generated.
+- [ ] **Make `no` answers do more than document.** Today the profile drives
+      documentation and the install-time report. The obvious next step is
+      scaffolding: `binders=no` should point the extra-invariant slot at `True`
+      (per Logos's `docs/modularity.md`, that is exactly what `CpcMini` does and
+      it costs nothing), and `scopes=no` should mark the step-pop preservation
+      obligations vacuous.
+- [ ] **Ship what `logos-smt=yes` earns.** The digest tells a generated checker
+      that its SMT-LIB semantics is Logos's, unmodified. Results Logos proves
+      about SMT-LIB itself are then candidates to reuse rather than reprove —
+      `TypePreservation/Datatypes.lean` and `Canonical/TypeDefaultBasic.lean`
+      are byte-identical across `Cpc` and `CpcMini`, so they are the obvious
+      first ones. Not shipped yet: they are stated about a `SmtModel` that
+      compilation configures, so whether they transfer has to be tested rather
+      than assumed. Advertised in the docs meanwhile.
+
+## 4d. Ethos as a reference checker
+
+- [x] **Build ethos alongside the compiler.** Same source tree, its own CMake
+      project. `install/get-eo-compiler.sh --no-ethos` skips it.
+- [x] **Cross-check the regression proofs.**
+      `scripts/check-with-ethos.sh` asks both checkers the same question, using
+      ethos's `--require-proof-of-false`, and compares. Run by
+      `scripts/run-ci.sh` as the `ethos` group.
+- [x] **Encode the one asymmetry.** Ethos has no SMT-LIB semantics, so it cannot
+      distinguish `correct` from `incomplete`. Accepting a proof the generated
+      checker calls `incomplete` is agreement, not a disagreement — the script
+      knows this, and a checker that reported `incorrect` there would not be
+      excused.
+- [ ] **Use ethos on the signature itself, not only on proofs.** It parses and
+      type-checks a `.eo` directly, so it could report a malformed signature
+      before the compiler is even run — a faster and clearer failure than
+      anything downstream.
 
 ## 5. Build and CI
 

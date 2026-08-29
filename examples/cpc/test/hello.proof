@@ -2,18 +2,22 @@
 ;
 ; Two assumptions that contradict each other, and two steps that derive `false`
 ; from them. It exercises the whole pipeline -- the s-expression reader, the
-; parser's operator table, the checker's command loop and its refutation test --
-; without needing anything proven about any rule.
+; parser's operator table, the checker's command loop and its refutation test.
 ;
-; Expected verdict: incomplete (see hello.expected).
+; Expected verdict: correct (see hello.expected).
 ;
-; The checker accepts it as a derivation of `false`, so it is not `incorrect`.
-; It is not `correct` either, because that would assert the assumptions are
-; unsatisfiable, and the soundness theorem does not apply until the side
-; conditions in Proofs/Assumptions.lean say the semantics models these terms.
-; A fresh checker reports exactly that, and the verdict improves to `correct`
-; when the semantics and the rule proofs are written -- so this test is a
-; live readout of how far the development has got.
+; `correct` means the three checks passed: the checker derived `false` from
+; these assumptions, and both side conditions hold -- every assumption and every
+; command mentions only things the SMT-LIB semantics gives a meaning to.
+;
+; It does *not* mean the result has been proven. `correct___eo_is_refutation` in
+; Cpc/Proofs/Checker.lean is still a `sorry`, so what the executable computes is
+; not yet backed by a theorem. Those are separate axes, and they are reported
+; separately on purpose: the verdict says what the checks found, and
+; scripts/rule-status.sh and scripts/run-ci.sh hygiene say how far the proof has
+; got. Watch the second, not the first, for progress on soundness.
+;
+; See unmodeled.proof for the verdict that is *not* about proof state.
 
 (declare-const x Int)
 (declare-const y Int)

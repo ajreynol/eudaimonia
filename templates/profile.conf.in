@@ -1,0 +1,61 @@
+# The calculus profile of @CHECKER@.
+#
+# High-level facts about @CALCULUS@ and its embedding that decide what this
+# checker needs, what it has to prove, and what it can inherit. They are
+# recorded here rather than inferred, because several of them are choices about
+# the calculus rather than properties of the signature text.
+#
+# Set by scripts/new-checker.sh when this project was generated. Editing a
+# line here changes what the documentation says and what install-@CALCLOWER@.sh
+# checks; it does not change the calculus.
+#
+# Each answer is one of two kinds:
+#
+#   verified  install-@CALCLOWER@.sh can tell from what the compiler emitted
+#             whether the answer is right, and says so when it is not.
+#   declared  nothing in the compiled output distinguishes the answers, so this
+#             is taken on trust and used for documentation and scaffolding.
+
+# Do rules discharge assumptions -- a `scope`-like rule, compiling to step-pop?
+# Such a rule turns an assumption into an implication, so the calculus needs an
+# implication and the checker's state machine needs its pop case.
+# verified: whether any rule dispatches to __eo_cmd_step_pop_proven.
+PROFILE_SCOPES=yes
+
+# Do rules gather `:list` premises? Those build their premise list through
+# __eo_nil, so the gathering operator must carry a nil -- for `and`, that is
+# `:right-assoc-nil true`.
+# verified: whether the core calls __eo_mk_premise_list, and whether a nil exists.
+PROFILE_LIST_PREMISES=yes
+
+# Does the calculus have algebraic datatypes? They add sort declarations,
+# constructors, selectors and testers to the parser and to type preservation.
+# verified: whether the term datatype carries datatype declarations.
+PROFILE_DATATYPES=yes
+
+# Are any rules binder-sensitive -- instantiation, skolemization, alpha
+# equivalence? These need premise truth in a *variable-variant* model, which is
+# what the extra-invariant slot in Proofs/Invariants/ is for. A calculus with no
+# such rules points that slot at `True` and pays nothing for it.
+# declared: a binder in the signature does not imply a rule that reasons under
+# one, and only the latter needs the invariant.
+PROFILE_BINDERS=yes
+
+# Does the semantics need a total order on values -- to pick a representative,
+# or to decide an extensionality question, as the theories of sets, arrays and
+# sequences do?
+# declared: the compiler emits the same SmtValueOrder for every signature, so
+# nothing in the output distinguishes needing it from not. This records whether
+# the *semantics you write* leans on it.
+PROFILE_VALUE_ORDERING=yes
+
+# Is the SMT-LIB semantics in install/defs/smt.eos the one Logos is verified
+# against, unmodified? If so, results Logos has proven about SMT-LIB itself are
+# candidates to reuse rather than reprove.
+# verified: by digest against the copy recorded below.
+PROFILE_LOGOS_SMT=@PROFILE_LOGOS_SMT@
+
+# Should the generated parser configuration be installed? A checker driven
+# programmatically rather than from proof files does not need one.
+# verified: whether Parser.lean was installed.
+PROFILE_PARSER=yes

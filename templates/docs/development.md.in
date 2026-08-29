@@ -30,6 +30,24 @@ While working on one rule, build just that rule:
 scripts/build.sh @CALCULUS@.Proofs.Rules.Symm
 ```
 
+## Checking without Lean
+
+`install/get-eo-compiler.sh` builds ethos alongside the compiler. Ethos reads
+`install/defs/@CALCULUS@.eo` directly and checks proofs against it, so it works
+before any of this development does:
+
+```bash
+scripts/check-with-ethos.sh
+```
+
+While a signature is being written, that is the fast loop: edit the `.eo`, check
+a proof, repeat, with no Lean build and nothing generated. Afterwards it stays
+useful as a second opinion — `scripts/run-ci.sh` runs it as the `ethos` group,
+comparing verdicts against @EXE@'s.
+
+Ethos is unverified. Agreement with it proves nothing; disagreement is a strong
+signal that the compiled calculus and the signature have parted company.
+
 ## Checks
 
 ```bash

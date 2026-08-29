@@ -14,6 +14,7 @@ Groups, and whether they run by default:
 
   build           yes  build the default targets
   regress         yes  run test/regress/ and check each verdict
+  ethos           yes  cross-check those proofs against the reference checker
   regeneration    yes  check @CALCULUS@/ has not drifted from its signature
   hygiene         no   reject sorry, admit and axiom under @CALCULUS@/
 
@@ -45,7 +46,7 @@ CI_GROUPS=("$@")
 # has one `sorry` per rule, so it would fail from the first commit and a CI that
 # is red by construction tells nobody anything. Add it here once the rules are
 # discharged -- see docs/development.md.
-[ "${#CI_GROUPS[@]}" -gt 0 ] || CI_GROUPS=(build regress regeneration)
+[ "${#CI_GROUPS[@]}" -gt 0 ] || CI_GROUPS=(build regress ethos regeneration)
 
 failed=()
 run_group() {
@@ -60,6 +61,7 @@ for g in "${CI_GROUPS[@]}"; do
     build)    run_group build scripts/build.sh ;;
     hygiene)  run_group hygiene scripts/check-proof-hygiene.sh ;;
     regress)  run_group regress test/regress/run.sh ;;
+    ethos)    run_group ethos scripts/check-with-ethos.sh ;;
     regeneration)
       if [ -f install/deps/eoc-env.sh ]; then
         run_group regeneration install/install-@CALCLOWER@.sh --check

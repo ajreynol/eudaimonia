@@ -30,12 +30,17 @@ is what keeps `correct` from quietly overstating what the soundness theorem
 covers, so a checker with no `incomplete` test has no evidence that the
 distinction still works.
 
-A freshly generated checker returns `incomplete` for **every** proof it
-accepts, because the side conditions in `@CALCULUS@/Proofs/Assumptions.lean`
-are stubs that model nothing yet. So an `incomplete` test passing today is
-weak evidence; it gets strong exactly when those stubs are replaced and other
-proofs start coming back `correct`. Watching a test move from `incomplete` to
-`correct` is a good way to see the semantics land.
+Make it a *genuine* case — a proof the checker accepts whose terms the
+specification has no counterpart for — rather than one that is incomplete
+because something is unfinished. The two are easy to confuse and only the first
+keeps testing anything as the development progresses.
+
+## The verdict is not a progress bar
+
+A `correct` verdict says the three checks passed. It does not say the result has
+been proven: `@CALCULUS@/Proofs/Checker.lean` may still hold a `sorry`, and the
+executable neither knows nor reports that. Use `scripts/rule-status.sh` and
+`scripts/run-ci.sh hygiene` for how far the proof has got.
 
 ## Where these came from
 
