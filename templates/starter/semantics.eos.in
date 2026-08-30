@@ -12,6 +12,8 @@
 
 (define-symbol and (x y))
 
+(define-symbol => (x y))
+
 ; Required whatever the calculus declares.
 ;
 ; The pipeline asks the semantics which datatype names are reserved, even for a

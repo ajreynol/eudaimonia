@@ -1,0 +1,5 @@
+; Two contradictory assumptions, refuted. Expected: correct.
+(declare-const P Bool)
+(assume @p0 P)
+(assume @p1 (not P))
+(step @p2 :rule contra :premises (@p0 @p1))

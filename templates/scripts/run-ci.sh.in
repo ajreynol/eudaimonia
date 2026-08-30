@@ -13,6 +13,7 @@ Run the same checks as CI. With no group, runs all of them.
 Groups, and whether they run by default:
 
   build           yes  build the default targets
+  modules         yes  every module this project ships must compile
   regress         yes  run test/regress/ and check each verdict
   ethos           yes  cross-check those proofs against the reference checker
   regeneration    yes  check @CALCULUS@/ has not drifted from its signature
@@ -46,7 +47,24 @@ CI_GROUPS=("$@")
 # has one `sorry` per rule, so it would fail from the first commit and a CI that
 # is red by construction tells nobody anything. Add it here once the rules are
 # discharged -- see docs/development.md.
-[ "${#CI_GROUPS[@]}" -gt 0 ] || CI_GROUPS=(build regress ethos regeneration)
+[ "${#CI_GROUPS[@]}" -gt 0 ] || CI_GROUPS=(build modules regress ethos regeneration)
+
+# Everything this project ships has to compile, `sorry` and all: a `sorry` is a
+# warning here, not a build failure, so a red build means something is broken
+# rather than unfinished.
+#
+# @CALCULUS@/Proofs/RuleLemmas.lean and the rule files under Proofs/Rules/ are
+# excluded. They are written against names @CALCULUS@/Proofs/RuleSupport/Support.lean
+# is meant to supply and does not yet, so they cannot compile until it is
+# written -- see docs/development.md.
+build_all_modules() {
+  local mods
+  mods=$(find . -name '*.lean' -not -path './.lake/*' -not -path '*/Rules/*' \
+           -not -name 'Main.lean' -not -name 'RuleLemmas.lean' \
+         | sed 's|^\./||; s|\.lean$||; s|/|.|g' | sort)
+  # shellcheck disable=SC2086
+  lake build ${mods}
+}
 
 failed=()
 run_group() {
@@ -60,6 +78,7 @@ for g in "${CI_GROUPS[@]}"; do
   case "${g}" in
     build)    run_group build scripts/build.sh ;;
     hygiene)  run_group hygiene scripts/check-proof-hygiene.sh ;;
+    modules)  run_group modules build_all_modules ;;
     regress)  run_group regress test/regress/run.sh ;;
     ethos)    run_group ethos scripts/check-with-ethos.sh ;;
     regeneration)

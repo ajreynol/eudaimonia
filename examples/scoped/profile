@@ -1,0 +1,4 @@
+# Verified against the compiler's output at install time.
+PROFILE_SCOPES=yes
+PROFILE_LIST_PREMISES=yes
+PROFILE_INDEXED_OPS=0

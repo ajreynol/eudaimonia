@@ -1,0 +1,40 @@
+; Scoped: a small calculus that exercises the parts Hello does not.
+;
+; Hello has one rule, no assumption discharge and no premise lists, so a checker
+; generated from it never reaches the machinery those need. This one adds both,
+; while staying small enough to build in seconds:
+;
+;   * `scope` discharges an assumption into an implication -- so the profile's
+;     `scopes` is yes, and the checker's step-pop path is exercised;
+;   * `and_intro` gathers its premises with `and` -- so `list-premises` is yes,
+;     and `and` genuinely needs `:right-assoc-nil true`, which is the one
+;     conditional entry of the signature contract.
+;
+; Between them, `examples/hello` and this cover both answers to those two
+; profile questions without anyone having to compile CPC.
+
+; `and` needs the nil here, because `and_intro` gathers premises with it.
+(declare-const and (-> Bool Bool Bool) :right-assoc-nil true)
+(declare-const not (-> Bool Bool))
+(declare-const => (-> Bool Bool Bool) :right-assoc)
+
+; From a formula and its negation, derive false.
+(declare-rule contra ((F Bool))
+  :premises (F (not F))
+  :conclusion false
+)
+
+; Discharge an assumption into an implication. This is what makes the profile's
+; `scopes` answer yes: it compiles to a step-pop.
+(declare-rule scope ((F Bool) (G Bool))
+  :assumption F
+  :premises (G)
+  :conclusion (=> F G)
+)
+
+; Gather premises with `and`. This is what makes `list-premises` yes, and what
+; makes the nil attribute above load-bearing rather than decorative.
+(declare-rule and_intro ((C Bool))
+  :premise-list C and
+  :conclusion C
+)

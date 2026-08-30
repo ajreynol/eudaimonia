@@ -1,0 +1,19 @@
+; What the symbols of Scoped.eo mean. Each transforms pointwise into the
+; SMT-LIB symbol of the same name.
+
+(define-symbol not (x))
+
+(define-symbol and (x y))
+
+(define-symbol => (x y))
+
+; Required whatever the calculus declares: the pipeline asks the semantics which
+; datatype names are reserved even for a calculus with no datatypes. See
+; docs/eoc-requests.md item 1 in Eudaimonia.
+(program $eo_to_smt_reserved_datatype_name ((s "String"))
+  :keep
+  :signature ("String") "Bool"
+  (
+  (($eo_to_smt_reserved_datatype_name s) ("string_prefix_eq" "str_at_sign" s))
+  )
+)

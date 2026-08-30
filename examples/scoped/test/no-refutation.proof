@@ -1,0 +1,3 @@
+; Assumptions but no derivation. Expected: incorrect.
+(declare-const P Bool)
+(assume @p0 P)

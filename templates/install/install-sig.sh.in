@@ -487,9 +487,9 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   detect() { if eval "$1" >/dev/null 2>&1; then echo yes; else echo no; fi; }
 
   # A rule that discharges an assumption dispatches through step-pop.
-  d_scopes="$(detect "sed -n '/^def __eo_cmd_step_pop_proven/,/^\$/p' '${LEAN_DIR}/@CHECKER@.lean' | grep -q 'CRule\\.'")"
+  d_scopes="$(detect "sed -n '/^def __eo_cmd_step_pop_proven/,/^\$/p' '${LEAN_DIR}/${EOC_CORE}.lean' | grep -q 'CRule\\.'")"
   # A rule with :list premises builds the list through __eo_mk_premise_list.
-  d_list="$(detect "grep -q '__eo_mk_premise_list (Term.UOp' '${LEAN_DIR}/@CHECKER@.lean'")"
+  d_list="$(detect "grep -q '__eo_mk_premise_list (Term.UOp' '${LEAN_DIR}/${EOC_CORE}.lean'")"
   # The highest index arity the calculus uses.
   #
   # The compiler emits `UserOp<n>` only for an arity the calculus actually has,

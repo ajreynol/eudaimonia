@@ -487,6 +487,7 @@ what a run *produces*, which is
 ```text
 config.sh                  the settings a run reads
 scripts/new-checker.sh     the generator
+scripts/run-ci.sh          generate every configuration and run its own CI
 templates/                 what it renders, one file per generated file
   pkg/                       the calculus package
   eunoia/                    the proof-format library
@@ -495,6 +496,7 @@ templates/                 what it renders, one file per generated file
   docs/ ci/ test/            its documentation, CI workflow and test layout
 examples/cpc/              a worked specification: CPC, as Logos compiles it
 examples/hello/            the smallest one that works: one rule, five proofs
+examples/scoped/           adds assumption discharge and `:list` premises
 docs/generated-checker.md  the anatomy of what a run produces
 docs/logos-experience-report.md
                            every `sorry` a generated checker has, and what the
@@ -529,6 +531,38 @@ proof, and the per-rule proofs (591 files in Logos).
 files each item corresponds to.
 
 ---
+
+## Known limitations
+
+Measured, not guessed: `scripts/run-ci.sh` generates a checker for each option
+configuration and runs that project's own CI, so what is listed here is what
+that suite cannot make pass.
+
+**The generated rule scaffolding does not compile.**
+`<Calculus>/Proofs/RuleLemmas.lean` and every file under `Proofs/Rules/` are
+written against names `Proofs/RuleSupport/Support.lean` is meant to supply —
+`StepRuleProperties`, `premiseTermList`, `AllHaveBoolType` — and it is an open
+stub. So they are excluded from the `modules` CI group, and
+`scripts/build-rules.sh` reports it rather than emitting one error per rule.
+
+This is a deliberate consequence of [minimal design](#minimal-design-imposed-on-your-checker):
+filling `Support.lean` would fix your checker/rule contract before you have
+written a rule. Logos's answer is in `Cpc/Proofs/RuleSupport/Contract.lean`, 164
+lines, and adopting it is a decision rather than a default.
+
+**`--indexed-ops` is recorded but not enforced.** The generator validates the
+value is 0–3 and writes it to `profile.conf`, and the installer checks it
+against what the compiler emitted — but nothing acts on a mismatch beyond
+reporting it, because the compiler decides arity emission from the signature.
+
+**A calculus compiled with `--rules` needs `=>` in its signature.** The trimming
+stage that runs for a rule subset — which is what `install-<calc>.sh --mini`
+does — fails with `Could not find target definition "=>"` if the signature has
+no implication, even when no rule uses one. The starter signature declares one
+for this reason.
+
+**`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They are
+always generated: they are proven, and `NonVacuity.lean` builds on them.
 
 ## How this repository is maintained
 
