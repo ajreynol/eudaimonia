@@ -25,13 +25,23 @@ A generated checker, immediately after `install/install-<calculus>.sh`:
 | ---- | ---------- | -------: |
 | [`Proofs/TypePreservation.lean`](#proofstypepreservationlean) | `smtx_typeof_wf` | 17,691 / 4,234 |
 | [`Proofs/TranslationTypePreservation.lean`](#proofstranslationtypepreservationlean) | `eo_to_smt_type_typeof_of_smt_type` | 33,453 / 5,141 |
-| [`Proofs/NonVacuity.lean`](#proofsnonvacuitylean) | `model_wf_nonvacuous` | 104 |
-| [`Proofs/Canonicity.lean`](#proofscanonicitylean) | `model_eval_boolean_canonical` | 10,083 / 228 |
+| [`Proofs/NonVacuity.lean`](#proofsnonvacuitylean) | `canonical_type_inhabited_of_type_wf`, then the model | 104 — but its hard half now ships proven |
+| [`Proofs/Canonicity.lean`](#proofscanonicitylean) | none for a Boolean-only calculus — **proven** | 10,083 / 228 |
 | [`Proofs/Checker.lean`](#proofscheckerlean) | `correct___eo_is_refutation` | 1,063 — **and identical across both packages** |
 | [`Proofs/RuleSupport/Support.lean`](#proofsrulesupportsupportlean) | a stub, not a `sorry`: nothing to state rules against | 352,795 |
 | [`Proofs/Rules/*.lean`](#proofsruleslean) | one per rule of your signature | 279,000 across 591 files |
 
-Two files in the same area carry **no** obligation, and it is worth knowing why:
+Three more files carry **no** obligation, having been ported from Logos and
+verified against a calculus that is not CPC:
+
+- **`Proofs/TypeDefaults.lean`** (243 lines) and **`Proofs/TypePredicates.lean`**
+  (36) come from `Cpc/Proofs/Canonical/TypeDefaultBasic.lean` and
+  `Cpc/Proofs/TypePreservation/Predicates.lean`, two of six files Logos measures
+  to be byte-identical between `Cpc` and `CpcMini`. They depend on nothing but
+  the generated `SmtModel`, which is why they transfer unchanged.
+- **`Proofs/Canonicity.lean`** is proven for the Boolean case.
+
+Two more carry none for a different reason:
 
 - **`ModelWf.lean`** is shipped proven. Its three theorems are the projections
   of the generated `model_wf`, immediate against that definition. Change

@@ -426,6 +426,13 @@ render pkg/Proofs/Checker.lean.in      "${DEST}/${CALCULUS}/Proofs/Checker.lean"
 # rest from building and they could not be worked on independently.
 render pkg/Proofs/Invariants/Extra.lean.in \
        "${DEST}/${CALCULUS}/Proofs/Invariants/Extra.lean"
+# Ported from Logos and proven: measured there to be byte-identical across two
+# genuinely different calculi, and depending on nothing but the generated
+# SmtModel. Shipped finished rather than stubbed.
+render pkg/Proofs/TypePredicates.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/TypePredicates.lean"
+render pkg/Proofs/TypeDefaults.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/TypeDefaults.lean"
 render pkg/Proofs/TypePreservation.lean.in \
        "${DEST}/${CALCULUS}/Proofs/TypePreservation.lean"
 case ",${THEOREMS}," in *,all,*|*,none,*) ;; esac
@@ -472,6 +479,8 @@ if [ "${MINI}" = "yes" ]; then
     "pkg/Proofs/RuleLemmas.lean.in:Proofs/RuleLemmas.lean" \
     "pkg/Proofs/Checker.lean.in:Proofs/Checker.lean" \
     "pkg/Proofs/Invariants/Extra.lean.in:Proofs/Invariants/Extra.lean" \
+    "pkg/Proofs/TypePredicates.lean.in:Proofs/TypePredicates.lean" \
+    "pkg/Proofs/TypeDefaults.lean.in:Proofs/TypeDefaults.lean" \
     "pkg/Proofs/TypePreservation.lean.in:Proofs/TypePreservation.lean" \
     "pkg/ModelWf.lean.in:ModelWf.lean" \
     "pkg/Proofs/RuleSupport/Support.lean.in:Proofs/RuleSupport/Support.lean" \

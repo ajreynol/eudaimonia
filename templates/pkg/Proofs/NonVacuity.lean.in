@@ -19,12 +19,48 @@ module
 --   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.ModelWf
 import all @CALCULUS@.ModelWf
+public import @CALCULUS@.Proofs.TypeDefaults
+import all @CALCULUS@.Proofs.TypeDefaults
 
 @[expose] public section
 
 namespace Smtm
 
-/-- Well-formed models exist. -/
+/-!
+The obligation is narrower than it looks, because `Proofs/TypeDefaults.lean`
+already carries the hard half — and carries it *proven*.
+
+`type_default_typed_of_inhabited` and `type_default_canonical_of_inhabited_wf_rec`
+say that an **inhabited**, recursively well-formed type has a default value that
+is both correctly typed and canonical. Those transfer unchanged from Logos.
+
+What does not transfer is the step from "well formed" to "inhabited". That is a
+fact about *your* types, so it is the sorry below. Logos proves it in
+`Cpc/Proofs/TypePreservation/Support.lean`, which is 957 lines and genuinely
+calculus-specific.
+-/
+
+/--
+Every well-formed type is inhabited by a canonical value of that type.
+
+**This is the real obligation.** With it, a model follows: map every symbol to
+the default value of its type and the three conjuncts of `model_wf` are the two
+proven theorems in `Proofs/TypeDefaults.lean` plus bookkeeping.
+-/
+theorem canonical_type_inhabited_of_type_wf (T : SmtType) :
+    __smtx_type_wf T = true ->
+    ∃ v : SmtValue, __smtx_typeof_value v = T ∧ __smtx_value_canonical v = true := by
+  sorry
+
+/--
+Well-formed models exist.
+
+Follows from the lemma above by constructing the model that maps each symbol to
+a witness of its type. Logos builds it in
+`Cpc/Proofs/TypePreservation/Nonvacuity.lean` -- 104 lines, and one of the six
+files measured to be identical across its two packages, so this derivation is
+not calculus-specific either and should eventually arrive proven.
+-/
 theorem model_wf_nonvacuous : ∃ M : SmtModel, model_wf M := by
   sorry
 

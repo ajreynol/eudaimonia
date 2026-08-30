@@ -1,0 +1,36 @@
+module
+
+-- **FINISHED.** You will not need to edit this file. It is complete as it
+-- stands; a signature install leaves it alone, and so does everything else.
+--
+-- It may still fail to build, if something it *depends on* is open. That is not
+-- a defect in this file and not a reason to change it.
+--
+-- Ported verbatim from Logos, where `Cpc/Proofs/TypePreservation/Predicates.lean`
+-- is one of six files measured to be **byte-identical between `Cpc` (591 rules)
+-- and `CpcMini` (5)** -- packages differing in rule set, in signature and in
+-- required invariants. Logos guards that property with
+-- `scripts/check-proof-modularity.sh`, so it is checked rather than assumed.
+--
+-- It depends on nothing but the generated `SmtModel`, which is why it transfers
+-- unchanged. Verified against a signature that is not CPC.
+
+public import @CALCULUS@.SmtModel
+import all @CALCULUS@.SmtModel
+
+public section
+
+open SmtEval
+open Smtm
+
+namespace Smtm
+
+/-- Semantic inhabitation of an SMT type. -/
+def type_inhabited (T : SmtType) : Prop :=
+  ∃ v : SmtValue, __smtx_typeof_value v = T
+
+/-- Proof-facing canonicality predicate for SMT values. -/
+def value_canonical (v : SmtValue) : Prop :=
+  __smtx_value_canonical v = true
+
+end Smtm

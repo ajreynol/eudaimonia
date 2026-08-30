@@ -547,6 +547,36 @@ wrong.
       the risk `DEV_MODE=1` documents: report upstream, and pin until it is
       fixed.
 
+## 4i. Leveraging Logos's modularity2
+
+Merged upstream 2026-08-30. What it bought, applied here:
+
+- [x] **Two files ported and shipped proven.**
+      `Proofs/TypeDefaults.lean` (243 lines) and `Proofs/TypePredicates.lean`
+      (36) from `Canonical/TypeDefaultBasic.lean` and
+      `TypePreservation/Predicates.lean` — two of the six Logos now measures
+      byte-identical across `Cpc` and `CpcMini`. They depend on nothing but the
+      generated `SmtModel`, and were verified to build against a calculus that
+      is not CPC.
+- [x] **`Proofs/Canonicity.lean` closed.** The Boolean case proves in one line;
+      the file ships finished for a calculus whose only literal kind is `Bool`.
+- [x] **`Proofs/NonVacuity.lean` narrowed.** Was "construct a well-formed
+      model"; is now "every well-formed type is inhabited by a canonical value",
+      with the model construction reduced to bookkeeping over the two proven
+      theorems in `TypeDefaults.lean`.
+- [ ] **Adopt the `.eq_N` guard.** The reason `CheckerState.lean` became
+      portable is that references to generated equation lemmas *by number*
+      (`__smtx_typeof.eq_1`) were replaced with named theorems: arm numbering
+      shifts when the signature changes. `scripts/check-proof-hygiene.sh` should
+      reject `.eq_N` in hand-written files for the same reason. Note **212 of
+      591** Logos rule proofs still use them, so the pattern is easy to fall
+      into.
+- [ ] **Adopt the soundness typecheck and its canary.** Logos's CI now
+      typechecks `Checker.lean` and `ApiCorrect.lean` with the rule bridge
+      stubbed, plus a liveness check so it cannot degrade into a no-op. That is
+      how a generated checker could verify its soundness proof without building
+      every rule — directly relevant to `Checker.lean` being *finished*.
+
 ## 5. Build and CI
 
 - [ ] **A build script with a toolchain fallback.** Logos's `scripts/build.sh`
