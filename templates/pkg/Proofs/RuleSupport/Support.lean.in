@@ -1,44 +1,90 @@
 module
 
--- **OPEN.** Compiles, and contains a `sorry` that is **yours to discharge, in
--- this file**. Nothing will fill it in. A signature install leaves it alone.
+-- **OPEN, and a STUB.** It compiles, so the rules built against it compile too.
+-- It is not a contract: the obligations below cannot be proven as written, on
+-- purpose. Replacing them is the first real step in the correctness
+-- development, and the next install will not touch this file.
 --
--- **The seam every generated rule proof imports.** The compiler emits each rule
--- as a statement in terms of the names below, so this is the one module that
--- has to supply them before any rule can be built.
+-- **What this is.** The compiler emits every rule proof against exactly the
+-- names below and nothing else. Measured across 595 generated rule files in
+-- three calculi -- including CPC's 591 -- the statements collapse to just two
+-- shapes, identical apart from the rule's own name: one for `step`, one for
+-- `step_pop`. So this seam is fixed by the compiler, not by your calculus, and
+-- a stub here is enough to make every rule file in any calculus compile.
 --
--- It is a stub, and it is the reason `scripts/build-rules.sh` reports that no
--- rule can be built yet. Filling it in is the start of the correctness
--- development, not a detail of it.
+-- The names split in two, and the difference is what makes the stub safe.
 --
--- What a rule statement refers to, and so what this must export:
+-- **Hypotheses** -- what a rule is *given*. Defined for real, because a rule
+-- whose hypotheses were unprovable would be vacuously true: it could be
+-- discharged by contradiction while establishing nothing.
 --
---   `model_wf M`               that `M` is a well-formed SMT model
---   `premiseTermList s ps`     the terms a step's premises name in state `s`
---   `AllHaveBoolType ts`       that every one of them is Boolean-typed
---   `StepRuleProperties M ts`  what a rule must establish about its conclusion,
---                              given what its premises say under `M` -- the
---                              contract the checker's core relies on
---   `cmdTranslationOk c`       from `Proofs/Assumptions.lean`, re-exported here
+-- **Obligations** -- what a rule must *establish*. Deliberately **unprovable**,
+-- so `sorry` is the only thing that closes a rule and no tactic can close one
+-- by accident. The alternative -- defining them as `True` -- would let a
+-- checker report every rule "proven" having proven nothing.
 --
--- To see the exact shape the compiler expects, read any file under
--- `@CALCULUS@/Proofs/Rules/`: each is a statement about these names, with
--- `sorry` where its proof goes.
+-- **Writing the real thing.** In Logos this is
+-- `Cpc/Proofs/RuleSupport/Contract.lean`, 164 lines, where `StepRuleProperties`
+-- is a structure with two fields: the conclusion is interpreted true given
+-- evidence about the premises, and it has an SMT-LIB translation. That is a
+-- reasonable default; this template does not assume it, because the contract
+-- between checker and rules is the design decision a calculus most needs to
+-- own. If your rules need premise evidence beyond "each premise is true here",
+-- it goes here, coupled to `Proofs/Invariants/Extra.lean`.
 --
--- In Logos this is `Cpc/Proofs/RuleSupport/Support.lean`, a thin aggregator over
--- `Proofs/Common.lean`, `Proofs/RuleSupport/Contract.lean` and the per-theory
--- support libraries beneath them -- some 350,000 lines. Do not expect to write
--- it in one sitting; `StepRuleProperties` and the model well-formedness
--- predicate are the load-bearing definitions, and the rest accretes as rules
--- are proven.
---
--- TEMPLATE STUB: scripts/build-rules.sh looks for this marker to explain why
--- rule proofs cannot be built. Remove the line when this module is real.
+-- The Logos experience report has the sizes:
+--   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.Proofs.CheckerCore
 import all @CALCULUS@.Proofs.CheckerCore
 
 @[expose] public section
 
+open SmtEval
+open Smtm
+
 namespace Eo
+
+/-! ## Hypotheses -- what a rule is given. Defined, not stubbed. -/
+
+/-- The proven terms a step's premise indices name. Structural: the state and
+index list fix this, so it is not a design decision. -/
+def premiseTermList (s : CState) : CIndexList -> List Term
+  | CIndexList.nil => []
+  | CIndexList.cons n premises => __eo_state_proven_nth s n :: premiseTermList s premises
+
+namespace RuleProofs
+
+/-- That a term has a counterpart in the SMT-LIB semantics. -/
+def eo_has_smt_translation (t : Term) : Prop := eoHasSmtTranslation t
+
+end RuleProofs
+
+/-- Every term in the list has EO type `Bool`. -/
+def AllHaveBoolType (ts : List Term) : Prop :=
+  ∀ t ∈ ts, __eo_typeof t = Term.Bool
+
+/-- The same thing under the name the `step_pop` shape uses. Two names for one
+idea is the compiler's doing, not a distinction. -/
+def AllTypeofBool (ts : List Term) : Prop := AllHaveBoolType ts
+
+/-- Every term in the list has an SMT-LIB translation. -/
+def AllHaveSmtTranslation (ts : List Term) : Prop :=
+  ∀ t ∈ ts, RuleProofs.eo_has_smt_translation t
+
+/-! ## Obligations -- what a rule must establish. Unprovable until you say what
+they mean. -/
+
+/-- No constructor, so nothing proves it. This is what keeps a stubbed checker
+from reporting rules as proven. -/
+inductive RuleObligationUnspecified : Prop
+
+/-- What a `step` rule must establish about its conclusion. -/
+def StepRuleProperties (_M : SmtModel) (_premises : List Term) (_P : Term) : Prop :=
+  RuleObligationUnspecified
+
+/-- The same for a rule that discharges an assumption. Takes the assumption
+rather than a model. -/
+def StepPopRuleProperties (_A : Term) (_premises : List Term) (_P : Term) : Prop :=
+  RuleObligationUnspecified
 
 end Eo

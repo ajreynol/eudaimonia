@@ -19,6 +19,41 @@ SMT-LIB, and `install/defs/smt.eos` says what that target means to a model.
 Together they are what makes a verdict of `correct` an assertion about
 satisfiability rather than about a syntactic derivation.
 
+### The SMT-LIB semantics is pinned, and pinning has a cost
+
+`install/defs/smt.eos` is a **snapshot**, and the install passes it to the
+compiler explicitly with `--smt-semantics`. So this package compiles against
+that file rather than against whatever the compiler currently ships, and the
+Lean it generates does not move when the compiler does. That is the point: your
+proofs stay about the model you proved them about.
+
+The cost is that the snapshot goes stale, and the `.eos` format is under active
+development. Two ways that shows up:
+
+- **A hard break.** The snapshot stops parsing — a form it uses is no longer
+  one the compiler accepts. The install fails and says which form.
+- **Silent drift.** It still parses, but the semantics upstream has moved on.
+  Nothing about your build changes; the proofs shipped proven — `ModelWf.lean`,
+  `Proofs/TypeDefaults.lean`, `Proofs/TypePredicates.lean`,
+  `Proofs/Canonicity.lean` — are simply about the older model.
+
+The install reports the second as `smt-drift` in the calculus profile,
+comparing your snapshot to the compiler's own
+`tools/eoc/semantics/smt.eos`. It reports; it never fails.
+
+**To take an update**, copy the compiler's file over yours:
+
+```bash
+cp install/deps/ethos/tools/eoc/semantics/smt.eos install/defs/smt.eos
+install/install-@CALCLOWER@.sh
+```
+
+Then expect to re-check anything proven against the model: the `logos-smt`
+profile entry will flip to `no`, which is the signal that the shipped proofs
+are no longer known to hold. If you would rather track the compiler and not
+maintain a snapshot at all, delete `install/defs/smt.eos` — the install falls
+back to the compiler's own semantics and says so.
+
 ## The signature contract
 
 The checker layer depends on the signature in four places. All four are checked

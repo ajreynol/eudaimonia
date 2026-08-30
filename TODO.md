@@ -152,11 +152,28 @@ Still framework work, because these should not be the user's at all:
       [docs/eoc-requests.md](docs/eoc-requests.md) item 5.
 - [ ] **`Proofs/CheckerCore.lean` likewise, probably.** Its differences from
       `CpcMini`'s are simp-lemma lists and one namespace qualifier.
-- [ ] **`Proofs/RuleSupport/Support.lean` needs at least a shape.** Today it is
-      a stub with no content, and until it is real no rule can be built at all.
-      Logos's `RuleSupport/` is 352,795 lines, so this cannot be shipped whole —
-      but `Contract.lean`, the 164-line seam that defines `StepRuleProperties`,
-      could be.
+- [x] **`Proofs/RuleSupport/Support.lean` needs at least a shape** — done.
+      It now defines the eight names every rule statement is written against,
+      so **rule files compile in every calculus** (verified on CPC's 591, plus
+      a 3-rule and a 1-rule signature). The split is deliberate: hypotheses are
+      defined for real, so no rule statement is vacuous; the two obligations are
+      an empty `Prop`, so a rule can only be closed with `sorry` and the stub
+      cannot be mistaken for a satisfied contract.
+
+      Measured while doing it: the seam is **calculus-independent**. Across 595
+      generated rule files the statements collapse to two shapes — `step` and
+      `step_pop` — identical apart from the rule's own name. That is an argument
+      for eoc seeding it; see `docs/eoc-requests.md` item 5.
+
+- [ ] **`Proofs/CheckerCore.lean` is what now blocks `RuleLemmas.lean`.** The
+      dispatcher is generated *with its proof bodies*, against a checker layer
+      nothing defines: `checker{Type,Translation,LocalTruth,AssumptionStability}Invariant`,
+      `CmdStepFacts`, `stateStepPopSuffix`, and nine bridge lemmas. In Logos
+      that is `CheckerCore.lean`, 1,123 lines with a 246-line diff between Cpc
+      and CpcMini — so it is neither trivially portable nor genuinely
+      calculus-specific throughout. It is the one remaining exclusion from the
+      generated `modules` CI group, and `Checker.lean` and `ApiCorrect` sit
+      downstream of it.
 
 ## 4. From the theorem to the executable — **done**
 

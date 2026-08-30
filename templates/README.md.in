@@ -40,7 +40,7 @@ regenerates it and refers to nothing outside itself.
 | `Proofs/TranslationTypePreservation.lean` | **O** | the type of a translated term is the translation of its type. **The one that cannot be inherited** |
 | `Proofs/NonVacuity.lean` | **O** | a well-formed model exists — without it soundness is vacuous |
 | `Proofs/Canonicity.lean` | P | evaluating a literal gives a value in normal form |
-| `Proofs/RuleSupport/Support.lean` | **O** | what every rule statement is written against |
+| `Proofs/RuleSupport/Support.lean` | **S** | what every rule statement is written against. A stub: it compiles, but its obligations cannot be proven until you replace them |
 | `Proofs/CheckerCore.lean` | **O** | correctness of the core, independent of the rules |
 | `Proofs/Rules/` | G+**O** | one file per rule: statement generated, **proof yours** |
 
@@ -53,6 +53,14 @@ deliberately not set, so a `sorry` is a warning rather than a build failure.
 | **P** proven | yes | no | never |
 | **F** finished | yes | no, but it depends on one | never |
 | **O** open | yes | **yes** | **yes** — that `sorry` is the work |
+| **S** stub | yes | no | **yes** — it compiles, but what it says is a placeholder |
+
+**S** is the odd one, and there is exactly one of it. `Proofs/RuleSupport/Support.lean`
+has no `sorry` — it is all definitions — so it looks finished and is not. Its
+two obligations are deliberately **unprovable**, which is what lets every rule
+file compile while keeping a rule impossible to close except with `sorry`.
+Defining them as `True` instead would let a checker report every rule proven
+having proven nothing.
 
 `ApiCorrect.lean` is the case worth understanding. It states soundness about the
 text of a proof file and derives it from `Proofs/Checker.lean`. It compiles, has
@@ -226,8 +234,8 @@ outside the formalization.
 **How far the proof has got** — everything else.
 `@CALCULUS@/Proofs/Checker.lean` holds `correct___eo_is_refutation` and it is a
 `sorry`; each rule under `@CALCULUS@/Proofs/Rules/` is a `sorry`; and
-`@CALCULUS@/Proofs/RuleSupport/Support.lean` is the stub they are all stated
-against.
+`@CALCULUS@/Proofs/RuleSupport/Support.lean`, the stub they are all stated
+against, states obligations that cannot be proven until you replace them.
 
 So a verdict of `correct` today says *the checks passed*, not *this has been
 proven*. `@CALCULUS@/ApiCorrect.lean` is already wired to the theorem, so

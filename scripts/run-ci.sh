@@ -25,6 +25,7 @@ Options:
   --jobs N     parallel compile jobs (default: all processors)
   --keep       keep the generated checkers instead of deleting them
   --list       print the configurations and exit
+  --quiet, -q  only the one-line verdicts, not each step's output
   -h, --help   show this message
 
 The Eunoia compiler is built once and shared by every configuration, which is
@@ -32,18 +33,58 @@ what keeps this under a few minutes.
 USAGE
 }
 
-JOBS=""; KEEP=0; LIST=0
+JOBS=""; KEEP=0; LIST=0; QUIET=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --jobs) JOBS="${2:?}"; shift 2 ;;
     --jobs=*) JOBS="${1#*=}"; shift ;;
     --keep) KEEP=1; shift ;;
     --list) LIST=1; shift ;;
+    --quiet|-q) QUIET=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 [ -n "${JOBS}" ] || JOBS="$(nproc 2>/dev/null || echo 4)"
+
+# Every step's output is shown, so a failure in a generated checker is
+# diagnosable from the log alone rather than only reproducible locally. On
+# GitHub Actions each step is wrapped in a ::group::, which the runner renders
+# as a collapsible section -- the detail is all there, folded away, and the
+# one-line verdicts stay readable. `--quiet` restores the terse form.
+in_gha() { [ -n "${GITHUB_ACTIONS:-}" ]; }
+
+# run_in <title> <dir> <cmd...> -- run a command in a directory, showing its
+# output indented under a heading. This is for the step whose output is the
+# point: the generated checker's own CI. Returns the command's own status.
+run_in() {
+  local title="$1" dir="$2"; shift 2
+  if [ "${QUIET}" = "1" ]; then
+    ( cd "${dir}" && "$@" ) >/dev/null 2>&1
+    return $?
+  fi
+  in_gha && echo "::group::${title}" || echo "  -- ${title}"
+  ( cd "${dir}" && "$@" ) 2>&1 | sed 's/^/  | /'
+  local rc=${PIPESTATUS[0]}
+  in_gha && echo "::endgroup::"
+  return "${rc}"
+}
+
+# run_logged <title> <dir> <cmd...> -- the same, for steps whose output is
+# noise until it isn't: a C++ build, an install. Captured, and printed only if
+# the step fails, so a red run is still diagnosable from the log alone.
+run_logged() {
+  local title="$1" dir="$2"; shift 2
+  local log="${OUT}/.log"
+  ( cd "${dir}" && "$@" ) >"${log}" 2>&1
+  local rc=$?
+  if [ "${rc}" -ne 0 ]; then
+    in_gha && echo "::group::${title} (FAILED)" || echo "  -- ${title} (FAILED)"
+    sed 's/^/  | /' "${log}" | tail -80
+    in_gha && echo "::endgroup::"
+  fi
+  return "${rc}"
+}
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${repo_root}"
@@ -73,8 +114,9 @@ rm -rf "${OUT}"; mkdir -p "${OUT}"
 echo "==> Building the Eunoia compiler once (shared by every configuration)"
 ./scripts/new-checker.sh --checker Shared --calculus Hello --spec examples/hello \
   --out "${OUT}" >/dev/null
-( cd "${OUT}/Shared" && ./install/get-eo-compiler.sh --pinned --jobs "${JOBS}" ) >/dev/null 2>&1 || {
-  echo "error: the compiler did not build." >&2; exit 1; }
+if ! run_logged "Eunoia compiler" "${OUT}/Shared" ./install/get-eo-compiler.sh --pinned --jobs "${JOBS}"; then
+  echo "error: the compiler did not build." >&2; exit 1
+fi
 SHARED_DEPS="${OUT}/Shared/install/deps"
 
 failed=()
@@ -94,30 +136,24 @@ for cfg in "${CONFIGS[@]}"; do
   ln -s "${SHARED_DEPS}" "${OUT}/${name}/install/deps"
 
   lower="$(printf '%s' "${calc}" | tr '[:upper:]' '[:lower:]')"
-  if ! ( cd "${OUT}/${name}" && ./install/install-${lower}.sh --jobs "${JOBS}" ) >/dev/null 2>&1; then
+  if ! run_logged "${name}: install" "${OUT}/${name}" "./install/install-${lower}.sh" --jobs "${JOBS}"; then
     echo "  install: FAILED"; failed+=("${name}/install"); continue
   fi
   case "${opts}" in *--mini*)
-    ( cd "${OUT}/${name}" && ./install/install-${lower}.sh --mini --jobs "${JOBS}" ) >/dev/null 2>&1 || {
-      echo "  install --mini: FAILED"; failed+=("${name}/mini"); continue; } ;;
+    if ! run_logged "${name}: install --mini" "${OUT}/${name}" \
+           "./install/install-${lower}.sh" --mini --jobs "${JOBS}"; then
+      echo "  install --mini: FAILED"; failed+=("${name}/mini"); continue
+    fi ;;
   esac
 
-  # Every module the template ships has to compile. The generated rule
-  # dispatcher is excluded on purpose: it imports the rule files, which are
-  # written against names Proofs/RuleSupport/Support.lean is meant to supply and
-  # does not -- see "Known limitations" in README.md.
-  mods=$( cd "${OUT}/${name}" && find . -name '*.lean' \
-            -not -path '*/.lake/*' -not -path '*/Rules/*' -not -name 'Main.lean' \
-            -not -name 'RuleLemmas.lean' \
-          | sed 's|^\./||; s|\.lean$||; s|/|.|g' | sort )
   # The deeper test: run the generated project's *own* CI, which is what a
   # user gets. It builds the default targets, compiles every module it ships,
   # runs the regression proofs, cross-checks them against ethos, and verifies
-  # the package has not drifted from its signature.
-  if ! ( cd "${OUT}/${name}" && ./scripts/run-ci.sh ) >/dev/null 2>&1; then
-    echo "  its own CI: FAILED"
-    ( cd "${OUT}/${name}" && ./scripts/run-ci.sh 2>&1 | grep -E -- "----|==> Failed" | sed 's/^/    /' )
-    failed+=("${name}"); continue
+  # the package has not drifted from its signature. Its output is shown rather
+  # than swallowed, so a failure here is diagnosable from the log -- and it
+  # runs once, not twice.
+  if ! run_in "${name}: its own CI" "${OUT}/${name}" ./scripts/run-ci.sh; then
+    echo "  its own CI: FAILED"; failed+=("${name}"); continue
   fi
   echo "  ok ($(( $(date +%s) - start ))s)"
 done
@@ -130,7 +166,7 @@ start=$(date +%s)
 if ./scripts/new-checker.sh --checker Big --calculus Cpc --spec examples/cpc \
      --out "${OUT}" >/dev/null; then
   rm -rf "${OUT}/Big/install/deps"; ln -s "${SHARED_DEPS}" "${OUT}/Big/install/deps"
-  if ( cd "${OUT}/Big" && ./install/install-cpc.sh --jobs "${JOBS}" ) >/dev/null 2>&1; then
+  if run_logged "Cpc: install" "${OUT}/Big" ./install/install-cpc.sh --jobs "${JOBS}"; then
     n=$(ls "${OUT}/Big/Cpc/Proofs/Rules"/*.lean 2>/dev/null | wc -l)
     echo "  ok ($(( $(date +%s) - start ))s, ${n} rule files)"
   else

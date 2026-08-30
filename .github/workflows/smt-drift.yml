@@ -1,0 +1,46 @@
+name: SMT semantics drift
+
+# Does the shipped SMT-LIB semantics snapshot still work against the *tip* of
+# the compiler's development branch?
+#
+# The main CI deliberately builds the compiler `--pinned`, so it cannot see
+# this. The `.eos` format is under active development, and the snapshot in
+# examples/*/smt.eos is frozen -- keeping it current is a manual decision, with
+# consequences for everything proven against the model it generates. This job
+# exists so that decision is prompted by a report rather than by a surprise.
+#
+# Scheduled rather than per-commit on purpose: upstream moving has nothing to do
+# with any particular pull request, and it costs a full compiler build.
+# Advisory -- it is expected to be red whenever the snapshot is behind.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  smt-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgmp-dev
+
+      - name: Install Lean
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      # Two things can go wrong, and both matter. The install fails outright if
+      # the snapshot no longer parses; it reports `smt-drift` in the calculus
+      # profile if it parses but the semantics has moved.
+      - name: Install against the compiler's development tip
+        run: |
+          scripts/new-checker.sh --checker Drift --calculus Hello \
+            --spec examples/hello --out checkers/.drift
+          cd checkers/.drift/Drift
+          ./install/get-eo-compiler.sh --tip
+          ./install/install-hello.sh

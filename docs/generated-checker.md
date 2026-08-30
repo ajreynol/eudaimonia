@@ -129,9 +129,11 @@ The rule of thumb: **port facts, not structure.**
   nothing about how you write your proofs, so it is ported and proven.
 - `RuleSupport/Contract.lean` in Logos defines `StepRuleProperties`: what a rule
   is obliged to establish. That is *structure*. Porting it would fix your
-  checker/rule contract before you have written a rule, so the template leaves
-  `Proofs/RuleSupport/Support.lean` open with a description of what it must
-  supply.
+  checker/rule contract before you have written a rule, so
+  `Proofs/RuleSupport/Support.lean` ships as a **stub** instead: the hypotheses
+  a rule is *given* are defined for real, and the obligations it must
+  *establish* are deliberately unprovable. Rules compile; none can be closed
+  except with `sorry`.
 
 ### The tradeoff
 
@@ -175,7 +177,7 @@ changing it means changing the templates rather than working around them.
                                    H  ** cannot be inherited **
   Proofs/NonVacuity.lean           H  a well-formed model exists
   Proofs/Canonicity.lean           H  literals evaluate to normal form
-  Proofs/RuleSupport/Support.lean  H  what rule statements are written against
+  Proofs/RuleSupport/Support.lean  H  what rule statements are stated against (a stub)
   Proofs/CheckerCore.lean          H  correctness of the core, rule-agnostic
   Proofs/Rules/                  G+H  statement generated, proof yours
 ```
@@ -241,9 +243,19 @@ the development would prove nothing while appearing to prove everything.
 preservation are always there.
 
 Then `Proofs/RuleSupport/Support.lean` — every generated rule statement is
-written against the names it supplies, so until it is real no rule can be built
-at all, and `scripts/build-rules.sh` says so rather than reporting hundreds of
-identical errors. Then `Proofs/CheckerCore.lean`, then the rules.
+written against the eight names it supplies. It ships as a stub, so the rules
+*compile* from the first commit, but its obligations cannot be proven until you
+say what they mean, which makes replacing it the first real step.
+
+That seam is not calculus-specific: across 595 generated rule files in three
+calculi the statements collapse to two shapes, one for `step` and one for
+`step_pop`, identical apart from the rule's name.
+
+Then `Proofs/CheckerCore.lean` — which is also what `Proofs/RuleLemmas.lean`
+needs, and it is generated *using* names (the state invariants, `CmdStepFacts`,
+`stateStepPopSuffix`) that nothing generates a definition for. So the dispatcher
+and everything downstream of it will not build until `CheckerCore.lean` is
+written. Then the rules.
 
 `Proofs/Assumptions.lean` is marked F because it arrives general and working,
 but expect to strengthen it per rule as the proofs turn out to need more than

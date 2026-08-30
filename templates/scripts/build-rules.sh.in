@@ -88,28 +88,6 @@ RULES_DIR="@CALCULUS@/Proofs/Rules"
 
 SORRY_RE='(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)'
 
-# Every generated rule statement is written in terms of the names
-# Proofs/RuleSupport/Support.lean is meant to supply. While that is still the
-# template's stub none of them can build, and they all fail the same way, which
-# is worth saying once here rather than leaving as several hundred identical
-# errors.
-SUPPORT="@CALCULUS@/Proofs/RuleSupport/Support.lean"
-if [ -f "${SUPPORT}" ] && grep -q "TEMPLATE STUB" "${SUPPORT}"; then
-  echo "==> No rule proof can be built yet."
-  echo
-  echo "    ${SUPPORT} is still the template's stub, and every generated rule"
-  echo "    statement is written in terms of the names it is meant to supply"
-  echo "    -- StepRuleProperties, premiseTermList, model_wf and the rest. So"
-  echo "    the rules do not fail here because their proofs are missing; they"
-  echo "    fail because there is nothing yet to state them against."
-  echo
-  echo "    Read that file for what it has to export, and any file under"
-  echo "    @CALCULUS@/Proofs/Rules/ for the shape the compiler expects."
-  echo
-  echo "    scripts/rule-status.sh reports the rules meanwhile."
-  exit 1
-fi
-
 declare -a targets=()
 if [ "${#NAMED[@]}" -gt 0 ]; then
   for name in "${NAMED[@]}"; do

@@ -172,14 +172,28 @@ Which rules it keeps is set by `MINI_RULES` near the top of
 than the theories: something that discharges an assumption, a transitivity, a
 contradiction.
 
-### Before any of that works
+### What the rules are stated against
 
 `@CALCULUS@/Proofs/RuleSupport/Support.lean` is the module every generated rule
-statement imports, and it is a stub. Until it supplies `StepRuleProperties`,
-`premiseTermList`, `model_wf` and the rest, no rule can be built — not because
-its proof is missing, but because there is nothing to state it against.
-`build-rules.sh` says so rather than reporting several hundred identical
-errors.
+statement imports, and it is a **stub**. It compiles, so the rules do too, and
+each carries the single `sorry` that is its proof.
+
+Its obligations — `StepRuleProperties` and `StepPopRuleProperties` — are
+deliberately **unprovable**, so `sorry` is the only thing that closes a rule and
+no tactic closes one by accident. Its hypotheses, such as `premiseTermList`, are
+defined for real: a rule whose hypotheses were unprovable would be vacuously
+true. Writing the real contract is the first step in the correctness
+development, and the file says what goes in it.
+
+That seam is not yours to design around: across 595 generated rule files in
+three calculi the statements collapse to two shapes, one for `step` and one for
+`step_pop`, identical apart from the rule's name.
+
+The **dispatcher** is a separate matter. `@CALCULUS@/Proofs/RuleLemmas.lean`
+arrives with its proof bodies written against a checker layer — the state
+invariants, `CmdStepFacts`, `stateStepPopSuffix` — that no generated file
+defines. `@CALCULUS@/Proofs/CheckerCore.lean` is where that goes, and until it
+is written the dispatcher and everything downstream of it will not build.
 
 ## Adding a rule
 

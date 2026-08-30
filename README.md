@@ -362,9 +362,11 @@ The rule of thumb: **port facts, not structure.**
   nothing about how you write your proofs, so it is ported and proven.
 - `RuleSupport/Contract.lean` in Logos defines `StepRuleProperties`: what a rule
   is obliged to establish. That is *structure*. Porting it would fix your
-  checker/rule contract before you have written a rule, so the template leaves
-  `Proofs/RuleSupport/Support.lean` open with a description of what it must
-  supply.
+  checker/rule contract before you have written a rule, so
+  `Proofs/RuleSupport/Support.lean` ships as a **stub** instead: the hypotheses
+  a rule is *given* are defined for real, so rule statements are not vacuous;
+  the obligations it must *establish* are deliberately unprovable, so rules
+  compile but none can be closed except with `sorry`.
 
 ### The tradeoff
 
@@ -538,17 +540,26 @@ Measured, not guessed: `scripts/run-ci.sh` generates a checker for each option
 configuration and runs that project's own CI, so what is listed here is what
 that suite cannot make pass.
 
-**The generated rule scaffolding does not compile.**
-`<Calculus>/Proofs/RuleLemmas.lean` and every file under `Proofs/Rules/` are
-written against names `Proofs/RuleSupport/Support.lean` is meant to supply —
-`StepRuleProperties`, `premiseTermList`, `AllHaveBoolType` — and it is an open
-stub. So they are excluded from the `modules` CI group, and
-`scripts/build-rules.sh` reports it rather than emitting one error per rule.
+**The rule dispatcher does not compile.**
+`<Calculus>/Proofs/RuleLemmas.lean` is generated with its proof bodies filled
+in, and those bodies are written against a *checker layer* — the state
+invariants (`checkerTypeInvariant`, `checkerTranslationInvariant`,
+`checkerLocalTruthInvariant`, `checkerAssumptionStabilityInvariant`),
+`CmdStepFacts`, `stateStepPopSuffix`, and nine bridge lemmas — that no generated
+file defines. `Proofs/CheckerCore.lean` is where it would go; in Logos it is
+1123 lines. So `RuleLemmas.lean` is the one exclusion from the `modules` CI
+group, and everything downstream of it — `Proofs/Checker.lean`, `ApiCorrect` —
+cannot be built until it is written.
 
-This is a deliberate consequence of [minimal design](#minimal-design-imposed-on-your-checker):
-filling `Support.lean` would fix your checker/rule contract before you have
-written a rule. Logos's answer is in `Cpc/Proofs/RuleSupport/Contract.lean`, 164
-lines, and adopting it is a decision rather than a default.
+The rule files themselves *do* compile, each carrying the one `sorry` that is
+its proof. `Proofs/RuleSupport/Support.lean` stubs the eight names they are
+stated against. That seam is fixed by the compiler rather than by your calculus:
+across 595 generated rule files in three calculi, the statements collapse to two
+shapes, identical but for the rule's name. Its obligations are deliberately
+unprovable, so a rule can only be closed by `sorry` — see the file.
+
+Seeding the checker layer is [item 5 of the eoc wish list](docs/eoc-requests.md),
+and the top priority there.
 
 **`--indexed-ops` is recorded but not enforced.** The generator validates the
 value is 0–3 and writes it to `profile.conf`, and the installer checks it
@@ -563,6 +574,29 @@ for this reason.
 
 **`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They are
 always generated: they are proven, and `NonVacuity.lean` builds on them.
+
+**The shipped `smt.eos` snapshot does not parse against the compiler's
+development tip.** The `.eos` format is changing, and our snapshot (1,837 lines,
+matching the pinned commit `1c0f95e1`) uses `define-value`, which the head of
+`ethosEoc3` no longer accepts in a configuration set. So:
+
+- `scripts/run-ci.sh` builds the compiler `--pinned` and is green.
+- `install/get-eo-compiler.sh` ships **`DEV_MODE=1`**, which builds the tip —
+  and installing with our snapshot against it fails.
+
+The two are inconsistent, and closing that is a decision rather than a fix:
+either set `DEV_MODE=0`, since the pin and the snapshot agree, or refresh the
+snapshot to the tip's (2,253 lines) and re-check everything proven against the
+model it generates. **Keeping the snapshot current is deliberately manual** —
+it is pinned so that generated Lean is reproducible and proofs stay about the
+model they were proved about, and taking an update has consequences that want a
+person's judgement.
+
+What is automated is noticing. `.github/workflows/smt-drift.yml` runs weekly and
+tries the tip; `install-<calc>.sh` reports an `smt-drift` line in the calculus
+profile when a snapshot still parses but has fallen behind; and a generated
+checker can drop `install/defs/smt.eos` entirely to track the compiler's own
+semantics instead.
 
 ## How this repository is maintained
 

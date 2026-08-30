@@ -40,7 +40,7 @@ refer to paths in the repositories they came from rather than to this one.
 | ---------- | ------------------------------------------------------------------- |
 | `Cpc.eo`   | `install/defs/Cpc.cached.eo` in cvc5/logos at `9a16707a` (2026-08-29) |
 | `Cpc.eos`  | `install/defs/Cpc.eos` in the same commit                            |
-| `smt.eos`  | `tools/eoc/semantics/smt.eos` in cvc5/ethos at `b704df9d`, the commit Logos pins |
+| `smt.eos`  | `tools/eoc/semantics/smt.eos` in cvc5/ethos at `b704df9d`. Identical to the file at `1c0f95e1`, the commit `install/get-eo-compiler.sh` pins — but **not** to the head of `ethosEoc3`, which has moved on. See "Known limitations" in the root README |
 
 `Cpc.eo` is Logos's *cached* signature rather than the upstream
 `proofs/eo/cpc/Cpc.eo` in cvc5: it is that signature with every `(include ...)`

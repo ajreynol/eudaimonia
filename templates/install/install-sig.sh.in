@@ -529,6 +529,31 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   report parser        "${PROFILE_PARSER:-yes}"        "${d_parser}"
   report indexed-ops   "${PROFILE_INDEXED_OPS:-3}"     "${d_idx}"
   report logos-smt     "${PROFILE_LOGOS_SMT:-no}"      "${d_logos}"
+
+  # Drift in the SMT-LIB semantics, which is the one thing here that changes
+  # under you rather than because of something you did.
+  #
+  # This package is compiled against install/defs/smt.eos -- our snapshot --
+  # passed explicitly with --smt-semantics, so the Lean it generates is
+  # reproducible and does not move when the compiler does. The cost of that
+  # pin is that an upstream change to the semantics is invisible unless it is
+  # looked for, so this looks for it. It reports; it never fails the install.
+  #
+  # It matters because the proofs this template ships proven -- ModelWf,
+  # TypeDefaults, TypePredicates, Canonicity -- are proven against the model
+  # the semantics generates. If it has moved, they are about the old one.
+  upstream_smt="${EOC_ETHOS_DIR:-}/tools/eoc/semantics/smt.eos"
+  if [ -n "${SMT_SEMANTICS}" ] && [ -f "${upstream_smt}" ]; then
+    if cmp -s "${SMT_SEMANTICS}" "${upstream_smt}"; then
+      printf '    %-16s %-4s  (matches the compiler own semantics)\n' "smt-drift" "none"
+    else
+      printf '    %-16s %-4s  <- yours %s lines, the compiler ships %s\n' \
+        "smt-drift" "yes" \
+        "$(wc -l < "${SMT_SEMANTICS}" | tr -d ' ')" \
+        "$(wc -l < "${upstream_smt}" | tr -d ' ')"
+      printf '    %-16s %-4s     see docs/calculus.md on updating the snapshot\n' "" ""
+    fi
+  fi
   # The rest are declared, not derived, and each for the same reason: the
   # machinery is in a fixed eoc template rather than generated from the
   # signature, so a calculus that has the feature and one that does not compile
