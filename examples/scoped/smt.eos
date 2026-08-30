@@ -218,7 +218,7 @@
 
 (program $smtx_map_entries_ordered_after
   ((i SmtValue) (j SmtValue) (e SmtValue) (m SmtMap))
-  :signature (SmtValue SmtMap) "Bool"
+  :signature (SmtValue SmtMap) <bool>
   (
   (($smtx_map_entries_ordered_after i ($msm_cons j e m)) ("vcmp" j i))
   (($smtx_map_entries_ordered_after i m) "true")
@@ -226,7 +226,7 @@
 )
 
 (program $smtx_map_default_canonical ((T SmtType) (e SmtValue))
-  :signature (SmtType SmtValue) "Bool"
+  :signature (SmtType SmtValue) <bool>
   (
   (($smtx_map_default_canonical T e)
     (eo::define ((U (smt.typeof_value e)))
@@ -239,7 +239,7 @@
 
 (program $smtx_map_canonical
   ((T SmtType) (i SmtValue) (e SmtValue) (m SmtMap))
-  :signature (SmtMap) "Bool"
+  :signature (SmtMap) <bool>
   (
   (($smtx_map_canonical ($msm_default T e))
     ("and" ($smtx_map_default_canonical T e) ($smtx_value_canonical e)))
@@ -303,7 +303,7 @@
 
 (program $smtx_seq_canonical
   ((T SmtType) (v SmtValue) (s SmtSeq))
-  :signature (SmtSeq) "Bool"
+  :signature (SmtSeq) <bool>
   (
   (($smtx_seq_canonical ($ssm_empty T)) "true")
   (($smtx_seq_canonical ($ssm_cons v s))
@@ -318,6 +318,442 @@
 (define-sort Char ()
   :bounded ("not" u)
   :default (smt.char ("n_to_char" "n_zero")))
+
+;-----------------------------------------------------------------------------
+(section "The datatypes a value is built over")
+;-----------------------------------------------------------------------------
+
+; What a value holds where it holds something built rather than a native: a
+; map, a sequence, a regular language, or the three a datatype declaration is
+; made of. Each is a datatype of the embedding, declared in
+; plugins/model_smt/model_smt.eos, and what follows are the ways of building
+; one. They are constructors like any other and say which datatype they build;
+; the name of one is the datatype's to scope, so the `cons` of a map and the
+; `cons` of a sequence are two constructors and not a clash.
+;
+; Nothing is asked of them. What is asked of a value is asked of the value
+; that *holds* one -- Map, Seq, RegLan and DtCons below -- so these say a
+; constructor and no case.
+
+; A map value, i.e. i mapped to e over the rest, or every index mapped to e.
+(declare-constructor cons ((i SmtValue) (e SmtValue) (m SmtMap)) :builds SmtMap)
+
+(declare-constructor default ((T SmtType) (e SmtValue)) :builds SmtMap)
+
+; A sequence value, i.e. a list of values ending in the empty one of a type.
+(declare-constructor cons ((i SmtValue) (s SmtSeq)) :builds SmtSeq)
+
+(declare-constructor empty ((T SmtType)) :builds SmtSeq)
+
+; The ways a regular language is built. An entry that says :builds declares a
+; constructor of that datatype of the embedding rather than a value, so nothing
+; is asked of these: what is asked of the value that holds one is asked of
+; RegLan below. A parameter that says no type is of the datatype itself, and
+; the two that hold a base element say SmtValue.
+;
+; They stand in the order the Lean inductive gives them, see SmtRegLan in
+; plugins/lean_meta/lean_meta_smt_model_defs.lean.
+
+(declare-constructor empty () :builds SmtRegLan)
+
+(declare-constructor epsilon () :builds SmtRegLan)
+
+(declare-constructor char ((c SmtValue)) :builds SmtRegLan)
+
+(declare-constructor range ((lo SmtValue) (hi SmtValue)) :builds SmtRegLan)
+
+(declare-constructor allchar () :builds SmtRegLan)
+
+(declare-constructor concat (r1 r2) :builds SmtRegLan)
+
+(declare-constructor union (r1 r2) :builds SmtRegLan)
+
+(declare-constructor inter (r1 r2) :builds SmtRegLan)
+
+(declare-constructor star (r) :builds SmtRegLan)
+
+(declare-constructor comp (r) :builds SmtRegLan)
+
+; The arguments of one datatype constructor: none, or the type of one argument
+; over the rest.
+(declare-constructor unit () :builds SmtDatatypeCons)
+
+(declare-constructor cons ((T SmtType) (c SmtDatatypeCons)) :builds SmtDatatypeCons)
+
+; The constructors of one datatype: none, or one over the rest.
+(declare-constructor null () :builds SmtDatatype)
+
+(declare-constructor sum ((c SmtDatatypeCons) (d SmtDatatype)) :builds SmtDatatype)
+
+; The datatypes of one declare-datatypes block: none, or one named datatype
+; over the rest.
+(declare-constructor nil () :builds SmtDatatypeDecl)
+
+(declare-constructor cons ((s <string>) (d SmtDatatype) (dd SmtDatatypeDecl))
+  :builds SmtDatatypeDecl)
+
+
+; What a datatype declaration means: how a reference in one is resolved
+; against the declaration it stands in, whether one is well founded, how many
+; selectors a constructor has, what a selector and a tester evaluate to, and
+; what the least value of one is. The map and the sequence say the same of
+; themselves above; these say it of the three a datatype declaration is made
+; of.
+;
+; They are written over the constructors declared above and over the
+; aggregates, which the embedding forward declares, so nothing here is the
+; embedding's to know: what a datatype *is* is above, what it *means* is here.
+
+; The helpers the embedding's own programs are written over: what a type is
+; when a field of a datatype refers to it, how an application is taken apart,
+; and whether a type is unit or finite. They stand here rather than in the
+; template for the same reason the datatype programs above do -- what a thing
+; *means* is the target's to say.
+
+(program $smtx_type_wf_component ((T SmtType))
+  :keep
+  :signature (SmtType) <bool>
+  (
+  (($smtx_type_wf_component T) ($smtx_type_wf_component_rec T))
+  )
+)
+
+(program $smtx_typeof_apply ((T SmtType) (U SmtType) (V SmtType))
+  :keep
+  :signature (SmtType SmtType) SmtType
+  (
+  ; only allowed to apply funs and datatype constructors
+  (($smtx_typeof_apply (FunType T U) V)
+    ($smtx_typeof_guard T ("ite" ("Teq" T V) U none)))
+  (($smtx_typeof_apply (DtcAppType T U) V)
+    ($smtx_typeof_guard T ("ite" ("Teq" T V) U none)))
+  (($smtx_typeof_apply T U)               none)
+  )
+)
+
+(program $smtx_typeof_guard ((T SmtType) (U SmtType))
+  :keep
+  :signature (SmtType SmtType) SmtType
+  (
+  (($smtx_typeof_guard T U) ("ite" ("Teq" T none) none U))
+  )
+)
+
+(program $smtx_typeof_guard_wf ((T SmtType) (U SmtType))
+  :keep
+  :signature (SmtType SmtType) SmtType
+  (
+  (($smtx_typeof_guard_wf T U) ("ite" ($smtx_type_wf T) U none))
+  )
+)
+
+(program $smtx_is_unit_type ((T SmtType))
+  :keep
+  :signature (SmtType) <bool>
+  (
+  (($smtx_is_unit_type T) ($smtx_type_bounded "true" T))
+  )
+)
+
+(program $smtx_is_finite_type ((T SmtType))
+  :keep
+  :signature (SmtType) <bool>
+  (
+  (($smtx_is_finite_type T) ($smtx_type_bounded "false" T))
+  )
+)
+
+(program $smtx_apply_head_value ((f SmtValue) (a SmtValue))
+  :keep
+  :signature (SmtValue) SmtValue
+  (
+  (($smtx_apply_head_value ($vsm_Apply f a)) ($smtx_apply_head_value f))
+  (($smtx_apply_head_value a)                a)
+  )
+)
+
+(program $smtx_apply_arg_nth_value
+  ((f SmtValue) (a SmtValue) (n <nat>) (npos <nat>))
+  :keep
+  :signature (SmtValue <nat> <nat>) SmtValue
+  (
+  (($smtx_apply_arg_nth_value ($vsm_Apply f a) n ("n_succ" npos))
+    ("ite" ("nateq" n npos) a
+      ($smtx_apply_arg_nth_value f n npos)))
+  (($smtx_apply_arg_nth_value a n npos) $vsm_NotValue)
+  )
+)
+
+(program $smtx_ret_typeof_sel_rec
+  ((T SmtType) (n <nat>) (m <nat>) (c SmtDatatypeCons) (d SmtDatatype))
+  :keep
+  :signature (SmtDatatype <nat> <nat>) SmtType
+  (
+  (($smtx_ret_typeof_sel_rec ($dt_sum ($dtc_cons T c) d) "n_zero" "n_zero") T)
+  (($smtx_ret_typeof_sel_rec ($dt_sum ($dtc_cons T c) d) "n_zero" ("n_succ" m))
+    ($smtx_ret_typeof_sel_rec ($dt_sum c d) "n_zero" m))
+  (($smtx_ret_typeof_sel_rec ($dt_sum c d) ("n_succ" n) m)
+    ($smtx_ret_typeof_sel_rec d n m))
+  (($smtx_ret_typeof_sel_rec d n m) none)
+  )
+)
+
+(program $smtx_ret_typeof_sel
+  ((s <string>) (n <nat>) (m <nat>) (dd SmtDatatypeDecl))
+  :keep
+  :signature (<string> SmtDatatypeDecl <nat> <nat>) SmtType
+  (
+  (($smtx_ret_typeof_sel s dd n m) ($smtx_ret_typeof_sel_rec ($smtx_dd_resolve s dd) n m))
+  )
+)
+
+(program $smtx_dtc_resolve
+  ((s <string>) (T SmtType) (c SmtDatatypeCons) (dd SmtDatatypeDecl))
+  :keep
+  :signature (SmtDatatypeCons SmtDatatypeDecl) SmtDatatypeCons
+  (
+  (($smtx_dtc_resolve ($dtc_cons (TypeRef s) c) dd)
+    ($dtc_cons (Datatype s dd) ($smtx_dtc_resolve c dd)))
+  (($smtx_dtc_resolve ($dtc_cons T c) dd)
+    ($dtc_cons T ($smtx_dtc_resolve c dd)))
+  (($smtx_dtc_resolve $dtc_unit dd) $dtc_unit)
+  )
+)
+
+(program $smtx_dt_resolve
+  ((d SmtDatatype) (c SmtDatatypeCons) (dd SmtDatatypeDecl))
+  :keep
+  :signature (SmtDatatype SmtDatatypeDecl) SmtDatatype
+  (
+  (($smtx_dt_resolve ($dt_sum c d) dd)
+    ($dt_sum ($smtx_dtc_resolve c dd) ($smtx_dt_resolve d dd)))
+  (($smtx_dt_resolve $dt_null dd) $dt_null)
+  )
+)
+
+(program $smtx_dd_lookup
+  ((s <string>) (s2 <string>) (d SmtDatatype) (c SmtDatatypeCons)
+   (dd SmtDatatypeDecl))
+  :keep
+  :signature (<string> SmtDatatypeDecl) SmtDatatype
+  (
+  (($smtx_dd_lookup s ($dd_cons s2 d dd))
+    ("ite" ("streq" s s2) d ($smtx_dd_lookup s dd)))
+  (($smtx_dd_lookup s $dd_nil) $dt_null)
+  )
+)
+
+(program $smtx_dd_has_dt
+  ((s <string>) (s2 <string>) (d SmtDatatype) (c SmtDatatypeCons)
+   (dd SmtDatatypeDecl))
+  :keep
+  :signature (<string> SmtDatatypeDecl) <bool>
+  (
+  (($smtx_dd_has_dt s ($dd_cons s2 d dd))
+    ("or" ("streq" s s2) ($smtx_dd_has_dt s dd)))
+  (($smtx_dd_has_dt s $dd_nil) "false")
+  )
+)
+
+(program $smtx_dt_cons_wf_rec
+  ((c SmtDatatypeCons) (T SmtType) (s <string>) (dd SmtDatatypeDecl))
+  :keep
+  :signature (SmtDatatypeDecl SmtDatatypeCons) <bool>
+  (
+  (($smtx_dt_cons_wf_rec dd ($dtc_cons (TypeRef s) c))
+    ("and" ($smtx_dd_has_dt s dd) ($smtx_dt_cons_wf_rec dd c)))
+  (($smtx_dt_cons_wf_rec dd ($dtc_cons T c))
+    ("and" ($smtx_type_wf_component_rec T)
+      ($smtx_dt_cons_wf_rec dd c)))
+  (($smtx_dt_cons_wf_rec dd $dtc_unit) "true")
+  )
+)
+
+(program $smtx_dt_wf_rec
+  ((dd SmtDatatypeDecl) (dF SmtDatatype) (cF SmtDatatypeCons))
+  :keep
+  :signature (SmtDatatypeDecl SmtDatatype) <bool>
+  (
+  (($smtx_dt_wf_rec dd ($dt_sum cF dF))
+    ("and" ($smtx_dt_cons_wf_rec dd cF) ($smtx_dt_wf_rec dd dF)))
+  (($smtx_dt_wf_rec dd $dt_null)  "true")
+  )
+)
+
+(program $smtx_decl_wf_rec
+  ((s <string>) (dd SmtDatatypeDecl) (d SmtDatatype) (ddF SmtDatatypeDecl))
+  :keep
+  :signature (SmtDatatypeDecl SmtDatatypeDecl) <bool>
+  (
+  (($smtx_decl_wf_rec dd ($dd_cons s d ddF))
+    ("and" ($smtx_dt_wf_rec dd d) ; this must be a well formed datatype
+    ("and" ("inhabited_type" (Datatype s dd)) ; must be inhabited
+    ("and" ($smtx_decl_wf_rec dd ddF) ; the tail must be a well formed datatype decl
+      ("not" ($smtx_dd_has_dt s ddF)))))) ; must be a unique reference
+  (($smtx_decl_wf_rec dd $dd_nil)  "true")
+  )
+)
+
+(program $smtx_dtc_num_sels ((U SmtType) (c SmtDatatypeCons))
+  :keep
+  :signature (SmtDatatypeCons) <nat>
+  (
+  (($smtx_dtc_num_sels ($dtc_cons U c)) ("n_succ" ($smtx_dtc_num_sels c)))
+  (($smtx_dtc_num_sels $dtc_unit)       "n_zero")
+  )
+)
+
+(program $smtx_dt_num_sels ((c SmtDatatypeCons) (d SmtDatatype) (n <nat>))
+  :keep
+  :signature (SmtDatatype <nat>) <nat>
+  (
+  (($smtx_dt_num_sels ($dt_sum c d) "n_zero") ($smtx_dtc_num_sels c))
+  (($smtx_dt_num_sels ($dt_sum c d) ("n_succ" n))
+     ($smtx_dt_num_sels d n))
+  (($smtx_dt_num_sels $dt_null n)                        "n_zero")
+  )
+)
+
+(program $smtx_typeof_dt_cons_rec
+  ((T SmtType) (U SmtType) (d SmtDatatype) (c SmtDatatypeCons) (n <nat>))
+  :keep
+  :signature (SmtType SmtDatatype <nat>) SmtType
+  (
+  (($smtx_typeof_dt_cons_rec T ($dt_sum $dtc_unit d) "n_zero") T)
+  (($smtx_typeof_dt_cons_rec T ($dt_sum ($dtc_cons U c) d) "n_zero")
+    (DtcAppType U ($smtx_typeof_dt_cons_rec T ($dt_sum c d) "n_zero")))
+  (($smtx_typeof_dt_cons_rec T ($dt_sum c d) ("n_succ" n))
+    ($smtx_typeof_dt_cons_rec T d n))
+  (($smtx_typeof_dt_cons_rec T d n) none)
+  )
+)
+
+(program $smtx_field_type_bounded
+  ((u <bool>) (s <string>) (T SmtType) (ddB SmtDatatypeDecl))
+  :keep
+  :signature (<bool> SmtType SmtDatatypeDecl) <bool>
+  (
+  (($smtx_field_type_bounded u (TypeRef s) ddB) ($smtx_dd_has_dt s ddB))
+  (($smtx_field_type_bounded u T ddB)                ($smtx_type_bounded u T))
+  )
+  :lean "termination_by T ddB => (sizeOf T, 1)"
+)
+
+(program $smtx_field_type_default
+  ((s <string>) (T SmtType) (dd SmtDatatypeDecl) (ddF SmtDatatypeDecl))
+  :keep
+  :signature (SmtDatatypeDecl SmtType SmtDatatypeDecl) SmtValue
+  (
+  (($smtx_field_type_default dd (TypeRef s) ddF) ($smtx_datatype_decl_default s dd ddF))
+  (($smtx_field_type_default dd T ddF) ($smtx_type_default T))
+  )
+  :lean "termination_by T ddF => 2 * (sizeOf T + sizeOf ddF) + 3
+decreasing_by
+  all_goals simp_wf
+  all_goals omega"
+)
+
+(program $smtx_datatype_cons_bounded
+  ((u <bool>) (T SmtType) (c SmtDatatypeCons) (ddB SmtDatatypeDecl))
+  :keep
+  :signature (<bool> SmtDatatypeCons SmtDatatypeDecl) <bool>
+  (
+  (($smtx_datatype_cons_bounded u $dtc_unit ddB) "true")
+  (($smtx_datatype_cons_bounded u ($dtc_cons T c) ddB)
+    ("and" ($smtx_field_type_bounded u T ddB)
+      ($smtx_datatype_cons_bounded u c ddB)))
+  )
+  :lean "termination_by c ddB => (sizeOf c, 0)"
+)
+
+(program $smtx_datatype_bounded
+  ((u <bool>) (c SmtDatatypeCons) (dF SmtDatatype) (ddB SmtDatatypeDecl))
+  :keep
+  :signature (<bool> SmtDatatype SmtDatatypeDecl) <bool>
+  (
+  (($smtx_datatype_bounded u ($dt_sum c $dt_null) ddB) ($smtx_datatype_cons_bounded u c ddB))
+  (($smtx_datatype_bounded u ($dt_sum c dF) ddB)
+    ("and" ("not" u)
+      ("and" ($smtx_datatype_cons_bounded u c ddB) ($smtx_datatype_bounded u dF ddB))))
+  (($smtx_datatype_bounded u dF ddB) ("not" u))
+  )
+  :lean "termination_by dF ddB => (sizeOf dF, 0)"
+)
+
+(program $smtx_datatype_decl_bounded_step
+  ((u <bool>) (sF <string>) (dF SmtDatatype)
+   (ddR SmtDatatypeDecl) (ddB SmtDatatypeDecl))
+  :keep
+  :signature (<bool> SmtDatatypeDecl SmtDatatypeDecl) SmtDatatypeDecl
+  (
+  (($smtx_datatype_decl_bounded_step u ($dd_cons sF dF ddR) ddB)
+    ($smtx_datatype_decl_bounded_step u ddR
+      ("ite"
+        ("and" ("not" ($smtx_dd_has_dt sF ddB))
+          ($smtx_datatype_bounded u dF ddB))
+        ($dd_cons sF dF ddB) ddB)))
+  (($smtx_datatype_decl_bounded_step u $dd_nil ddB) ddB)
+  )
+  :lean "termination_by ddR ddB => (sizeOf ddR, 0)"
+)
+
+(program $smtx_datatype_decl_bounded
+  ((u <bool>) (sC <string>) (dC SmtDatatype) (ddC SmtDatatypeDecl)
+   (dd SmtDatatypeDecl) (ddB SmtDatatypeDecl))
+  :keep
+  :signature (<bool> SmtDatatypeDecl SmtDatatypeDecl SmtDatatypeDecl) SmtDatatypeDecl
+  (
+  (($smtx_datatype_decl_bounded u ($dd_cons sC dC ddC) dd ddB)
+    ($smtx_datatype_decl_bounded u ddC dd ($smtx_datatype_decl_bounded_step u dd ddB)))
+  (($smtx_datatype_decl_bounded u $dd_nil dd ddB) ddB)
+  )
+  :lean "termination_by ddC dd ddB => (sizeOf dd, sizeOf ddC)"
+)
+
+(program $smtx_datatype_cons_default
+  ((v SmtValue) (T SmtType) (c SmtDatatypeCons) (dd SmtDatatypeDecl) (ddF SmtDatatypeDecl))
+  :keep
+  :signature (SmtValue SmtDatatypeDecl SmtDatatypeCons SmtDatatypeDecl) SmtValue
+  (
+  (($smtx_datatype_cons_default v dd $dtc_unit ddF) v)
+  (($smtx_datatype_cons_default v dd ($dtc_cons T c) ddF)
+    (eo::define ((va ($smtx_field_type_default dd T ddF)))
+      ("ite" ("veq" va $vsm_NotValue) $vsm_NotValue
+        ($smtx_datatype_cons_default ($vsm_Apply v va) dd c ddF))))
+  )
+  :lean "termination_by c ddF => 2 * (sizeOf c + sizeOf ddF) + 2"
+)
+
+(program $smtx_datatype_default
+  ((s <string>) (dd SmtDatatypeDecl) (ddF SmtDatatypeDecl) (dF SmtDatatype)
+   (cF SmtDatatypeCons) (n <nat>))
+  :keep
+  :signature (<string> SmtDatatypeDecl <nat> SmtDatatype SmtDatatypeDecl) SmtValue
+  (
+  (($smtx_datatype_default s dd n ($dt_sum cF dF) ddF)
+    (eo::define ((v1 ($smtx_datatype_cons_default ($vsm_DtCons s dd n) dd cF ddF)))
+      ("ite" ("not" ("veq" v1 $vsm_NotValue))
+        v1
+        ($smtx_datatype_default s dd ("n_succ" n) dF ddF))))
+  (($smtx_datatype_default s dd n dF ddF) $vsm_NotValue)
+  )
+  :lean "termination_by dF ddF => 2 * (sizeOf dF + sizeOf ddF) + 1"
+)
+
+(program $smtx_datatype_decl_default
+  ((s <string>) (sF <string>) (sU <string>)
+   (dd SmtDatatypeDecl) (ddF SmtDatatypeDecl) (dF SmtDatatype))
+  :keep
+  :signature (<string> SmtDatatypeDecl SmtDatatypeDecl) SmtValue
+  (
+  (($smtx_datatype_decl_default s dd ($dd_cons sF dF ddF))
+    ("ite" ("streq" s sF)
+      ($smtx_datatype_default s dd "n_zero" dF ddF)
+      ($smtx_datatype_decl_default s dd ddF)))
+  (($smtx_datatype_decl_default s dd ddF) $vsm_NotValue)
+  )
+  :lean "termination_by ddF => 2 * sizeOf ddF"
+)
 
 ;-----------------------------------------------------------------------------
 (section "The values")
@@ -342,20 +778,20 @@
 ; They stand in the order their constructors are given, which what is derived
 ; from that order depends on, so a value is added at the end.
 
-(define-value NotValue ())
+(declare-constructor NotValue () :builds SmtValue)
 
-(define-value Boolean ((b "Bool"))
+(declare-constructor Boolean ((b <bool>)) :builds SmtValue
   :typeof Bool)
 
-(define-value Numeral ((n "Int"))
+(declare-constructor Numeral ((n <numeral>)) :builds SmtValue
   :typeof Int)
 
-(define-value Rational ((r "Rat"))
+(declare-constructor Rational ((r <rational>)) :builds SmtValue
   :typeof Real)
 
 ; A bit-vector is of the width it carries, and is the one spelling of what it
 ; denotes when its value is that width's remainder.
-(define-value Binary ((w "Int") (v "Int"))
+(declare-constructor Binary ((w <numeral>) (v <numeral>)) :builds SmtValue
   :typeof ("ite" ("and" ("zleq" 0 w) ("zeq" v ("mod_total" v ("z_pow2" w))))
             (BitVec ("z_to_n" w))
             none)
@@ -363,32 +799,33 @@
                ("zeq" v ("mod_total" v ("z_pow2" w)))
                "true"))
 
-(define-value Map ((m SmtMap))
+(declare-constructor Map ((m SmtMap)) :builds SmtValue
   :typeof (smt.typeof_map_value m)
   :canonical ($smtx_map_canonical m))
 
 ; A function value is named rather than given, so what it is of is what it
 ; says it is of.
-(define-value Fun ((s "String") (T SmtType) (U SmtType))
+(declare-constructor Fun ((s <string>) (T SmtType) (U SmtType)) :builds SmtValue
   :typeof (FunType T U))
 
 ; A set is a map to the Booleans, so it is canonical when the map is and when
 ; what it maps the rest to is false.
-(define-value Set ((m SmtMap))
+(declare-constructor Set ((m SmtMap)) :builds SmtValue
   :typeof ($smtx_map_to_set_type (smt.typeof_map_value m))
   :canonical ("and" ($smtx_map_canonical m)
                ("veq" ($smtx_map_get_default m) smt.false)))
 
-(define-value Seq ((s SmtSeq))
+(declare-constructor Seq ((s SmtSeq)) :builds SmtValue
   :typeof (smt.typeof_seq_value s)
   :canonical ($smtx_seq_canonical s))
 
-(define-value Char ((c "Char"))
+(declare-constructor Char ((c <char>)) :builds SmtValue
   :typeof ("ite" ("char_valid" c) Char none)
   :canonical ("char_valid" c))
 
-(define-value UValue ((i "Nat") (e "Nat"))
+(declare-constructor UValue ((i <nat>) (e <nat>)) :builds SmtValue
   :typeof (USort i))
+
 
 ; -- $smtx_re_canonical
 ; A regular language is written the one way when every base element it holds
@@ -398,7 +835,7 @@
 ; every way of building one is canonical in itself.
 (program $smtx_re_canonical
   ((c SmtValue) (lo SmtValue) (hi SmtValue) (r SmtRegLan) (r2 SmtRegLan))
-  :signature (SmtRegLan) "Bool"
+  :signature (SmtRegLan) <bool>
   (
   (($smtx_re_canonical $rsm_empty)          "true")
   (($smtx_re_canonical $rsm_epsilon)        "true")
@@ -417,7 +854,7 @@
   )
 )
 
-(define-value RegLan ((r SmtRegLan))
+(declare-constructor RegLan ((r SmtRegLan)) :builds SmtValue
   :typeof RegLan
   :canonical ($smtx_re_canonical r))
 
@@ -429,8 +866,8 @@
 ; answers the same for the *term*: the hand-written Lean proofs of Logos are
 ; stated over both, so neither stands in for the other.
 (program $smtx_typeof_dt_cons_value_rec
-  ((T SmtType) (U SmtType) (n "Nat") (c SmtDatatypeCons) (d SmtDatatype))
-  :signature (SmtType SmtDatatype "Nat") SmtType
+  ((T SmtType) (U SmtType) (n <nat>) (c SmtDatatypeCons) (d SmtDatatype))
+  :signature (SmtType SmtDatatype <nat>) SmtType
   (
   (($smtx_typeof_dt_cons_value_rec T ($dt_sum $dtc_unit d) "n_zero") T)
   (($smtx_typeof_dt_cons_value_rec T ($dt_sum ($dtc_cons U c) d) "n_zero")
@@ -443,7 +880,7 @@
 
 ; A datatype constructor is of the type its declaration gives it. It is not
 ; guarded by well-foundedness, which would be circular.
-(define-value DtCons ((s "String") (dd SmtDatatypeDecl) (ci "Nat"))
+(declare-constructor DtCons ((s <string>) (dd SmtDatatypeDecl) (ci <nat>)) :builds SmtValue
   :typeof (smt.typeof_dt_cons_value s dd ci))
 
 ; -- $smtx_typeof_apply_value
@@ -461,7 +898,7 @@
 
 ; An application of one is a value of the type applying it gives, and is
 ; canonical when both halves are.
-(define-value Apply ((f SmtValue) (a SmtValue))
+(declare-constructor Apply ((f SmtValue) (a SmtValue)) :builds SmtValue
   :typeof ($smtx_typeof_apply_value (smt.typeof_value f) (smt.typeof_value a))
   :canonical ("and" ($smtx_value_canonical f)
                ($smtx_value_canonical a)))
@@ -478,27 +915,27 @@
 ; is of and its value in a model. They are written where a symbol writes them,
 ; and stand before the symbols written over them.
 
-(define-literal Boolean ((b "Bool"))
+(define-literal Boolean ((b <bool>))
   :typeof Bool
   :value (smt.bool b))
 
-(define-literal Numeral ((n "Int"))
+(define-literal Numeral ((n <numeral>))
   :typeof Int
   :value (smt.numeral n))
 
-(define-literal Rational ((r "Rat"))
+(define-literal Rational ((r <rational>))
   :typeof Real
   :value (smt.rational r))
 
 ; A string is of the strings when what it carries is one, i.e. when every
 ; character of it is a character of SMT-LIB; its value is the sequence of them.
-(define-literal String ((s "String"))
+(define-literal String ((s <string>))
   :typeof ("ite" ("string_valid" s) String none)
   :value (smt.seq ("pack_string" s)))
 
 ; A bit-vector carries its width and its value, and is of that width when the
 ; value is one the width can hold.
-(define-literal Binary ((w "Int") (v "Int"))
+(define-literal Binary ((w <numeral>) (v <numeral>))
   :typeof ("ite" ("and" ("zleq" 0 w) ("zeq" v ("mod_total" v ("z_pow2" w))))
             (BitVec ("z_to_n" w))
             none)
@@ -642,7 +1079,7 @@
 )
 
 ; -- $smtx_to_real_coerce
-(program $smtx_to_real_coerce ((x1 "Int") (x2 "Rat") (v SmtValue))
+(program $smtx_to_real_coerce ((x1 <numeral>) (x2 <rational>) (v SmtValue))
   :signature (SmtValue) SmtValue
   (
   (($smtx_to_real_coerce (smt.numeral x1)) (smt.rational ("to_real" x1)))
@@ -706,7 +1143,7 @@
 ; name; see the block of $eoo_-.2 below.
 (define-symbol uneg (x)
   :typeof ($smtx_typeof_arith_overload_op_1 x)
-  :eval ((smt.numeral x)) (smt.numeral ("z_uneg" x))
+  :eval ((smt.numeral x)) (smt.numeral ("zneg" x))
   :eval ((smt.rational qx)) (smt.rational ("qneg" qx)))
 
 (define-symbol div_total (x y)
@@ -864,7 +1301,7 @@
   (smt.binary n ("mod_total" v ("z_pow2" n))))
 
 ; The type of a bit-vector operator that returns what its argument is.
-(program $smtx_typeof_bv_op_1 ((T SmtType) (n "Int"))
+(program $smtx_typeof_bv_op_1 ((T SmtType) (n <numeral>))
   :signature (SmtType) SmtType
   (
   (($smtx_typeof_bv_op_1 (BitVec n)) (BitVec n))
@@ -874,7 +1311,7 @@
 
 ; The type of a bit-vector operator whose two arguments must be of one width.
 (program $smtx_typeof_bv_op_2
-  ((T SmtType) (U SmtType) (n1 "Nat") (n2 "Nat"))
+  ((T SmtType) (U SmtType) (n1 <nat>) (n2 <nat>))
   :signature (SmtType SmtType) SmtType
   (
   (($smtx_typeof_bv_op_2 (BitVec n1) (BitVec n2))
@@ -885,7 +1322,7 @@
 
 ; The same, for one that returns a type given rather than its arguments'.
 (program $smtx_typeof_bv_op_2_ret
-  ((T SmtType) (U SmtType) (V SmtType) (n1 "Nat") (n2 "Nat"))
+  ((T SmtType) (U SmtType) (V SmtType) (n1 <nat>) (n2 <nat>))
   :signature (SmtType SmtType SmtType) SmtType
   (
   (($smtx_typeof_bv_op_2_ret (BitVec n1) (BitVec n2) U)
@@ -895,7 +1332,7 @@
 )
 
 ; The same, for one that returns a type given rather than its argument's.
-(program $smtx_typeof_bv_op_1_ret ((T SmtType) (U SmtType) (n "Int"))
+(program $smtx_typeof_bv_op_1_ret ((T SmtType) (U SmtType) (n <numeral>))
   :signature (SmtType SmtType) SmtType
   (
   (($smtx_typeof_bv_op_1_ret (BitVec n) T) T)
@@ -905,15 +1342,15 @@
 
 ; The width a bit-vector value is of, or minus one if the value is not one.
 (program $smtx_bv_sizeof_value
-  ((x1 "Int") (x2 "Int") (t1 SmtValue))
-  :signature (SmtValue) "Int"
+  ((x1 <numeral>) (x2 <numeral>) (t1 SmtValue))
+  :signature (SmtValue) <numeral>
   (
   (($smtx_bv_sizeof_value (smt.binary x1 x2)) x1)
   (($smtx_bv_sizeof_value t1) "z_neg_one")
   )
 )
 
-(program $smtx_typeof_concat ( (x1 "Int") (x2 "Int")  (x3 SmtType)  (x4 SmtType))
+(program $smtx_typeof_concat ( (x1 <numeral>) (x2 <numeral>)  (x3 SmtType)  (x4 SmtType))
   :signature (SmtType SmtType) SmtType
   (
   (($smtx_typeof_concat (BitVec x1) (BitVec x2)) (BitVec ("z_to_n" ("zplus" ("n_to_z" x1) ("n_to_z" x2)))))
@@ -921,15 +1358,15 @@
   )
 )
 
-(program $smtx_typeof_extract ( (x1 "Int") (x2 "Int")  (x3 "Int")  (x4 SmtType)  (x5 SmtType)  (x6 SmtType))
+(program $smtx_typeof_extract ( (x1 <numeral>) (x2 <numeral>)  (x3 <numeral>)  (x4 SmtType)  (x5 SmtType)  (x6 SmtType))
   :signature (SmtTerm SmtTerm SmtType) SmtType
   (
-  (($smtx_typeof_extract (Numeral x1) (Numeral x2) (BitVec x3)) ("ite" ("zleq" 0 x2) ("ite" ("zlt" x1 ("n_to_z" x3)) ("ite" ("zlt" 0 ("zplus" ("zplus" x1 1) ("z_uneg" x2))) (BitVec ("z_to_n" ("zplus" ("zplus" x1 1) ("z_uneg" x2)))) none) none) none))
+  (($smtx_typeof_extract (Numeral x1) (Numeral x2) (BitVec x3)) ("ite" ("zleq" 0 x2) ("ite" ("zlt" x1 ("n_to_z" x3)) ("ite" ("zlt" 0 ("zplus" ("zplus" x1 1) ("zneg" x2))) (BitVec ("z_to_n" ("zplus" ("zplus" x1 1) ("zneg" x2)))) none) none) none))
   (($smtx_typeof_extract x4 x5 x6) none)
   )
 )
 
-(program $smtx_typeof_repeat ( (x1 "Int") (x2 "Int")  (x3 SmtType)  (x4 SmtType))
+(program $smtx_typeof_repeat ( (x1 <numeral>) (x2 <numeral>)  (x3 SmtType)  (x4 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_repeat (Numeral x1) (BitVec x2)) ("ite" ("zleq" 1 x1) (BitVec ("z_to_n" ("zmult" x1 ("n_to_z" x2)))) none))
@@ -937,7 +1374,7 @@
   )
 )
 
-(program $smtx_typeof_zero_extend ( (x1 "Int") (x2 "Int")  (x3 SmtType)  (x4 SmtType))
+(program $smtx_typeof_zero_extend ( (x1 <numeral>) (x2 <numeral>)  (x3 SmtType)  (x4 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_zero_extend (Numeral x1) (BitVec x2)) ("ite" ("zleq" 0 x1) (BitVec ("z_to_n" ("zplus" x1 ("n_to_z" x2)))) none))
@@ -945,7 +1382,7 @@
   )
 )
 
-(program $smtx_typeof_sign_extend ( (x1 "Int") (x2 "Int")  (x3 SmtType)  (x4 SmtType))
+(program $smtx_typeof_sign_extend ( (x1 <numeral>) (x2 <numeral>)  (x3 SmtType)  (x4 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_sign_extend (Numeral x1) (BitVec x2)) ("ite" ("zleq" 0 x1) (BitVec ("z_to_n" ("zplus" x1 ("n_to_z" x2)))) none))
@@ -953,7 +1390,7 @@
   )
 )
 
-(program $smtx_typeof_rotate_left ( (x1 "Int") (x2 "Int")  (x3 SmtType)  (x4 SmtType))
+(program $smtx_typeof_rotate_left ( (x1 <numeral>) (x2 <numeral>)  (x3 SmtType)  (x4 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_rotate_left (Numeral x1) (BitVec x2)) ("ite" ("zleq" 0 x1) (BitVec x2) none))
@@ -961,7 +1398,7 @@
   )
 )
 
-(program $smtx_typeof_rotate_right ( (x1 "Int") (x2 "Int")  (x3 SmtType)  (x4 SmtType))
+(program $smtx_typeof_rotate_right ( (x1 <numeral>) (x2 <numeral>)  (x3 SmtType)  (x4 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_rotate_right (Numeral x1) (BitVec x2)) ("ite" ("zleq" 0 x1) (BitVec x2) none))
@@ -969,7 +1406,7 @@
   )
 )
 
-(program $smtx_typeof_int_to_bv ( (x1 "Int") (x2 SmtType)  (x3 SmtType))
+(program $smtx_typeof_int_to_bv ( (x1 <numeral>) (x2 SmtType)  (x3 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_int_to_bv (Numeral x1) Int) ("ite" ("zleq" 0 x1) (BitVec ("z_to_n" x1)) none))
@@ -977,16 +1414,16 @@
   )
 )
 
-(program $smtx_repeat_rec ((n "Nat")(x1 SmtValue)(x1 SmtValue))
-  :signature ("Nat" SmtValue) SmtValue
+(program $smtx_repeat_rec ((n <nat>)(x1 SmtValue)(x1 SmtValue))
+  :signature (<nat> SmtValue) SmtValue
   (
   (($smtx_repeat_rec "n_zero" x1) smt.binary_empty)
   (($smtx_repeat_rec ("n_succ" n) x1) (concat x1 ($smtx_repeat_rec n x1)))
   )
 )
 
-(program $smtx_rotate_left_rec ((n "Nat")(x1 "Int") (x2 "Int")(x1 "Int") (x2 "Int") (t1 SmtValue))
-  :signature ("Nat" SmtValue) SmtValue
+(program $smtx_rotate_left_rec ((n <nat>)(x1 <numeral>) (x2 <numeral>)(x1 <numeral>) (x2 <numeral>) (t1 SmtValue))
+  :signature (<nat> SmtValue) SmtValue
   (
   (($smtx_rotate_left_rec "n_zero" (smt.binary x1 x2)) (smt.binary x1 x2))
   (($smtx_rotate_left_rec ("n_succ" n) (smt.binary x1 x2)) (eo::define ((wm1 (smt.numeral ("z_dec" x1)))) (eo::define ((wm2 (smt.numeral ("z_dec" ("z_dec" x1))))) ($smtx_rotate_left_rec n (concat (extract wm2 0 (smt.binary x1 x2)) (extract wm1 wm1 (smt.binary x1 x2)))))))
@@ -994,8 +1431,8 @@
   )
 )
 
-(program $smtx_rotate_right_rec ((n "Nat")(x1 "Int") (x2 "Int")(x1 "Int") (x2 "Int") (t1 SmtValue))
-  :signature ("Nat" SmtValue) SmtValue
+(program $smtx_rotate_right_rec ((n <nat>)(x1 <numeral>) (x2 <numeral>)(x1 <numeral>) (x2 <numeral>) (t1 SmtValue))
+  :signature (<nat> SmtValue) SmtValue
   (
   (($smtx_rotate_right_rec "n_zero" (smt.binary x1 x2)) (smt.binary x1 x2))
   (($smtx_rotate_right_rec ("n_succ" n) (smt.binary x1 x2)) (eo::define ((wm1 (smt.numeral ("z_dec" x1)))) ($smtx_rotate_right_rec n (concat (extract 0 0 (smt.binary x1 x2)) (extract wm1 1 (smt.binary x1 x2))))))
@@ -1033,7 +1470,7 @@
 
 (define-symbol extract ((! i :raw) (! j :raw) x)
   :typeof ($smtx_typeof_extract i j x)
-  :eval ((smt.numeral i) (smt.numeral j) (smt.binary n x)) (of_width ("zplus" ("zplus" i 1) ("z_uneg" j)) ("binary_extract" n x i j)))
+  :eval ((smt.numeral i) (smt.numeral j) (smt.binary n x)) (of_width ("zplus" ("zplus" i 1) ("zneg" j)) ("binary_extract" n x i j)))
 
 (define-symbol repeat ((! k :raw) x)
   :typeof ($smtx_typeof_repeat k x)
@@ -1073,7 +1510,7 @@
 
 (define-symbol bvneg (x)
   :typeof ($smtx_typeof_bv_op_1 x)
-  :eval ((smt.binary n x)) (of_width n ("z_uneg" x)))
+  :eval ((smt.binary n x)) (of_width n ("zneg" x)))
 
 (define-symbol bvadd (x y)
   :typeof ($smtx_typeof_bv_op_2 x y)
@@ -1191,14 +1628,14 @@
 
 (define-symbol bvnego (x)
   :typeof ($smtx_typeof_bv_op_1_ret x Bool)
-  :eval ((smt.binary n x)) (smt.bool ("zeq" x ("z_pow2" ("zplus" n ("z_uneg" 1))))))
+  :eval ((smt.binary n x)) (smt.bool ("zeq" x ("z_pow2" ("zplus" n ("zneg" 1))))))
 
 (define-symbol bvsaddo (x y)
   :typeof ($smtx_typeof_bv_op_2_ret x y Bool)
   :eval ((smt.binary n x) (smt.binary m y))
     (smt.bool
-      ("or" ("zleq" ("z_pow2" ("zplus" n ("z_uneg" 1))) ("zplus" ("binary_uts" n x) ("binary_uts" m y)))
-            ("zlt" ("zplus" ("binary_uts" n x) ("binary_uts" m y)) ("z_uneg" ("z_pow2" ("zplus" n ("z_uneg" 1))))))))
+      ("or" ("zleq" ("z_pow2" ("zplus" n ("zneg" 1))) ("zplus" ("binary_uts" n x) ("binary_uts" m y)))
+            ("zlt" ("zplus" ("binary_uts" n x) ("binary_uts" m y)) ("zneg" ("z_pow2" ("zplus" n ("zneg" 1))))))))
 
 (define-symbol bvumulo (x y)
   :typeof ($smtx_typeof_bv_op_2_ret x y Bool)
@@ -1208,8 +1645,8 @@
   :typeof ($smtx_typeof_bv_op_2_ret x y Bool)
   :eval ((smt.binary n x) (smt.binary m y))
     (smt.bool
-      ("or" ("zleq" ("z_pow2" ("zplus" n ("z_uneg" 1))) ("zmult" ("binary_uts" n x) ("binary_uts" m y)))
-            ("zlt" ("zmult" ("binary_uts" n x) ("binary_uts" m y)) ("z_uneg" ("z_pow2" ("zplus" n ("z_uneg" 1))))))))
+      ("or" ("zleq" ("z_pow2" ("zplus" n ("zneg" 1))) ("zmult" ("binary_uts" n x) ("binary_uts" m y)))
+            ("zlt" ("zmult" ("binary_uts" n x) ("binary_uts" m y)) ("zneg" ("z_pow2" ("zplus" n ("zneg" 1))))))))
 
 (define-symbol bvusubo (x y)
   :typeof ($smtx_typeof_bv_op_2_ret x y Bool)
@@ -1349,7 +1786,7 @@
   )
 )
 
-(program $smtx_typeof_re.^ ( (x1 "Int") (x2 SmtType)  (x3 SmtType))
+(program $smtx_typeof_re.^ ( (x1 <numeral>) (x2 SmtType)  (x3 SmtType))
   :signature (SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_re.^ (Numeral x1) RegLan) ("ite" ("zleq" 0 x1) RegLan none))
@@ -1357,7 +1794,7 @@
   )
 )
 
-(program $smtx_typeof_re.loop ( (x1 "Int") (x2 "Int")   (x3 SmtType)  (x4 SmtType)  (x5 SmtType))
+(program $smtx_typeof_re.loop ( (x1 <numeral>) (x2 <numeral>)   (x3 SmtType)  (x4 SmtType)  (x5 SmtType))
   :signature (SmtTerm SmtTerm SmtType) SmtType
   (
   (($smtx_typeof_re.loop (Numeral x1) (Numeral x2) RegLan) ("ite" ("zleq" 0 x1) ("ite" ("zleq" 0 x2) RegLan none) none))
@@ -1383,16 +1820,16 @@
   )
 )
 
-(program $smtx_re.^_rec ((n "Nat")(x1 SmtValue)(x1 SmtValue))
-  :signature ("Nat" SmtValue) SmtValue
+(program $smtx_re.^_rec ((n <nat>)(x1 SmtValue)(x1 SmtValue))
+  :signature (<nat> SmtValue) SmtValue
   (
   (($smtx_re.^_rec "n_zero" x1) (str.to_re smt.string_empty))
   (($smtx_re.^_rec ("n_succ" n) x1) (re.++ ($smtx_re.^_rec n x1) x1))
   )
 )
 
-(program $smtx_re.loop_rec ((n "Nat")(x1 SmtValue)(x2 "Int") (x3 SmtValue)(x1 SmtValue)(x2 "Int") (x3 SmtValue) (t1 SmtValue) (t2 SmtValue) (t3 SmtValue))
-  :signature ("Nat" SmtValue SmtValue SmtValue) SmtValue
+(program $smtx_re.loop_rec ((n <nat>)(x1 SmtValue)(x2 <numeral>) (x3 SmtValue)(x1 SmtValue)(x2 <numeral>) (x3 SmtValue) (t1 SmtValue) (t2 SmtValue) (t3 SmtValue))
+  :signature (<nat> SmtValue SmtValue SmtValue) SmtValue
   (
   (($smtx_re.loop_rec "n_zero" x1 (smt.numeral x2) x3) (re.^ x1 x3))
   (($smtx_re.loop_rec ("n_succ" n) x1 (smt.numeral x2) x3) (re.union ($smtx_re.loop_rec n x1 (smt.numeral ("z_dec" x2)) x3) (re.^ (smt.numeral x2) x3)))
@@ -1401,8 +1838,8 @@
 )
 
 (program $smtx_seq_value_nth
-  ((v SmtValue) (vs SmtSeq) (n "Int") (T SmtType) (d SmtValue))
-  :signature (SmtSeq "Int" SmtValue) SmtValue
+  ((v SmtValue) (vs SmtSeq) (n <numeral>) (T SmtType) (d SmtValue))
+  :signature (SmtSeq <numeral> SmtValue) SmtValue
   (
   (($smtx_seq_value_nth (smt.seq_empty T) n d)                     d)
   (($smtx_seq_value_nth (smt.seq_cons v vs) 0 d) v)
@@ -1412,8 +1849,8 @@
 )
 
 (program $smtx_seq_nth_wrong
-  ((M SmtModel) (s SmtSeq) (n "Int") (T SmtType))
-  :signature (SmtModel SmtSeq "Int" SmtType) SmtValue
+  ((M SmtModel) (s SmtSeq) (n <numeral>) (T SmtType))
+  :signature (SmtModel SmtSeq <numeral> SmtType) SmtValue
   (
   (($smtx_seq_nth_wrong M s n (Seq T))
     ($smtx_map_select
@@ -1427,7 +1864,7 @@
 
 ; Sequence nth
 (program $smtx_seq_nth
-  ((M SmtModel) (s SmtSeq) (n "Int") (v1 SmtValue) (v2 SmtValue))
+  ((M SmtModel) (s SmtSeq) (n <numeral>) (v1 SmtValue) (v2 SmtValue))
   :signature (SmtModel SmtValue SmtValue) SmtValue
   (
   (($smtx_seq_nth M (smt.seq s) (smt.numeral n))
@@ -1667,8 +2104,8 @@
 ; insist on true/false, to ensure the function is total.
 (program $smtx_set_op_rec
   ((T SmtType) (m1 SmtMap) (m2 SmtMap) (acc SmtMap) (e SmtValue)
-   (efalse SmtValue) (etrue SmtValue) (isInter "Bool"))
-  :signature ("Bool" SmtMap SmtMap SmtMap) SmtMap
+   (efalse SmtValue) (etrue SmtValue) (isInter <bool>))
+  :signature (<bool> SmtMap SmtMap SmtMap) SmtMap
   (
   (($smtx_set_op_rec isInter (smt.map_default T efalse) m2 acc) acc)
   (($smtx_set_op_rec isInter (smt.map_cons e etrue m1) m2 acc)
@@ -1787,20 +2224,9 @@
 (define-method $smtx_type_default
   :lean "termination_by T => 2 * sizeOf T")
 
-(define-method $smtx_datatype_decl_default
-  :lean "termination_by ddF => 2 * sizeOf ddF")
 
-(define-method $smtx_datatype_default
-  :lean "termination_by dF ddF => 2 * (sizeOf dF + sizeOf ddF) + 1")
 
-(define-method $smtx_datatype_cons_default
-  :lean "termination_by c ddF => 2 * (sizeOf c + sizeOf ddF) + 2")
 
-(define-method $smtx_field_type_default
-  :lean "termination_by T ddF => 2 * (sizeOf T + sizeOf ddF) + 3
-decreasing_by
-  all_goals simp_wf
-  all_goals omega")
 
 ; Type boundedness (unit/finite) computes a fixpoint over datatype
 ; declarations. The lexicographic measures decrease on the structural
@@ -1810,20 +2236,10 @@ decreasing_by
 (define-method $smtx_type_bounded
   :lean "termination_by T => (sizeOf T, 0)")
 
-(define-method $smtx_datatype_decl_bounded
-  :lean "termination_by ddC dd ddB => (sizeOf dd, sizeOf ddC)")
 
-(define-method $smtx_datatype_decl_bounded_step
-  :lean "termination_by ddR ddB => (sizeOf ddR, 0)")
 
-(define-method $smtx_datatype_bounded
-  :lean "termination_by dF ddB => (sizeOf dF, 0)")
 
-(define-method $smtx_datatype_cons_bounded
-  :lean "termination_by c ddB => (sizeOf c, 0)")
 
-(define-method $smtx_field_type_bounded
-  :lean "termination_by T ddB => (sizeOf T, 1)")
 
 ; The evaluator recurses structurally, and the theorem that follows it caches
 ; the equation for a Boolean term, which Lean would otherwise unfold anew at

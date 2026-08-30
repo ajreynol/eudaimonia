@@ -41,7 +41,10 @@ resolved at run time -- which tracks the compiler as it is developed, at the
 cost of a build that cannot be reproduced later. --tip and --pinned override
 DEV_MODE for one run.
 
-DEV_MODE is currently 1, and is meant to be temporary.
+DEV_MODE is 0: this checker is pinned. Note that the commit and
+install/defs/smt.eos are pinned together -- that file is a snapshot of the
+pinned commit's semantics, and the format is still changing, so a snapshot
+generally does not parse against a different commit. See install/README.md.
 
 Options:
   --deps-dir DIR       where to put everything (default: install/deps)
@@ -84,19 +87,22 @@ USAGE
 #                        cost of two runs a week apart not building the same
 #                        thing.
 #
-# ###########################################################################
-# # DEV_MODE IS TEMPORARY. Set it back to 0 -- and set ETHOS_VERSION to the   #
-# # commit that was last built -- before this is relied on by anyone else.    #
-# # A tip-following build is not reproducible, so a checker generated under   #
-# # it cannot be regenerated identically later. See TODO.md.                  #
-# ###########################################################################
-DEV_MODE=1
+# A generated checker is pinned. Following the tip is available with --tip for
+# a single run, but it is not the default: a checker built against a moving
+# compiler cannot be regenerated identically later, and the Eunoia semantics
+# format is still changing under it.
+DEV_MODE=0
 
 ETHOS_BRANCH="ethosEoc3"
 
-# The commit built when DEV_MODE=0. Last known good: the head of ethosEoc3 on
-# 2026-08-29. A tip build prints the line to paste here when switching back.
-ETHOS_VERSION="1c0f95e17687913eeef9ae6af9efcf2d6fe36076"
+# The commit built when DEV_MODE=0: the head of ethosEoc3 on 2026-08-30.
+#
+# This is not an arbitrary choice of pin. install/defs/smt.eos is a snapshot of
+# tools/eoc/semantics/smt.eos *from this commit*, and the two move together --
+# the semantics format changes, so a snapshot taken at one commit will not
+# generally parse against another. scripts/bump-eoc.sh in the Eudaimonia
+# repository advances both at once.
+ETHOS_VERSION="3cf1c03fdfd01720b4ec7614f475a75b31c3b483"
 # ---------------------------------------------------------------------------
 
 # The driver options the pin has to provide. See the note above.
@@ -193,14 +199,18 @@ if [ "${DEV_MODE}" = "1" ]; then
   cat >&2 <<'WARN'
 
   ##########################################################################
-  ##  DEVELOPMENT MODE: building the branch tip, not a pin.               ##
+  ##  Building the branch tip, not the pin.                               ##
   ##                                                                      ##
-  ##  This build is not reproducible. Two runs on different days build    ##
+  ##  This build is not reproducible: two runs on different days build    ##
   ##  different compilers, and a checker generated now cannot be          ##
   ##  regenerated identically later.                                      ##
   ##                                                                      ##
-  ##  Temporary. Set DEV_MODE=0 in this script before relying on a build. ##
-  ##  on it. The line to paste is printed at the end of this run.         ##
+  ##  install/defs/smt.eos is a snapshot of the *pinned* commit's         ##
+  ##  semantics, and the format is still changing -- so the install may   ##
+  ##  reject it against a newer compiler. If it does, that is this, not   ##
+  ##  a fault in the signature. See install/README.md.                    ##
+  ##                                                                      ##
+  ##  The lines to pin what this builds are printed at the end.           ##
   ##########################################################################
 
 WARN
@@ -310,14 +320,18 @@ DONE
 if [ "${DEV_MODE}" = "1" ]; then
   cat <<DONE
 
-==> This was a development build of the ${ETHOS_BRANCH} tip, and is not
-    reproducible. To leave development mode, edit install/get-eo-compiler.sh:
+==> This built the ${ETHOS_BRANCH} tip rather than the pin, and is not
+    reproducible. To pin what was just built, edit install/get-eo-compiler.sh:
 
-      DEV_MODE=0
       ETHOS_VERSION="${ETHOS_VERSION}"
 
-    That pins what was just built, so switching back changes nothing about the
-    compiler -- only whether the next run is allowed to move.
+    and take the semantics that goes with it:
+
+      cp deps/ethos/tools/eoc/semantics/smt.eos defs/smt.eos
+
+    Both, not one. The commit and the snapshot are pinned together: the
+    semantics format is still changing, so a snapshot taken at one commit will
+    not generally parse against another.
 
     Until then, @CALCULUS@ cannot be regenerated identically from its
     signature, so do not treat a regeneration as reproducible.

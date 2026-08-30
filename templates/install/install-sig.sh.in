@@ -510,7 +510,7 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   # Logos's SMT-LIB semantics, by digest of the file this compiled against.
   d_logos=no
   if [ -n "${SMT_SEMANTICS}" ] && command -v md5sum >/dev/null 2>&1; then
-    [ "$(md5sum < "${SMT_SEMANTICS}" | cut -d' ' -f1)" != "dc24e2490ab4cf6a13e570788b37474b" ] || d_logos=yes
+    [ "$(md5sum < "${SMT_SEMANTICS}" | cut -d' ' -f1)" != "b3e8d1005cd5d4157647b13c24310ac6" ] || d_logos=yes
   fi
 
   echo "==> Checking the calculus profile"

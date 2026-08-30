@@ -176,11 +176,9 @@ install/install-<calc>.sh       # signature -> Lean
 It lands in that project's `install/deps/`, which is not kept in git, and
 records its paths in `install/deps/eoc-env.sh`.
 
-> **Currently in development mode.** The script builds the *head* of
-> `ethosEoc3`, resolved at run time, rather than a fixed commit. That build is
-> **not reproducible**: two runs on different days build different compilers,
-> and a checker generated now cannot be regenerated identically later. This is
-> temporary — see [Leaving development mode](#leaving-development-mode).
+A generated checker is **pinned**: `DEV_MODE=0`, and `ETHOS_VERSION` names the
+commit. Two runs a month apart build the same compiler, and a checker can be
+regenerated identically later.
 
 The Eunoia compiler is developed on the **`ethosEoc3`** branch of cvc5/ethos;
 that is where the latest one is. `main` lags it, and its `driver.py` lacks two
@@ -211,18 +209,36 @@ A tip build still resolves to one concrete commit before doing anything, and
 records it in `install/deps/eoc-env.sh` along with `EOC_DEV_MODE=1`. So what was
 built is always *known*, even when it is not reproducible.
 
-### Leaving development mode
+A tip build still resolves to one concrete commit before doing anything and
+records it, so what was built is always known — but it is a way to try
+something, not the default.
 
-A tip build ends by printing the two lines to paste back:
+### Advancing the pin
 
+The commit is not the whole pin. `install/defs/smt.eos` is a **snapshot** of
+that commit's `tools/eoc/semantics/smt.eos`, handed back to the compiler with
+`--smt-semantics` so the generated Lean does not move when the compiler does.
+The Eunoia semantics format is still changing, so a snapshot taken at one commit
+will not generally parse against another: the two have to move together.
+
+`scripts/bump-eoc.sh` moves them together.
+
+```bash
+scripts/bump-eoc.sh --dry-run     # what would change
+scripts/bump-eoc.sh               # advance to the head of ethosEoc3
+scripts/bump-eoc.sh --commit <sha>
 ```
-DEV_MODE=0
-ETHOS_VERSION="<the commit it just built>"
-```
 
-Pinning what was just built changes nothing about the compiler — only whether
-the next run is allowed to move. Do this before anyone else relies on the
-generated checker.
+It rewrites `ETHOS_VERSION`, refreshes `examples/*/smt.eos` and
+`examples/cpc/Cpc.eos` from that commit, and updates the digest the calculus
+profile reports `logos-smt` from. Then run `scripts/run-ci.sh`: the semantics
+moving means what the compiler generates may have moved, and anything shipped
+*proven* — `ModelWf.lean`, `Proofs/{TypeDefaults,TypePredicates,Canonicity}.lean`
+— is proven against the model that semantics generates.
+
+It is modelled on `scripts/bump-eoc-version.py` in Logos, which does the same
+for a single package. The difference is what each pins: Logos ships no
+`smt.eos` and tracks the compiler's own, so it synchronizes `Cpc.eos` alone.
 
 ### Ethos is already there
 
@@ -515,9 +531,10 @@ generator.
 
 ## Status
 
-**In development mode**: the Eunoia compiler is built from the head of
-`ethosEoc3` rather than a pinned commit, so builds are not reproducible. See
-[Leaving development mode](#leaving-development-mode).
+**Pinned to a development branch.** The Eunoia compiler is built from a fixed
+commit of `ethosEoc3`, not from `main`, which lacks two options this template is
+built on. Builds are reproducible; the branch is not a released one. See
+[Advancing the pin](#advancing-the-pin).
 
 What is here is the build infrastructure, the shape of a checker, and the
 compiler that will fill it in: a run generates a Lake project that builds
@@ -575,28 +592,14 @@ for this reason.
 **`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They are
 always generated: they are proven, and `NonVacuity.lean` builds on them.
 
-**The shipped `smt.eos` snapshot does not parse against the compiler's
-development tip.** The `.eos` format is changing, and our snapshot (1,837 lines,
-matching the pinned commit `1c0f95e1`) uses `define-value`, which the head of
-`ethosEoc3` no longer accepts in a configuration set. So:
+**The pinned compiler is a development branch.** `ethosEoc3`, not `main`, for
+the reasons above. `scripts/bump-eoc.sh` advances the pin and the snapshots that
+move with it; `.github/workflows/smt-drift.yml` runs weekly and says when the
+branch has moved ahead of the pin.
 
-- `scripts/run-ci.sh` builds the compiler `--pinned` and is green.
-- `install/get-eo-compiler.sh` ships **`DEV_MODE=1`**, which builds the tip —
-  and installing with our snapshot against it fails.
-
-The two are inconsistent, and closing that is a decision rather than a fix:
-either set `DEV_MODE=0`, since the pin and the snapshot agree, or refresh the
-snapshot to the tip's (2,253 lines) and re-check everything proven against the
-model it generates. **Keeping the snapshot current is deliberately manual** —
-it is pinned so that generated Lean is reproducible and proofs stay about the
-model they were proved about, and taking an update has consequences that want a
-person's judgement.
-
-What is automated is noticing. `.github/workflows/smt-drift.yml` runs weekly and
-tries the tip; `install-<calc>.sh` reports an `smt-drift` line in the calculus
-profile when a snapshot still parses but has fallen behind; and a generated
-checker can drop `install/defs/smt.eos` entirely to track the compiler's own
-semantics instead.
+Keeping the pin current is deliberately manual. A snapshot and a commit have to
+agree, and taking an update can invalidate what is shipped proven — that wants
+a person's judgement, not a bot's.
 
 ## How this repository is maintained
 

@@ -64,7 +64,9 @@ CI_GROUPS=("$@")
 # docs/development.md.
 build_all_modules() {
   local mods
-  mods=$(find . -name '*.lean' -not -path './.lake/*' \
+  # install/ is excluded because install/deps holds the compiler's own tree and
+  # its raw Lean output under eoc-out/ -- neither is a module of this package.
+  mods=$(find . -name '*.lean' -not -path './.lake/*' -not -path './install/*' \
            -not -name 'Main.lean' -not -name 'RuleLemmas.lean' \
          | sed 's|^\./||; s|\.lean$||; s|/|.|g' | sort)
   # shellcheck disable=SC2086

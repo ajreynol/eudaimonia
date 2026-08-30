@@ -1,10 +1,5 @@
 # Roadmap
 
-> ⚠️ **This repository is in development mode.**
-> `scripts/get-eo-compiler.sh` builds the head of the `ethosEoc3` branch rather
-> than a pinned commit, so **builds are not reproducible**. Temporary and
-> deliberate; see [Leave development mode](#1-compiling-the-signature) below.
-
 What [Logos](https://github.com/cvc5/logos) has that a generated checker will
 need. Each item names the Logos files it corresponds to, so that what is being
 generalized is always in view.
@@ -30,21 +25,23 @@ has a `signature/` directory and no way to turn it into Lean.
       tree for `--calc-name`, `--smt-semantics`, `--semantics` and
       `--no-parser` before building, so a commit without them fails there
       rather than inside a later compile.
-- [ ] **⚠️ LEAVE DEVELOPMENT MODE.** `scripts/get-eo-compiler.sh` has
-      `DEV_MODE=1`, so it builds the *head* of `ethosEoc3` resolved at run
-      time, not a fixed commit. **Builds are therefore not reproducible**: two
-      runs on different days build different compilers, and a checker generated
-      today cannot be regenerated identically later. This is deliberate for now
-      — the compiler is under active development on that branch and tracking it
-      is the point — but it has to end before anyone else relies on this
-      repository, and before any claim that a generated checker can be
-      reproduced.
+- [x] **Leave development mode** — done, 2026-08-30. `DEV_MODE=0`, and
+      `ETHOS_VERSION` is `3cf1c03f`, the head of `ethosEoc3` on that date.
+      Builds are reproducible again: two runs a month apart build the same
+      compiler, and a generated checker can be regenerated identically.
 
-      To leave: set `DEV_MODE=0` and set `ETHOS_VERSION` to the commit last
-      built. A tip run prints both lines at the end, and `deps/eoc-env.sh`
-      records `EOC_ETHOS_VERSION` and `EOC_DEV_MODE` for whatever needs to know
-      which it got. Pinning what was just built changes nothing about the
-      compiler — only whether the next run is allowed to move.
+      Bumping the pin turned out not to be a one-line change, which is why
+      `scripts/bump-eoc.sh` exists. `install/defs/smt.eos` is a snapshot of the
+      pinned commit's `tools/eoc/semantics/smt.eos`, handed back with
+      `--smt-semantics`, and the semantics format is still moving — the old
+      1,837-line snapshot did not parse against the new compiler at all
+      (`define-value is not a form of a configuration set`). Commit and snapshot
+      have to advance together, along with the digest the profile reports
+      `logos-smt` from. The script does all of it; `--dry-run` reports.
+
+      Modelled on `scripts/bump-eoc-version.py` in Logos, which pins `Cpc.eos`
+      only — Logos ships no `smt.eos` and tracks the compiler's own.
+
 - [ ] **Move the pin to `main` when it can carry one.** The pin is on a
       development branch, whose head moves. Main's `driver.py` has
       `--semantics` but not `--calc-name` or `--smt-semantics`, which are the
@@ -553,16 +550,16 @@ wrong.
 
 ## 4h. Upstream regression, caught by dev mode
 
-- [ ] **ethosEoc3 tip `af638bb3` emits `native_z_uneg` without defining it.**
-      CPC's generated `SmtModel.lean` calls it nine times; nothing in the
-      generated tree declares it, so the package does not build. Hello is
-      unaffected — it has no arithmetic — which is why a second, smaller
-      calculus is worth having.
+- [x] **ethosEoc3 tip `af638bb3` emitted `native_z_uneg` without defining it** —
+      fixed upstream, verified 2026-08-30. CPC's generated `SmtModel.lean` called
+      it nine times with nothing declaring it, so the package did not build.
+      Hello was unaffected — it has no arithmetic — which is why a second,
+      smaller calculus was worth having.
 
-      `install/get-eo-compiler.sh --pinned` (commit `1c0f95e1`) builds and passes
-      all four CI groups, so the escape hatch works as designed. This is exactly
-      the risk `DEV_MODE=1` documents: report upstream, and pin until it is
-      fixed.
+      At the current pin (`3cf1c03f`) the symbol does not appear at all, and
+      `Cpc.SmtModel` and `Cpc.Spec` build. The escape hatch worked as designed
+      in the meantime: pinning to a known-good commit kept CI green while the
+      tip was broken.
 
 ## 4i. Leveraging Logos's modularity2
 

@@ -305,9 +305,10 @@ the generator:
 
 - **`install/install-<calculus>.sh --mini`** is what actually compiles the
   reduced package. `--mini` at generation time creates it; this fills it in.
-- **`install/get-eo-compiler.sh`** carries `DEV_MODE`, which decides whether the
-  Eunoia compiler is pinned or follows the development branch. It is a constant
-  in that script, not a generator option — see the README.
+- **`install/get-eo-compiler.sh`** carries `ETHOS_VERSION` and `DEV_MODE=0` —
+  which commit of the Eunoia compiler gets built. Constants in that script, not
+  generator options. `--tip` overrides for one run. Note that the commit and
+  `install/defs/smt.eos` are pinned *together*; see `install/README.md`.
 
 ## What is not there
 

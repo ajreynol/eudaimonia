@@ -101,5 +101,30 @@ regenerated from them.
 ## Pinning
 
 The Ethos commit is not an option of `install-@CALCLOWER@.sh`. It is set in
-`get-eo-compiler.sh`, so that what the compiler emits changes only when someone
-moves it deliberately. See the note above `DEV_MODE` in that script.
+`get-eo-compiler.sh` as `ETHOS_VERSION`, with `DEV_MODE=0`, so what the compiler
+emits changes only when someone moves it deliberately.
+
+**Two things are pinned, and they move together.** `defs/smt.eos` is a snapshot
+of that commit's `tools/eoc/semantics/smt.eos`, handed back to the compiler with
+`--smt-semantics`. The Eunoia semantics format is still changing, so a snapshot
+taken at one commit will not generally parse against another. Advancing one
+without the other does not work.
+
+To take an update, copy both from the compiler tree after building it:
+
+```bash
+./get-eo-compiler.sh --tip                              # note the commit it resolves
+cp deps/ethos/tools/eoc/semantics/smt.eos defs/smt.eos
+# then set ETHOS_VERSION to that commit and DEV_MODE stays 0
+./install-@CALCLOWER@.sh
+```
+
+The install reports an `smt-drift` line in the calculus profile when the
+snapshot still parses but has fallen behind the compiler's own. Deleting
+`defs/smt.eos` is also legitimate: the install falls back to the compiler's own
+semantics and says so, trading reproducibility for staying current.
+
+Anything shipped *proven* is proven against the model this semantics generates —
+`ModelWf.lean` and `Proofs/{TypeDefaults,TypePredicates,Canonicity}.lean`. The
+`logos-smt` profile entry flipping to `no` is the signal that they are no longer
+known to hold.

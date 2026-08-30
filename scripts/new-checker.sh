@@ -262,7 +262,7 @@ rel() {
 # The digest of the SMT-LIB semantics Logos is verified against, so a generated
 # checker can tell whether the one it was given is that file unmodified. If it
 # is, results Logos proves about SMT-LIB itself are candidates to reuse.
-LOGOS_SMT_DIGEST="dc24e2490ab4cf6a13e570788b37474b"
+LOGOS_SMT_DIGEST="b3e8d1005cd5d4157647b13c24310ac6"
 
 EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
 CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
