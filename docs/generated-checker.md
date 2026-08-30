@@ -25,10 +25,12 @@ In this order, when you open a checker you did not generate:
 1. **`README.md`** — what it is and how to build it.
 2. **`docs/calculus.md`** — what calculus it checks, what the signature must
    provide, and its profile.
-3. **`install/README.md`** — how it is regenerated from the signature, and
+3. **`docs/logos-experience-report.md`** — every `sorry` the checker contains,
+   in reading order, with what the same obligation cost Logos.
+4. **`install/README.md`** — how it is regenerated from the signature, and
    crucially *what regeneration overwrites and what it preserves*.
-4. **`docs/development.md`** — the working loop: build, check, add a rule.
-5. **`<Calculus>/`** — the package itself. Every module says in its own header
+5. **`docs/development.md`** — the working loop: build, check, add a rule.
+6. **`<Calculus>/`** — the package itself. Every module says in its own header
    whether it is generated or hand-written.
 
 If you only want to know how far the work has got, two commands answer it:
@@ -72,7 +74,8 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
   scripts/                   build.sh, build-rules.sh, rule-status.sh,
                              check-proof-hygiene.sh, check-with-ethos.sh,
                              run-ci.sh
-  docs/                      calculus.md, development.md
+  docs/                      calculus.md, development.md,
+                             logos-experience-report.md
   test/regress/              proofs, expected verdicts, and a runner
   .github/workflows/ci.yml
   .gitignore

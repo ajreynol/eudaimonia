@@ -512,6 +512,8 @@ render_exe scripts/check-with-ethos.sh.in     "${DEST}/scripts/check-with-ethos.
 
 render docs/calculus.md.in     "${DEST}/docs/calculus.md"
 render docs/development.md.in  "${DEST}/docs/development.md"
+render docs/logos-experience-report.md.in \
+       "${DEST}/docs/logos-experience-report.md"
 
 render gitignore.in            "${DEST}/.gitignore"
 render ci/ci.yml.in            "${DEST}/.github/workflows/ci.yml"

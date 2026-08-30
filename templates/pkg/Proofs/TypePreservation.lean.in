@@ -14,26 +14,8 @@ module
 -- for every calculus over ordinary SMT-LIB. It is left open here only because
 -- the template does not yet carry the proof.
 --
--- ---------------------------------------------------------------------------
--- What Logos does here
--- ---------------------------------------------------------------------------
---
--- `Cpc/Proofs/TypePreservation/`: **17,691 lines across 16 files**, against
--- CpcMini's 4,234 across 10. Files are organised by theory --
--- `CoreArith.lean`, `BitVec.lean`, `Sets.lean`, `SeqStringRegex.lean` -- which
--- is the clearest evidence that the cost here follows the theories rather than
--- the rules.
---
--- Roughly half of it is invariant between the two packages:
--- `Datatypes.lean` (1,334 lines) is byte-identical, `Common.lean` (529) differs
--- by four lines. The theory-specific halves are where the size lives.
---
--- **Whether it can be inherited depends on your `smt.eos`.** The statement is
--- about definitions generated from the SMT-LIB semantics, so a proof of it
--- transfers only while that semantics is the stock one — which is exactly what
--- the `logos-smt` entry of `install/defs/profile.conf` records. Supply your own
--- `smt.eos`, change what a type is or what a well-formed model is, and this
--- becomes yours no matter what upstream ships.
+-- What this cost the checker this template is modelled on, and what shape the
+-- work takes, is in `docs/logos-experience-report.md`.
 public import @CALCULUS@.ModelWf
 import all @CALCULUS@.ModelWf
 

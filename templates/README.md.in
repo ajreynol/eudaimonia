@@ -60,6 +60,11 @@ So the work is **H**, and there is less of it than the file count suggests.
 
 ### The front-end theorems
 
+**[docs/logos-experience-report.md](docs/logos-experience-report.md)** goes
+through every `sorry` this checker contains and what the same obligation cost
+Logos. Read it before starting any of them.
+
+
 `ModelWf.lean` and the four under `Proofs/` are what the rule proofs stand on.
 Each is a **leaf** — none imports another — so a `sorry` in one does not stop
 the rest from building, and they can be worked on in any order.
@@ -114,7 +119,7 @@ Everything here is **F** — copied in complete, working, and not yours to write
 | `install/install-@CALCLOWER@.sh` | compile the signature into `@CALCULUS@/` |
 | `install/README.md` | what regeneration overwrites, and what it keeps |
 | `scripts/` | `build.sh`, `build-rules.sh`, `rule-status.sh`, `check-proof-hygiene.sh`, `check-with-ethos.sh`, `run-ci.sh` |
-| `docs/` | `calculus.md`, `development.md` |
+| `docs/` | `calculus.md`, `development.md`, `logos-experience-report.md` |
 | `test/regress/` | proofs, expected verdicts, and a runner |
 | `Main.lean` | the executable: read a proof, report a verdict |
 | `lakefile.toml`, `lean-toolchain` | the package and its pinned Lean version |

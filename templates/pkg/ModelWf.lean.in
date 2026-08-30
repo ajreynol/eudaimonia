@@ -18,19 +18,8 @@ module
 -- SMT-LIB semantics is still the stock one, and so whether anything proven
 -- against it can be trusted.
 --
--- ---------------------------------------------------------------------------
--- What Logos does here
--- ---------------------------------------------------------------------------
---
--- Logos has no file at this name. `model_wf` is used directly, its conjuncts
--- destructured at each site that needs one, throughout `Proofs/`.
---
--- Naming the projections is this template's suggestion rather than Logos's
--- practice, on the grounds that a checker whose definition of well-formedness
--- may change is better off with one place that breaks than with the same
--- destructuring repeated across a proof development. If you keep the stock
--- semantics the difference is cosmetic; if you do not, this file is where you
--- will be glad the change surfaced.
+-- What this cost the checker this template is modelled on, and what shape the
+-- work takes, is in `docs/logos-experience-report.md`.
 public import @CALCULUS@.SmtModel
 import all @CALCULUS@.SmtModel
 

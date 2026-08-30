@@ -102,6 +102,14 @@ The side conditions are checked at run time, which is why a proof the checker
 accepts can still come back `incomplete`: it mentions something the semantics
 does not model, so the theorem does not apply to it.
 
+## The proofs
+
+[`logos-experience-report.md`](logos-experience-report.md) goes through every
+`sorry` this checker contains, in reading order, with what the same obligation
+cost Logos. Start with `@CALCULUS@/Proofs/Invariants/Extra.lean` — the one file
+that genuinely differs between two checkers, and the decision that most affects
+the rest.
+
 ## The rule proofs
 
 This is the bulk of the work, and the part no tooling can do for you. Two

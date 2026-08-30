@@ -25,10 +25,13 @@ module
 -- **A calculus that needs nothing extra leaves this as it is** -- pointed at
 -- `True` -- and pays nothing for it. That is what `CpcMini` does.
 --
--- In CPC the slot holds *variable stability*, which exists so that
--- binder-sensitive rules (`instantiate`, `skolemize`, `alpha_equiv`) can be
--- given premise truth in a variable-variant model. If your calculus has such
--- rules, this is where that lives.
+-- In CPC the slot holds *variable stability*: every assumption on the stack
+-- stays true when the model's variable assignment is varied. It exists so that
+-- a rule reasoning under a binder can be given premise truth in a
+-- variable-variant model.
+--
+-- Exactly one of CPC's 591 rules uses it, and the machinery it rests on is
+-- 32,274 lines. Do not reach for this speculatively -- see `docs/logos-experience-report.md`.
 --
 -- **This choice is coupled to `Proofs/RuleSupport/Support.lean`.** Making the
 -- extra invariant load-bearing means adding a corresponding field to the
@@ -36,35 +39,8 @@ module
 -- alongside `true_here`. The two are decided together, up front, and are
 -- awkward to separate later.
 --
--- ---------------------------------------------------------------------------
--- What Logos does here
--- ---------------------------------------------------------------------------
---
--- `Cpc/Proofs/Invariants/Stability.lean`, 552 lines against CpcMini's 488 --
--- and the difference is not duplication: CpcMini defines
--- `StableWhenTrueInAnyVarModel` as `True` and pays nothing, while Cpc points
--- the slot at a real invariant.
---
--- CPC's invariant is *assumption stability*: every assumption on the checker
--- stack stays true when the model's variable assignment is varied. Written out,
--- it is a walk over the stack asserting `StableWhenTrueInAnyVarModel` of each
--- `assume` and `assume_push` entry and nothing of `proven` entries.
---
--- **The cost is not in this file.** `StableWhenTrueInAnyVarModel` is defined in
--- `Cpc/Proofs/Closed/Support.lean`, and `Closed/` is **32,274 lines** -- larger
--- than the entire checker layer. CpcMini has none of it.
---
--- **And exactly one rule uses the slot.** Of 591 CPC rules, `Re_unfold_neg` is
--- the only one whose proof reaches for `true_in_var_model`. (The `Closed/`
--- machinery beneath is shared more widely -- `Quant_unused_vars` and other
--- binder rules import it directly -- but the *invariant* has a single
--- consumer.)
---
--- Two things to take from that. Leaving this at `True` is the common case and
--- costs nothing, so do not reach for it speculatively. And when one rule does
--- need it, the price is paid in the machinery it rests on rather than here --
--- so the question to ask is not "do I want this invariant" but "am I prepared
--- to build what it stands on".
+-- What this cost the checker this template is modelled on, and what shape the
+-- work takes, is in `docs/logos-experience-report.md`.
 public import @CALCULUS@.Proofs.Assumptions
 import all @CALCULUS@.Proofs.Assumptions
 
