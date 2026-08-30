@@ -17,8 +17,12 @@ Where the two overlap it is noted; the two lists agree.
 
 ## Priority
 
-**Top: item 5, seed the checker layer as templates** — and within it, the one
-small change that unblocks everything else: make `Checker.lean` take its two
+**Top: item 4b, the dispatcher's catch-all branch.** It is a few lines, and it
+is the only thing keeping `Proofs/RuleLemmas.lean` out of a generated checker's
+CI now that `Proofs/CheckerCore.lean` supplies the sixteen names it needs.
+
+**Then item 5, seed the checker layer as templates** — and within it, the one
+small change that unblocks the rest: make `Checker.lean` take its two
 rule-bridge theorems as hypotheses instead of importing `RuleLemmas`. Four call
 sites, 1,063 lines, and it is what stands between a generated checker and a
 soundness proof it does not have to write.
@@ -234,6 +238,41 @@ If the rule stub template emitted
 `def cmd_step_<rule>_args_ok : CArgList → Prop := fun _ => True` and eoc
 generated the dispatch, a generated checker would never need to hand-maintain
 that table at all.
+
+## 4b. Emit the dispatcher's catch-all branch conditionally
+
+**Small, local, and the only thing keeping `Proofs/RuleLemmas.lean` out of a
+generated checker's CI.**
+
+`RuleLemmas.lean` dispatches over the rule enum and closes with a wildcard:
+
+```lean
+  cases r with
+  | contra => ...
+  -- Every rule unsupported by plain `step` reduces definitionally to `Stuck`.
+  | _ =>
+      exact False.elim (hProg rfl)
+```
+
+The branch is emitted unconditionally. When every rule of the calculus is a
+plain `step` rule the enum is already exhausted, and Lean rejects it:
+
+```
+error: Wildcard alternative is not needed
+```
+
+It is an error from the `cases` elaborator rather than a lint, so nothing on the
+consumer side suppresses it — `set_option match.ignoreUnusedAlts true` does not
+apply.
+
+**The fix:** emit the wildcard only when the `cases` does not already cover
+every constructor — that is, when at least one rule is not handled by the arm
+being generated. Both dispatchers need it (`step` and `step_pop`).
+
+This bites exactly the calculi most likely to be someone's first: a starter
+signature whose rules are all plain `step` rules. A calculus with a `step_pop`
+rule compiles today, which is what Eudaimonia's CI uses to keep the checker
+layer honest.
 
 ## 5. Seed the checker layer as templates
 

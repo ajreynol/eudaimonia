@@ -158,6 +158,22 @@ for cfg in "${CONFIGS[@]}"; do
   echo "  ok ($(( $(date +%s) - start ))s)"
 done
 
+# The checker layer, which the per-project `modules` group cannot cover: the
+# generated dispatcher is excluded there because eoc emits a redundant wildcard
+# for a calculus whose rules are all plain `step` rules. Scoped has a step_pop
+# rule, so its dispatcher compiles -- and building it, plus everything
+# downstream, is what says Proofs/CheckerCore.lean still supplies what
+# RuleLemmas.lean needs.
+echo
+echo "############ checker layer (Scoped) ############"
+start=$(date +%s)
+if run_logged "Scoped: dispatcher and downstream" "${OUT}/Scoped" \
+     lake build Scoped.Proofs.RuleLemmas Scoped.Proofs.Checker Scoped.ApiCorrect; then
+  echo "  ok ($(( $(date +%s) - start ))s)"
+else
+  echo "  FAILED"; failed+=("checker-layer")
+fi
+
 # CPC is generated and installed but not built: minutes, and 591 rule files that
 # exercise the compiler rather than the generator.
 echo

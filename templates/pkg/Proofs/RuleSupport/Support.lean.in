@@ -34,8 +34,8 @@ module
 --
 -- The Logos experience report has the sizes:
 --   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
-public import @CALCULUS@.Proofs.CheckerCore
-import all @CALCULUS@.Proofs.CheckerCore
+public import @CALCULUS@.Proofs.Assumptions
+import all @CALCULUS@.Proofs.Assumptions
 
 @[expose] public section
 

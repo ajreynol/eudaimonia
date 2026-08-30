@@ -1,22 +1,163 @@
 module
 
--- **OPEN.** Compiles, and contains a `sorry` that is **yours to discharge, in
--- this file**. Nothing will fill it in. A signature install leaves it alone.
+-- **OPEN, and a STUB.** It compiles, so the generated rule dispatcher and
+-- everything downstream of it compile too. It is not a proof: every obligation
+-- below is a `sorry` that is yours to discharge, in this file. A signature
+-- install leaves it alone.
 --
--- It is a stub: what stands here is a description of what belongs in it.
+-- **What this is.** `Proofs/RuleLemmas.lean` is generated *with its proof
+-- bodies already written*, and those bodies are stated against a vocabulary
+-- that no generated file defines -- the state invariants, `CmdStepFacts`,
+-- `stateStepPopSuffix`, and the lemmas bridging a rule's obligation to the
+-- checker's. This file supplies it.
 --
--- The correctness of the core checker, independent of which rules the calculus
--- has: that running a proof preserves the invariant relating the proof state to
--- what is entailed by the assumptions.
+-- The interface is fixed by the compiler, not by your calculus: **16 names**,
+-- and a calculus without `step_pop` rules needs a subset of the same set. So
+-- the shape here is forced; only the content is a design decision.
 --
--- This is the largest hand-written piece of the development and the one that is
--- genuinely reusable across calculi -- it is about the machinery of proof
--- checking rather than about any particular rule. In Logos it is around 3,000
--- lines.
+-- The split is the same one `Proofs/RuleSupport/Support.lean` makes.
 --
--- In Logos: `Cpc/Proofs/CheckerCore.lean`.
+-- **Placeholders** -- the invariants, and what a proof state satisfying them
+-- means. Defined as `True` so that the generated dispatcher's hypotheses are
+-- *satisfiable*: a theorem with unsatisfiable hypotheses is vacuously true and
+-- establishes nothing. Giving them content is the first thing to do here, and
+-- it is what makes the lemmas below provable -- several of them are not merely
+-- unproven but **false** while the invariants say nothing. That is the point:
+-- they record what the invariants will have to guarantee.
+--
+-- **The obligation** -- `CmdStepFacts`, what running one command establishes.
+-- Deliberately **unprovable**, so nothing closes it by accident and the
+-- dispatcher cannot come out looking proven while resting on nothing.
+--
+-- In Logos this file is 1,123 lines, and the invariants and `CheckerState`
+-- machinery it rests on are thousands more. It is the largest hand-written
+-- piece of the development, and the most reusable: it is about the machinery of
+-- proof checking rather than about any rule. Seeding it from the compiler is
+-- item 5 of the Eudaimonia eoc wish list.
+--
+--   https://github.com/ajreynol/eudaimonia/blob/main/docs/eoc-requests.md
+public import @CALCULUS@.Proofs.RuleSupport.Support
+import all @CALCULUS@.Proofs.RuleSupport.Support
 
-public import @CALCULUS@.Proofs.Assumptions
-import all @CALCULUS@.Proofs.Assumptions
+@[expose] public section
 
-public section
+open SmtEval
+open Smtm
+
+namespace Eo
+
+/-! ## The invariants
+
+What is true of a proof state the checker has accepted so far. `True` is a
+placeholder: it keeps the dispatcher's hypotheses satisfiable while saying
+nothing. Everything below is waiting on these.
+-/
+
+/-- Every proven term in the state is well-typed. -/
+def checkerTypeInvariant (_s : CState) : Prop := True
+
+/-- Every proven term in the state has an SMT-LIB translation. -/
+def checkerTranslationInvariant (_s : CState) : Prop := True
+
+/-- Every proven term in the state is interpreted true by the model. -/
+def checkerLocalTruthInvariant (_M : SmtModel) (_s : CState) : Prop := True
+
+/-- The state's assumptions stay fixed under the model. -/
+def checkerAssumptionStabilityInvariant (_M : SmtModel) (_s : CState) : Prop := True
+
+/-- That one state is reachable from another by discharging assumptions. -/
+def stateStepPopSuffix (_cur _root : CState) : Prop := True
+
+/--
+What a rule proof may assume relating the checker's model to the one it is
+given.
+
+The generated dispatcher binds three hypotheses when it applies a `step` rule,
+so a third is required here whatever it says. Making it meaningful is part of
+writing the real contract.
+-/
+def ModelsAgreeOnAssumptions (_M _N : SmtModel) : Prop := True
+
+/-! ## The obligation -/
+
+/-- No constructor, so nothing proves it. -/
+inductive CheckerFactsUnspecified : Prop
+
+/--
+What running one command establishes about the resulting state.
+
+Unprovable as it stands, so the dispatcher compiles without ever looking proven.
+-/
+def CmdStepFacts (_M : SmtModel) (_s : CState) (_P : Term) : Prop :=
+  CheckerFactsUnspecified
+
+/-! ## Bridge lemmas
+
+Each is a `sorry`. Several are *false* until the invariants above have content
+-- `premiseTermList_has_bool_type` says every premise is well-typed, which
+nothing currently guarantees. Read them as the specification of what the
+invariants must deliver.
+-/
+
+theorem term_ne_stuck_of_typeof_bool {t : Term}
+    (_h : __eo_typeof t = Term.Bool) : t ≠ Term.Stuck := by
+  sorry
+
+theorem premiseTermList_has_bool_type (s : CState) (premises : CIndexList) :
+    checkerTypeInvariant s -> checkerTranslationInvariant s ->
+    AllHaveBoolType (premiseTermList s premises) := by
+  sorry
+
+theorem premiseTermList_has_smt_translation (s : CState) (premises : CIndexList) :
+    checkerTranslationInvariant s ->
+    AllHaveSmtTranslation (premiseTermList s premises) := by
+  sorry
+
+theorem premiseTermList_has_typeof_bool (s : CState) (premises : CIndexList) :
+    checkerTypeInvariant s ->
+    AllTypeofBool (premiseTermList s premises) := by
+  sorry
+
+theorem checkerTypeInvariant_head_assume_push (A : Term) (tail : CState) :
+    checkerTypeInvariant (CState.cons (CStateObj.assume_push A) tail) ->
+    checkerTypeInvariant tail ∧ __eo_typeof A = Term.Bool := by
+  sorry
+
+theorem checkerTranslationInvariant_head_assume_push (A : Term) (tail : CState) :
+    checkerTranslationInvariant (CState.cons (CStateObj.assume_push A) tail) ->
+    RuleProofs.eo_has_smt_translation A := by
+  sorry
+
+theorem checkerTypeInvariant_of_stateStepPopSuffix {cur root : CState} :
+    stateStepPopSuffix cur root -> checkerTypeInvariant root ->
+    checkerTypeInvariant cur := by
+  sorry
+
+theorem checkerTranslationInvariant_of_stateStepPopSuffix {cur root : CState} :
+    stateStepPopSuffix cur root -> checkerTranslationInvariant root ->
+    checkerTranslationInvariant cur := by
+  sorry
+
+/-- The seam: a `step` rule's obligation becomes the checker's. -/
+theorem cmd_step_facts_of_rule_properties
+    (M : SmtModel) (_hM : model_wf M) (s : CState) (premises : CIndexList)
+    {P : Term} :
+    checkerLocalTruthInvariant M s ->
+    checkerAssumptionStabilityInvariant M s ->
+    (forall N, model_wf N -> ModelsAgreeOnAssumptions M N ->
+      StepRuleProperties N (premiseTermList s premises) P) ->
+    CmdStepFacts M s P := by
+  sorry
+
+/-- The same, for a rule that discharges an assumption. -/
+theorem cmd_step_pop_facts_of_rule_properties
+    (M : SmtModel) (_hM : model_wf M) (root tail : CState) (A : Term)
+    (premises : CIndexList) {P : Term} :
+    checkerLocalTruthInvariant M root ->
+    checkerAssumptionStabilityInvariant M root ->
+    stateStepPopSuffix (CState.cons (CStateObj.assume_push A) tail) root ->
+    StepPopRuleProperties A (premiseTermList root premises) P ->
+    CmdStepFacts M tail P := by
+  sorry
+
+end Eo

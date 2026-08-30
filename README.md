@@ -452,8 +452,9 @@ stubs, builds them, and runs the regression proofs:
   ok no-refutation.proof                      incorrect
 ```
 
-The generated Lean is byte-identical to what Logos carries, modulo the header
-naming which installer wrote it. `scripts/run-ci.sh` passes.
+`scripts/run-ci.sh` passes: the package builds, every module compiles, the
+regression proofs get the verdicts they should, ethos agrees with all of them,
+and reinstalling from the signature reproduces the package byte-for-byte.
 
 Any signature reachable on the machine can be compiled instead, including one
 sitting in a tree of includes:
@@ -531,75 +532,93 @@ generator.
 
 ## Status
 
-**Pinned to a development branch.** The Eunoia compiler is built from a fixed
-commit of `ethosEoc3`, not from `main`, which lacks two options this template is
-built on. Builds are reproducible; the branch is not a released one. See
-[Advancing the pin](#advancing-the-pin).
+A run produces a **working checker**, end to end: `new-checker.sh` writes the
+project, `install/get-eo-compiler.sh` builds the Eunoia compiler, and
+`install/install-<calc>.sh` compiles the signature into Lean over the stubs.
+The result builds clean, runs, parses the Eunoia proof format, and reports one
+of three verdicts. CPC — 591 rules — generates, installs, and builds.
 
-What is here is the build infrastructure, the shape of a checker, and the
-compiler that will fill it in: a run generates a Lake project that builds
-clean, an executable that runs, and every module a checker needs as a stub
-describing what belongs in it. `scripts/get-eo-compiler.sh` builds `ethos-eoc`.
-What does not exist yet is the step between them — driving the compiler over a
-signature and installing the Lean it publishes over the stubs.
+What is not done is the correctness development: the checker layer, and the
+per-rule proofs. See [What is not there](#what-is-not-there) below and
+**[TODO.md](TODO.md)**, which sets it out item by item against the Logos files
+each corresponds to.
 
-After that: the signature-independent parser library, the core correctness
-proof, and the per-rule proofs (591 files in Logos).
+### What CI guarantees
 
-**[TODO.md](TODO.md)** sets all of it out, item by item, against the Logos
-files each item corresponds to.
+`scripts/run-ci.sh` generates a checker for **six option configurations** and,
+for each, runs **that project's own `scripts/run-ci.sh`** — not a bespoke script
+written to pass. What is tested is what a user gets. It then generates and
+installs CPC. The whole suite is about **105 seconds**, so it runs on every push.
 
----
+Each generated project's CI is five groups:
 
-## Known limitations
+| group | what it establishes |
+| ----- | ------------------- |
+| `build` | the library and the executable build |
+| `modules` | **every module the package ships compiles** — `sorry` and all. One exclusion: `Proofs/RuleLemmas.lean` |
+| `regress` | the regression proofs get the verdicts they should — all three, plus a parse error |
+| `ethos` | **the same proofs, cross-checked against ethos** — the reference Eunoia checker, an independent implementation, built from the same tree |
+| `regeneration` | reinstalling from the signature reproduces the package **byte-for-byte** |
 
-Measured, not guessed: `scripts/run-ci.sh` generates a checker for each option
-configuration and runs that project's own CI, so what is listed here is what
-that suite cannot make pass.
+Two of those are stronger than they look. `ethos` is a differential check: a
+verdict is not just what our Lean says, it is what our Lean and an independent
+checker both say. `regeneration` means the package is genuinely a function of
+its specification — drift between the signature and the Lean is caught rather
+than accumulating.
 
-**The rule dispatcher does not compile.**
-`<Calculus>/Proofs/RuleLemmas.lean` is generated with its proof bodies filled
-in, and those bodies are written against a *checker layer* — the state
-invariants (`checkerTypeInvariant`, `checkerTranslationInvariant`,
-`checkerLocalTruthInvariant`, `checkerAssumptionStabilityInvariant`),
-`CmdStepFacts`, `stateStepPopSuffix`, and nine bridge lemmas — that no generated
-file defines. `Proofs/CheckerCore.lean` is where it would go; in Logos it is
-1123 lines. So `RuleLemmas.lean` is the one exclusion from the `modules` CI
-group, and everything downstream of it — `Proofs/Checker.lean`, `ApiCorrect` —
-cannot be built until it is written.
+And because `modules` compiles everything, **a red build means something is
+broken, not that something is unfinished.** That is what makes the suite usable
+as a signal at all: unfinished is the normal state of a checker under
+development, so it cannot be what failure means.
 
-The rule files themselves *do* compile, each carrying the one `sorry` that is
-its proof. `Proofs/RuleSupport/Support.lean` stubs the eight names they are
-stated against. That seam is fixed by the compiler rather than by your calculus:
-across 595 generated rule files in three calculi, the statements collapse to two
-shapes, identical but for the rule's name. Its obligations are deliberately
-unprovable, so a rule can only be closed by `sorry` — see the file.
+The six configurations cover the option surface that changes what is written:
+signature source, `--mini`, `--dummy-rule`, `--theorems none`, a theorem subset,
+`--format-name` and `--no-parser`.
 
-Seeding the checker layer is [item 5 of the eoc wish list](docs/eoc-requests.md),
-and the top priority there.
+### What is incorporated from Logos
 
-**`--indexed-ops` is recorded but not enforced.** The generator validates the
-value is 0–3 and writes it to `profile.conf`, and the installer checks it
-against what the compiler emitted — but nothing acts on a mismatch beyond
-reporting it, because the compiler decides arity emission from the signature.
+Logos is a verified checker for a 591-rule calculus, and the parts of it that
+generalize are copied in **complete and proven**, not restated as stubs:
 
-**A calculus compiled with `--rules` needs `=>` in its signature.** The trimming
-stage that runs for a rule subset — which is what `install-<calc>.sh --mini`
-does — fails with `Could not find target definition "=>"` if the signature has
-no implication, even when no rule uses one. The starter signature declares one
-for this reason.
+| | |
+| --- | --- |
+| `ApiChecks.lean` | each executable check tied to the theorem component it stands for |
+| `Api.lean`, `Diagnostics.lean` | what the executable does with a file, and where a rejected proof broke |
+| `ModelWf.lean` | what a well-formed model gives you, proven against the generated `model_wf` |
+| `Proofs/Assumptions.lean` | the side conditions, and deciding them |
+| `Proofs/TypeDefaults.lean`, `Proofs/TypePredicates.lean` | ported from Logos's proof-modularity work: an inhabited well-formed type has a typed canonical default, and type inhabitation and value canonicity |
+| `Proofs/Canonicity.lean` | evaluating a literal gives a value in normal form |
+| `Proofs/Invariants/Extra.lean` | the calculus-specific seam, `True` for a calculus that needs nothing |
 
-**`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They are
-always generated: they are proven, and `NonVacuity.lean` builds on them.
+**55 declarations, 1,044 lines, zero `sorry`.** A generated checker starts with
+that rather than with an empty file and a description.
 
-**The pinned compiler is a development branch.** `ethosEoc3`, not `main`, for
-the reasons above. `scripts/bump-eoc.sh` advances the pin and the snapshots that
-move with it; `.github/workflows/smt-drift.yml` runs weekly and says when the
-branch has moved ahead of the pin.
+The rule for what gets copied is **port facts, not structure**: a fact about the
+generated model constrains nothing about how you write your proofs, so it is
+ported; a *contract* — what a rule is obliged to establish — is a design
+decision your calculus should own, so it is not. That is why
+`Proofs/RuleSupport/Support.lean` is a stub rather than a copy of Logos's
+`Contract.lean`, and why its obligations are deliberately unprovable: a stub
+that could be closed by `trivial` would let 591 rules report as proven having
+proven nothing.
 
-Keeping the pin current is deliberately manual. A snapshot and a commit have to
-agree, and taking an update can invalidate what is shipped proven — that wants
-a person's judgement, not a bot's.
+Upstream modularity work is tracked and adopted as it lands, and pushed for
+where it is missing. Logos's `modularity2` made `Proofs/CheckerState.lean`
+identical between a 591-rule package and a 5-rule one — 1,463 lines that had
+differed by 145 — which is precisely what makes a file inheritable by a
+generated checker rather than maintained per calculus. `docs/eoc-requests.md`
+is the running list of where that work still has to happen upstream, ranked.
+
+### What is not there
+
+A generated checker ships **compiling**, not proven: the correctness development
+is the outstanding work, and `Proofs/CheckerCore.lean` and
+`Proofs/RuleSupport/Support.lean` are the stubs it starts from. Both define the
+hypotheses a proof is given for real, and leave what it must establish as
+propositions nothing can prove by accident.
+
+**[docs/limitations.md](docs/limitations.md)** has the detail, and
+[TODO.md](TODO.md) the plan.
 
 ## How this repository is maintained
 

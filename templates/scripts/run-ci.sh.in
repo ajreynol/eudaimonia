@@ -53,15 +53,18 @@ CI_GROUPS=("$@")
 # warning here, not a build failure, so a red build means something is broken
 # rather than unfinished.
 #
-# The rule files under Proofs/Rules/ are included: they compile from the first
-# commit, each carrying the one `sorry` that is its proof.
+# The rule files and everything they rest on are included, each carrying the
+# `sorry` that is its outstanding proof.
 #
-# @CALCULUS@/Proofs/RuleLemmas.lean is the one exclusion. The compiler generates
-# it against a checker layer -- the state invariants, `CmdStepFacts` and
-# `stateStepPopSuffix` -- that no generated file defines and that
-# @CALCULUS@/Proofs/CheckerCore.lean is where you would write. Until it is
-# written, the dispatcher and everything downstream of it cannot compile. See
-# docs/development.md.
+# @CALCULUS@/Proofs/RuleLemmas.lean is the one exclusion, and it is excluded for
+# a single upstream reason rather than anything missing here: the compiler emits
+# a catch-all `| _ =>` branch in its `cases` over the rule enum whether or not
+# one is needed, and Lean rejects a redundant alternative. A calculus with at
+# least one rule the plain `step` dispatcher does not handle compiles fine; a
+# calculus whose rules are all plain `step` rules does not.
+#
+# @CALCULUS@/Proofs/CheckerCore.lean supplies everything else the dispatcher
+# needs. Once that branch is emitted conditionally, drop the exclusion here.
 build_all_modules() {
   local mods
   # install/ is excluded because install/deps holds the compiler's own tree and

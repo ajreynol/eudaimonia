@@ -162,15 +162,32 @@ Still framework work, because these should not be the user's at all:
       `step_pop` — identical apart from the rule's own name. That is an argument
       for eoc seeding it; see `docs/eoc-requests.md` item 5.
 
-- [ ] **`Proofs/CheckerCore.lean` is what now blocks `RuleLemmas.lean`.** The
-      dispatcher is generated *with its proof bodies*, against a checker layer
-      nothing defines: `checker{Type,Translation,LocalTruth,AssumptionStability}Invariant`,
-      `CmdStepFacts`, `stateStepPopSuffix`, and nine bridge lemmas. In Logos
-      that is `CheckerCore.lean`, 1,123 lines with a 246-line diff between Cpc
-      and CpcMini — so it is neither trivially portable nor genuinely
-      calculus-specific throughout. It is the one remaining exclusion from the
-      generated `modules` CI group, and `Checker.lean` and `ApiCorrect` sit
-      downstream of it.
+- [x] **`Proofs/CheckerCore.lean` supplies what `RuleLemmas.lean` needs** —
+      done, 2026-08-30. The dispatcher is generated *with its proof bodies*,
+      against a checker layer nothing defined: four state invariants,
+      `CmdStepFacts`, `stateStepPopSuffix` and ten bridge lemmas. The template
+      now stubs all sixteen, on the same discipline as `Support.lean` —
+      invariants are `True` so the dispatcher's hypotheses stay satisfiable,
+      `CmdStepFacts` is an empty `Prop` so nothing closes it by accident.
+
+      Two structural findings on the way. The template had `Support.lean`
+      importing `CheckerCore`, which is **backwards** — in Logos the chain runs
+      `CheckerCore -> CheckerState -> Contract -> Assumptions`, and the seam has
+      to be *below* the checker layer, not above it. Fixed. And the interface is
+      fixed by the compiler rather than by the calculus: 16 names, of which a
+      calculus without `step_pop` rules needs a subset.
+
+      Verified on `Scoped`: the dispatcher, `Proofs/Checker.lean` and
+      `ApiCorrect` all build. The framework CI builds them every run, so the
+      layer cannot silently rot.
+
+- [ ] **Drop the `RuleLemmas.lean` exclusion once eoc stops emitting a needless
+      wildcard.** The remaining blocker is not the checker layer but a codegen
+      detail: the dispatcher's `cases` over the rule enum always closes with
+      `| _ =>`, and Lean errors with `Wildcard alternative is not needed` when
+      the rules are all plain `step` rules and the enum is already exhausted.
+      No `set_option` suppresses it. Filed as
+      [item 4b](docs/eoc-requests.md), now the top priority there.
 
 ## 4. From the theorem to the executable — **done**
 
@@ -669,6 +686,26 @@ than making it more complete.
 
 - [ ] **Performance.** Logos is explicit that it has not been optimized and is
       significantly slower than unverified checkers. Nothing here changes that.
+
+## 7. Rough edges
+
+Small, known, and none of them blocking. Kept here rather than in the README so
+that "known limitations" there stays about substance.
+
+- [ ] **`--indexed-ops` is recorded but not enforced.** The generator validates
+      the value is 0-3 and writes it to `profile.conf`, and the installer checks
+      it against what the compiler emitted -- but nothing acts on a mismatch
+      beyond reporting it, because the compiler decides arity emission from the
+      signature.
+- [ ] **A calculus compiled with `--rules` needs `=>` in its signature.** The
+      trimming stage that runs for a rule subset -- which is what
+      `install-<calc>.sh --mini` does -- fails with
+      `Could not find target definition "=>"` if the signature has no
+      implication, even when no rule uses one. The starter signature declares
+      one for this reason.
+- [ ] **`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They
+      are always generated: they are proven, and `NonVacuity.lean` builds on
+      them.
 
 ## What is not on this list
 
