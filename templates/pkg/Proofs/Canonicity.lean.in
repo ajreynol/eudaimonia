@@ -1,10 +1,9 @@
 module
 
--- **FINISHED for the literal kinds it covers** -- which for a calculus over
+-- **PROVEN for the literal kinds it covers** -- which for a calculus over
 -- Booleans alone is all of them. Adding a literal kind to the signature adds a
--- theorem here, and to that extent the file is open; what is here is proven.
---
--- A signature install leaves it alone.
+-- theorem here, and to that extent the file becomes open; what is here has no
+-- `sorry`. A signature install leaves it alone.
 --
 -- **Canonicity** — that evaluating a literal gives a value in normal form.
 --

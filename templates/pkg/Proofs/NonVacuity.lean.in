@@ -1,7 +1,7 @@
 module
 
--- **OPEN.** This file is yours: it contains work you have to do, here, and
--- nothing will fill it in. A signature install leaves it alone.
+-- **OPEN.** Compiles, and contains a `sorry` that is **yours to discharge, in
+-- this file**. Nothing will fill it in. A signature install leaves it alone.
 --
 -- **Non-vacuity** — that a well-formed model exists at all.
 --

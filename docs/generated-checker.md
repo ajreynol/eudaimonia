@@ -82,47 +82,72 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
   .gitignore
 ```
 
-## Finished, open, generated
+## Design principles
 
-A file in a generated checker is one of three things, and every file says which
-in its own header.
+Two commitments, and a tradeoff between them that is the user's to resolve.
 
-| | meaning | you edit it? |
-| --- | ------- | ------------ |
-| **GENERATED** | the compiler writes it from your signature | never — the next install overwrites it |
-| **FINISHED** | copied in complete by the generator | never — there is nothing missing |
-| **OPEN** | work you have to do, in that file | **yes** |
+### Everything ships compiling
 
-**A `sorry` in a dependency does not make a file open.** This is the distinction
-that matters, and it is easy to get backwards.
+A generated checker builds from the first command, before anything is proven.
+`warningAsError` is deliberately not set on the calculus library, so a `sorry`
+is a warning and a file containing one still compiles.
 
-A file is *finished* when you will not need to edit it. That is a statement
-about the file, not about whether it builds. `ApiCorrect.lean` is finished: it
-states soundness about the text of a proof file and derives it from
-`Proofs/Checker.lean`. It will not build until that theorem is discharged — and
-that is not a defect in `ApiCorrect.lean`, and no reason to open it.
+That makes the build a signal about *structure* rather than about progress.
+A red build means something is genuinely broken; it never means "there is work
+left". What is unproven is reported by `scripts/check-proof-hygiene.sh` and
+`scripts/rule-status.sh`, which is where you should look.
 
-A file is *open* when it contains a `sorry`, or a gap, **that is yours to close
-there**. `Proofs/NonVacuity.lean` is open: the `sorry` in it is the work.
+Four kinds of file, and every one says which it is in its own header:
 
-So the question to ask of a red build is not "which file failed" but "which
-*open* file is still open". `scripts/rule-status.sh` and
-`scripts/run-ci.sh hygiene` answer that; the build does not.
+| | compiles? | `sorry` of its own? | you edit it? |
+| --- | --- | --- | --- |
+| **GENERATED** | yes | no | never — the next install overwrites it |
+| **PROVEN** | yes | no | never |
+| **FINISHED** | yes | no, but it depends on one | never |
+| **OPEN** | yes | **yes** | **yes** — that `sorry` is the work |
 
-### Why the distinction earns its keep
+`ApiCorrect.lean` is the case that makes the distinction worth having. It states
+soundness about the text of a proof file and derives it from
+`Proofs/Checker.lean`. It compiles, it has no `sorry` of its own, and it is
+finished — you will not edit it — but it is not proven, because what it rests on
+is not.
 
-Without it, a generated checker looks like it has far more work in it than it
-does. Almost everything that fails to build in a fresh checker fails because
-something downstream of it is open — not because it is unfinished. Counting
-build errors would suggest dozens of files need attention; counting *open* files
-gives the real number, which is six plus the rules.
+### Minimal design imposed on your checker
 
-It also names a goal precisely. `Proofs/Checker.lean` is **open and should be
-finished**: it is byte-identical between Logos's two packages, names no rule and
-no operator, and is a proof about a stack machine rather than about a calculus.
-Getting it to arrive finished — carrying a `sorry` only in what it depends on —
-is the single largest improvement available, and is item 5 of
-[eoc-requests.md](eoc-requests.md).
+The template decides as little as it can about how *your* proofs are organised.
+
+Logos is the reference, and it is tempting to copy more of it than is wise.
+Where Logos has made a choice that a different checker might reasonably make
+differently — what a rule must prove, how premise evidence is packaged, what
+counts as an extra invariant — the template leaves the decision open rather than
+shipping Logos's answer as though it were forced.
+
+The rule of thumb: **port facts, not structure.**
+
+- `Proofs/TypeDefaults.lean` is a *fact* about the generated model — an
+  inhabited, well-formed type has a typed canonical default. It constrains
+  nothing about how you write your proofs, so it is ported and proven.
+- `RuleSupport/Contract.lean` in Logos defines `StepRuleProperties`: what a rule
+  is obliged to establish. That is *structure*. Porting it would fix your
+  checker/rule contract before you have written a rule, so the template leaves
+  `Proofs/RuleSupport/Support.lean` open with a description of what it must
+  supply.
+
+### The tradeoff
+
+These pull against each other, and neither answer is right in general.
+
+Porting more from Logos means less to write, and a checker whose shape you
+inherited. Porting less means more to write, and a checker that is yours. A
+project reproducing CPC closely wants the first; one whose calculus is genuinely
+different wants the second, and would find inherited structure actively in the
+way.
+
+The template currently sits toward the second, and says so where it matters:
+each `OPEN` file describes what belongs in it and what Logos put there, so
+adopting Logos's answer is always available and never assumed. Where that
+balance should sit is a decision for whoever is building the checker, and
+changing it means changing the templates rather than working around them.
 
 ```text
 <Calculus>/

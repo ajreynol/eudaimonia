@@ -26,37 +26,41 @@ regenerates it and refers to nothing outside itself.
 | `@CHECKER@.lean` | G | the core checker |
 | `Parser.lean` | G | the operator table for this signature |
 | `Proofs/RuleLemmas.lean` | G | the dispatcher over the rules |
-| `Api.lean` | F | what the executable does with a file — parse, then the three checks |
-| `ApiChecks.lean` | F | each check is the theorem component it stands for. Proven |
+| `Api.lean` | P | what the executable does with a file — parse, then the three checks |
+| `ApiChecks.lean` | P | each check is the theorem component it stands for. Proven |
 | `ApiCorrect.lean` | F | soundness, about the text of a file, derived from `Proofs/Checker.lean` |
-| `Diagnostics.lean` | F | where a rejected proof broke |
-| `Proofs/Assumptions.lean` | F | the side conditions, and deciding them. Strengthen per rule as proofs need it |
-| `Proofs/Checker.lean` | F\* | the soundness theorem. **Not calculus-specific** — see below |
-| `ModelWf.lean` | **H** | what a well-formed model gives you. **Proven** against the generated `model_wf` — change `smt.eos` and it becomes yours |
-| `Proofs/Invariants/Extra.lean` | **H** | **the calculus-specific seam. Start here.** What your rules need of the proof state beyond well-typed, translatable and locally true. `True` if they need nothing |
-| `Proofs/TypePreservation.lean` | **H** | a term the semantics types has a well-formed type |
-| `Proofs/TranslationTypePreservation.lean` | **H** | the type of a translated term is the translation of its type. **The one that cannot be inherited** |
-| `Proofs/NonVacuity.lean` | **H** | a well-formed model exists — without it soundness is vacuous |
-| `Proofs/Canonicity.lean` | **H** | evaluating a literal gives a value in normal form |
-| `Proofs/RuleSupport/Support.lean` | **H** | what every rule statement is written against |
-| `Proofs/CheckerCore.lean` | **H** | correctness of the core, independent of the rules |
-| `Proofs/Rules/` | G+H | one file per rule: statement generated, **proof yours** |
+| `Diagnostics.lean` | P | where a rejected proof broke |
+| `Proofs/Assumptions.lean` | P | the side conditions, and deciding them. Strengthen per rule as proofs need it |
+| `Proofs/Checker.lean` | **O**\* | the soundness theorem. **Not calculus-specific** — see below |
+| `ModelWf.lean` | P | what a well-formed model gives you. **Proven** against the generated `model_wf` — change `smt.eos` and it becomes yours |
+| `Proofs/TypePredicates.lean` | P | type inhabitation and value canonicity, ported from Logos |
+| `Proofs/TypeDefaults.lean` | P | an inhabited well-formed type has a typed canonical default, ported from Logos |
+| `Proofs/Invariants/Extra.lean` | P | **the calculus-specific seam. Start here.** What your rules need of the proof state beyond well-typed, translatable and locally true. `True` if they need nothing |
+| `Proofs/TypePreservation.lean` | **O** | a term the semantics types has a well-formed type |
+| `Proofs/TranslationTypePreservation.lean` | **O** | the type of a translated term is the translation of its type. **The one that cannot be inherited** |
+| `Proofs/NonVacuity.lean` | **O** | a well-formed model exists — without it soundness is vacuous |
+| `Proofs/Canonicity.lean` | P | evaluating a literal gives a value in normal form |
+| `Proofs/RuleSupport/Support.lean` | **O** | what every rule statement is written against |
+| `Proofs/CheckerCore.lean` | **O** | correctness of the core, independent of the rules |
+| `Proofs/Rules/` | G+**O** | one file per rule: statement generated, **proof yours** |
 
-Three kinds of file, and knowing which is which is how you find the work.
+**Everything here compiles**, before anything is proven. `warningAsError` is
+deliberately not set, so a `sorry` is a warning rather than a build failure.
 
-| | kind | who wrote it | on `install-@CALCLOWER@.sh` |
-| --- | ---- | ------------ | --------------------------- |
-| **G** | **generated** | the compiler, from your signature | **overwritten** |
-| **F** | **fixed** | copied in complete by the generator | left alone |
-| **H** | **hand-written** | **you** — these arrive as stubs and `sorry`s | left alone |
+| | compiles? | `sorry` of its own? | you edit it? |
+| --- | --- | --- | --- |
+| **G** generated | yes | no | never — the next install overwrites it |
+| **P** proven | yes | no | never |
+| **F** finished | yes | no, but it depends on one | never |
+| **O** open | yes | **yes** | **yes** — that `sorry` is the work |
 
-**F is the category worth noticing.** Those files are copied in working and are
-not yours to write: they are hand-written, but by the template rather than by
-you. You *can* edit them, and there is no reason to unless you want to change
-what the checker does. They are not regenerated from the signature either, so an
-edit survives.
+`ApiCorrect.lean` is the case worth understanding. It states soundness about the
+text of a proof file and derives it from `Proofs/Checker.lean`. It compiles, has
+no `sorry` of its own, and you will not edit it — but it is not proven, because
+what it rests on is not.
 
-So the work is **H**, and there is less of it than the file count suggests.
+So a red build never means "there is work left"; it means something is broken.
+`scripts/rule-status.sh` and `scripts/run-ci.sh hygiene` report the work.
 
 ### The front-end theorems
 

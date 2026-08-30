@@ -11,9 +11,12 @@ name = "@FORMAT@"
 # The calculus: the proof rules, the terms they are stated about, and the
 # semantics they are proven correct against. The modules compiled from
 # signature/@CALCULUS@.eo belong here.
+# `warningAsError` is deliberately not set. A `sorry` is a warning, and this
+# package is meant to compile with them: everything ships in a shape that
+# builds, and what is unproven is reported by scripts/check-proof-hygiene.sh
+# rather than by a failed build. See "Compiles, proven, open" in README.md.
 [[lean_lib]]
 name = "@CALCULUS@"
-moreLeanArgs = ["-DwarningAsError=true"]
 
 @MINI_LIB@# The checker: the executable that reads a proof and reports a verdict.
 [[lean_exe]]

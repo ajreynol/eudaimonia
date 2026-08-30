@@ -358,7 +358,6 @@ if [ "${MINI}" = "yes" ]; then
     "# proofs against something that builds in seconds. See ${MINI_CALC}.lean." \
     "[[lean_lib]]" \
     "name = \"${MINI_CALC}\"" \
-    "moreLeanArgs = [\"-DwarningAsError=true\"]" \
     "")"
   MINI_TARGET=", \"${MINI_CALC}\""
 else

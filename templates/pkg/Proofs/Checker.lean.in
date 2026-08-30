@@ -41,8 +41,13 @@ module
 --
 -- In Logos: `Cpc/Proofs/Checker.lean`, whose `correct___eo_is_refutation` this
 -- corresponds to.
-public import @CALCULUS@.Proofs.RuleLemmas
-import all @CALCULUS@.Proofs.RuleLemmas
+-- Deliberately importing the invariant slot rather than `Proofs.RuleLemmas`.
+-- The real proof rests on the rule dispatcher, and so transitively on every
+-- rule proof -- which is why Logos cannot build this file until all 591 are
+-- done. A stub that inherited that would not compile, and everything here is
+-- meant to.
+public import @CALCULUS@.Proofs.Invariants.Extra
+import all @CALCULUS@.Proofs.Invariants.Extra
 
 public section
 
