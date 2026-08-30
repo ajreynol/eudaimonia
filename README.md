@@ -332,45 +332,27 @@ close once there are proofs to keep.
 
 A checker whose **development infrastructure is initialized**, not just a Lake
 package: the compiler that regenerates it, the scripts that build and check it,
-and documentation about its own calculus. The shape is Logos's.
+its own regression suite, and documentation about its own calculus. The shape is
+Logos's.
 
 ```text
-<Checker>/
-  install/                 regenerating <Calculus> from its signature
-    defs/<Calculus>.eo     the Eunoia signature
-    defs/<Calculus>.eos    what its symbols mean
-    defs/smt.eos           the SMT-LIB semantics that is written against
-    get-eo-compiler.sh     fetch and build the Eunoia compiler
-    install-<calc>.sh      compile the signature into <Calculus>/
-    README.md              what regeneration overwrites, and what it preserves
-  scripts/                 build.sh, check-proof-hygiene.sh, run-ci.sh
-  docs/                    calculus.md, development.md
-  test/regress/            proofs to check, the verdict each should get, and a
-                           runner; populated from <spec>/test/ if it has one
-  .github/workflows/ci.yml
-  .gitignore
-  lakefile.toml
-  lean-toolchain
-  Main.lean
-  <Calculus>.lean
-  Eunoia.lean
-  Eunoia/                  reading the Eunoia proof format: hand-written,
-                           calculus-independent, ~1,080 lines
-  <Calculus>/              the package: 17 modules, G generated and H hand-written
-    ...
-    Proofs/Rules/          one file per rule: statement generated, proof yours
-  README.md
+<Checker>/                 <- the generated project, standalone
+  <Calculus>/                the calculus: 17 modules + one file per rule
+  <Calculus>Mini/            the reduced package        (--mini)
+  <Format>/                  reading the proof format   (--format-name)
+  install/                   signature, semantics, and the compiler
+  scripts/ docs/ test/       build, check, document, regress
+  Main.lean lakefile.toml lean-toolchain README.md
 ```
 
-Every module under `<Calculus>/` carries a header saying whether it is
-generated from the signature — and so overwritten by a reinstall — or
-hand-written and left alone. `Proofs/Rules/` is both: the compiler emits a
-rule's statement with `sorry`, the proof goes in that same file, and a reinstall
-preserves it.
+**[docs/generated-checker.md](docs/generated-checker.md)** is the full anatomy:
+every file, how to navigate a checker you did not generate, which module is
+compiled from the signature and which is yours to write, and a table mapping
+each `new-checker.sh` option to what it decided.
 
-A generated checker does not refer back to this repository. It owns its own
-copy of the compiler setup, so it can be moved anywhere or made a repository of
-its own.
+A generated checker does not refer back to this repository. It owns its own copy
+of the compiler setup, so it can be moved anywhere or made a repository of its
+own.
 
 ### Trying it end to end
 
@@ -439,26 +421,33 @@ the *text* of a proof file and derives it from `Proofs/Checker.lean` — so
 discharging that one theorem closes the gap with no other file changing.
 `scripts/rule-status.sh` is where progress shows, not the verdict.
 
-## Repository layout
+## This repository
+
+Eudaimonia itself — the generator and its templates. Not to be confused with
+what a run *produces*, which is
+[docs/generated-checker.md](docs/generated-checker.md).
 
 ```text
 config.sh                  the settings a run reads
 scripts/new-checker.sh     the generator
-scripts/get-eo-compiler.sh fetches and builds the Eunoia compiler, pinned
 templates/                 what it renders, one file per generated file
-  pkg/ install/ scripts/  the checker's package, installer and dev scripts
-  docs/ ci/ test/         its documentation, CI workflow and test layout
-docs/eoc-requests.md       what a template needs from the eoc compiler
+  pkg/                       the calculus package
+  eunoia/                    the proof-format library
+  starter/                   the --dummy-rule signature and its proofs
+  install/ scripts/          the checker's installer and dev scripts
+  docs/ ci/ test/            its documentation, CI workflow and test layout
 examples/cpc/              a worked specification: CPC, as Logos compiles it
 examples/hello/            the smallest one that works: one rule, five proofs
+docs/generated-checker.md  the anatomy of what a run produces
+docs/eoc-requests.md       what a template needs from the eoc compiler
 checkers/                  where runs write, ignored by git
-deps/                      the Ethos tree and ethos-eoc, ignored by git
 TODO.md                    what Logos has that a generated checker still needs
 ```
 
-Templates are plain files with `@CHECKER@`, `@CALCULUS@`, `@EXE@` and
-`@TOOLCHAIN@` substituted in. Adding a file to a generated project means adding
-a template and one `render` line in the script.
+Templates are plain files with `@CHECKER@`, `@CALCULUS@`, `@FORMAT@`, `@EXE@`,
+`@CALCLOWER@`, `@MINI@` and `@TOOLCHAIN@` substituted in. Adding a file to a
+generated project means adding a template and one `render` line in the
+generator.
 
 ## Status
 
