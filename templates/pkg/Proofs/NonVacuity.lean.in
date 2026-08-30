@@ -16,7 +16,7 @@ module
 --
 -- What this obligation cost Logos, and what shape the work takes, is in the
 -- Logos experience report:
---   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
+--   @EUDAIMONIA@/blob/main/docs/logos-experience-report.md
 -- `SmtModel` directly rather than `ModelWf`: this statement does not need the
 -- projections, and `ModelWf.lean` is one of the files `--theorems` can leave
 -- out. A front-end theorem must not depend on another being generated.

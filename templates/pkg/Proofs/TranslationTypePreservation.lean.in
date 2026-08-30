@@ -17,7 +17,7 @@ module
 --
 -- What this obligation cost Logos, and what shape the work takes, is in the
 -- Logos experience report:
---   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
+--   @EUDAIMONIA@/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.Spec
 import all @CALCULUS@.Spec
 public import @CALCULUS@.@CHECKER@

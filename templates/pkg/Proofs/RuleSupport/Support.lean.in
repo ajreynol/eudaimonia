@@ -33,7 +33,7 @@ module
 -- it goes here, coupled to `Proofs/Invariants/Extra.lean`.
 --
 -- The Logos experience report has the sizes:
---   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
+--   @EUDAIMONIA@/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.Proofs.Assumptions
 import all @CALCULUS@.Proofs.Assumptions
 

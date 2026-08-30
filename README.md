@@ -322,8 +322,9 @@ the generator's. Generate it there:
 scripts/new-checker.sh --checker Apodeixis --out ~/apodeixis
 ```
 
-A generated project is self-contained and does not refer back to this one, so
-it can also simply be moved.
+A generated project builds without anything from this one, so it can also
+simply be moved. It links back here for the documentation that describes
+checkers in general, and carries its own for what is specific to its calculus.
 
 Regenerating over an existing project needs `--force`. It deletes the project
 directory and writes it again, so everything under it goes, hand-written Lean
@@ -428,9 +429,14 @@ cost Logos — a verified checker for a 591-rule calculus. Generated projects li
 back to it rather than carrying a copy, since it describes Logos rather than any
 one calculus.
 
-A generated checker does not refer back to this repository. It owns its own copy
-of the compiler setup, so it can be moved anywhere or made a repository of its
-own.
+A generated checker owns its own copy of the compiler setup and builds without
+anything from this repository, so it can be moved anywhere or made a repository
+of its own. What it does keep is a link back to
+[`docs/generated-checker.md`](docs/generated-checker.md),
+[`docs/logos-experience-report.md`](docs/logos-experience-report.md) and
+[`docs/limitations.md`](docs/limitations.md) — the documentation that describes
+checkers of this shape rather than any one calculus, and that goes on changing
+here. Shipping a copy into the project would freeze it.
 
 ### Trying it end to end
 

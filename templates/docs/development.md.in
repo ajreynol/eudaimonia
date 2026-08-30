@@ -1,5 +1,14 @@
 # Working on @CHECKER@
 
+How to work on **this** checker. What is general to checkers of this shape lives
+in [Eudaimonia](@EUDAIMONIA@) and evolves there:
+
+- [Anatomy of a generated checker](@EUDAIMONIA@/blob/main/docs/generated-checker.md)
+  — what every file is, which are yours, and where to start reading
+- [The Logos experience report](@EUDAIMONIA@/blob/main/docs/logos-experience-report.md)
+  — every `sorry` here, and what the same obligation cost Logos
+- [Limitations](@EUDAIMONIA@/blob/main/docs/limitations.md) — what is not done
+
 ## The loop
 
 ```bash
@@ -104,7 +113,7 @@ does not model, so the theorem does not apply to it.
 
 ## The proofs
 
-The [Logos experience report](https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md)
+The [Logos experience report](@EUDAIMONIA@/blob/main/docs/logos-experience-report.md)
 goes through every `sorry` this checker contains, in reading order, with what
 the same obligation cost Logos. It is in the Eudaimonia repository, since it
 describes Logos rather than @CALCULUS@. Start with `@CALCULUS@/Proofs/Invariants/Extra.lean` — the one file

@@ -35,7 +35,7 @@ module
 -- proof checking rather than about any rule. Seeding it from the compiler is
 -- item 5 of the Eudaimonia eoc wish list.
 --
---   https://github.com/ajreynol/eudaimonia/blob/main/docs/eoc-requests.md
+--   @EUDAIMONIA@/blob/main/docs/eoc-requests.md
 public import @CALCULUS@.Proofs.RuleSupport.Support
 import all @CALCULUS@.Proofs.RuleSupport.Support
 

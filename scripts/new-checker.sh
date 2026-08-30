@@ -264,6 +264,13 @@ rel() {
 # is, results Logos proves about SMT-LIB itself are candidates to reuse.
 LOGOS_SMT_DIGEST="b3e8d1005cd5d4157647b13c24310ac6"
 
+# Where a generated checker points for the documentation that is not its own.
+# Anything that describes checkers in general -- the anatomy, the design
+# principles, what each `sorry` costs, what is not done yet -- lives in
+# Eudaimonia and evolves there, so a generated checker links rather than
+# carrying a copy that goes stale the day it is written.
+EUDAIMONIA="https://github.com/ajreynol/eudaimonia"
+
 EXE="$(printf '%s' "${CHECKER}" | tr '[:upper:]' '[:lower:]')"
 CALCLOWER="$(printf '%s' "${CALCULUS}" | tr '[:upper:]' '[:lower:]')"
 MINI_CALC="${CALCULUS}Mini"
@@ -316,6 +323,7 @@ render() {
       -e "s|@MINI@|${MINI_CALC}|g" \
       -e "s|@FORMAT@|${FORMAT}|g" \
       -e "s|@MINI_RULES@|${MINI_RULES}|g" \
+      -e "s|@EUDAIMONIA@|${EUDAIMONIA}|g" \
       -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
       "${template}" > "${out}"
 }
@@ -492,7 +500,7 @@ if [ "${MINI}" = "yes" ]; then
         -e "s|@CALCLOWER@|${CALCLOWER}|g" \
         -e "s|@MINI@|${MINI_CALC}|g" \
         -e "s|@FORMAT@|${FORMAT}|g" \
-      -e "s|@FORMAT@|${FORMAT}|g" \
+        -e "s|@EUDAIMONIA@|${EUDAIMONIA}|g" \
         -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
         "${templates_dir}/${src}" > "${DEST}/${MINI_CALC}/${dst}"
   done

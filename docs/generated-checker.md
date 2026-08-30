@@ -7,14 +7,20 @@ This describes the **generated project**, not this repository. For this
 repository — the templates and the generator — see the *This repository*
 section of the [README](../README.md).
 
-A generated checker is standalone. It does not refer back here, owns the
-compiler that regenerates it, and can be moved anywhere or made a repository of
-its own.
+A generated checker is **structurally** standalone: it owns the compiler that
+regenerates it, builds without anything from here, and can be moved anywhere or
+made a repository of its own. What it does keep is a link back to this
+documentation — this page, the [Logos experience
+report](logos-experience-report.md) and [Limitations](limitations.md) — because
+those describe checkers of this shape in general and go on changing. A copy
+shipped into the project would be stale the day it was written.
 
-Throughout, `<Checker>`, `<Calculus>` and `<Format>` stand for what you passed
-to `--checker`, `--calculus` and `--format-name`. The examples use
-`--checker Logos --calculus Cpc`, so `<Checker>` is `Logos` and `<Calculus>` is
-`Cpc`.
+So: what is specific to a calculus lives in that project, in its `README.md`,
+`docs/development.md`, `docs/calculus.md` and `install/README.md`. What is
+general lives here.
+
+Throughout, `<Checker>`, `<Calculus>` and `<Format>` stand for what was passed
+to `--checker`, `--calculus` and `--format-name`.
 
 ---
 
