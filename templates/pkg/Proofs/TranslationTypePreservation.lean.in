@@ -15,8 +15,9 @@ module
 -- discharge it. Everything else on this list could in principle be inherited;
 -- this one is irreducibly the cost of having a calculus of your own.
 --
--- What this cost the checker this template is modelled on, and what shape the
--- work takes, is in `docs/logos-experience-report.md`.
+-- What this obligation cost Logos, and what shape the work takes, is in the
+-- Logos experience report:
+--   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.Spec
 import all @CALCULUS@.Spec
 public import @CALCULUS@.@CHECKER@

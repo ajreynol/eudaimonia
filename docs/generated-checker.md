@@ -25,8 +25,10 @@ In this order, when you open a checker you did not generate:
 1. **`README.md`** — what it is and how to build it.
 2. **`docs/calculus.md`** — what calculus it checks, what the signature must
    provide, and its profile.
-3. **`docs/logos-experience-report.md`** — every `sorry` the checker contains,
-   in reading order, with what the same obligation cost Logos.
+3. **[The Logos experience report](logos-experience-report.md)** — every `sorry`
+   the checker contains, in reading order, with what the same obligation cost
+   Logos. It lives here rather than in the generated project, since it describes
+   Logos rather than any one calculus.
 4. **`install/README.md`** — how it is regenerated from the signature, and
    crucially *what regeneration overwrites and what it preserves*.
 5. **`docs/development.md`** — the working loop: build, check, add a rule.
@@ -74,8 +76,7 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
   scripts/                   build.sh, build-rules.sh, rule-status.sh,
                              check-proof-hygiene.sh, check-with-ethos.sh,
                              run-ci.sh
-  docs/                      calculus.md, development.md,
-                             logos-experience-report.md
+  docs/                      calculus.md, development.md
   test/regress/              proofs, expected verdicts, and a runner
   .github/workflows/ci.yml
   .gitignore

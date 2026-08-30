@@ -1,12 +1,16 @@
 # Logos experience report
 
-Every `sorry` a freshly generated @CHECKER@ contains, and what the same
+Every `sorry` a freshly generated checker contains, and what the same
 obligation cost [Logos](https://github.com/cvc5/logos) — a verified checker for
 CPC, a 591-rule calculus over most of SMT-LIB.
 
-This is not a survey of Logos. It is a report against **this checker's stubs**,
-one section each, so that before starting any of them you know what you are
-walking into.
+This is not a survey of Logos. It is a report against **the stubs a generated
+checker actually contains**, one section each, so that before starting any of
+them you know what you are walking into.
+
+It is fixed documentation: it describes Logos, not your calculus, so it lives
+here rather than being copied into each generated project. Those projects link
+back to it.
 
 Where two numbers are given they are `Cpc` (591 rules) against `CpcMini` (the
 same signature reduced to five rules). The gap between them is the single most
@@ -15,7 +19,7 @@ its theories** and which follow the **rule count**.
 
 ## The inventory
 
-A generated @CHECKER@, immediately after `install/install-@CALCLOWER@.sh`:
+A generated checker, immediately after `install/install-<calculus>.sh`:
 
 | stub | obligation | in Logos |
 | ---- | ---------- | -------: |

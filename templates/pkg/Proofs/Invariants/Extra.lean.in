@@ -31,7 +31,7 @@ module
 -- variable-variant model.
 --
 -- Exactly one of CPC's 591 rules uses it, and the machinery it rests on is
--- 32,274 lines. Do not reach for this speculatively -- see `docs/logos-experience-report.md`.
+-- 32,274 lines. Do not reach for this speculatively; see the report below.
 --
 -- **This choice is coupled to `Proofs/RuleSupport/Support.lean`.** Making the
 -- extra invariant load-bearing means adding a corresponding field to the
@@ -39,8 +39,9 @@ module
 -- alongside `true_here`. The two are decided together, up front, and are
 -- awkward to separate later.
 --
--- What this cost the checker this template is modelled on, and what shape the
--- work takes, is in `docs/logos-experience-report.md`.
+-- What this obligation cost Logos, and what shape the work takes, is in the
+-- Logos experience report:
+--   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.Proofs.Assumptions
 import all @CALCULUS@.Proofs.Assumptions
 

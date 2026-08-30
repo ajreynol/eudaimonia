@@ -14,8 +14,9 @@ module
 -- for every calculus over ordinary SMT-LIB. It is left open here only because
 -- the template does not yet carry the proof.
 --
--- What this cost the checker this template is modelled on, and what shape the
--- work takes, is in `docs/logos-experience-report.md`.
+-- What this obligation cost Logos, and what shape the work takes, is in the
+-- Logos experience report:
+--   https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md
 public import @CALCULUS@.ModelWf
 import all @CALCULUS@.ModelWf
 

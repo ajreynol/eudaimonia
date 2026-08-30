@@ -337,6 +337,12 @@ every file, how to navigate a checker you did not generate, which module is
 compiled from the signature and which is yours to write, and a table mapping
 each `new-checker.sh` option to what it decided.
 
+**[docs/logos-experience-report.md](docs/logos-experience-report.md)** goes
+through every `sorry` a generated checker contains and what the same obligation
+cost Logos — a verified checker for a 591-rule calculus. Generated projects link
+back to it rather than carrying a copy, since it describes Logos rather than any
+one calculus.
+
 A generated checker does not refer back to this repository. It owns its own copy
 of the compiler setup, so it can be moved anywhere or made a repository of its
 own.
@@ -423,6 +429,9 @@ templates/                 what it renders, one file per generated file
 examples/cpc/              a worked specification: CPC, as Logos compiles it
 examples/hello/            the smallest one that works: one rule, five proofs
 docs/generated-checker.md  the anatomy of what a run produces
+docs/logos-experience-report.md
+                           every `sorry` a generated checker has, and what the
+                           same obligation cost Logos
 docs/eoc-requests.md       what a template needs from the eoc compiler
 checkers/                  where runs write, ignored by git
 TODO.md                    what Logos has that a generated checker still needs

@@ -104,9 +104,10 @@ does not model, so the theorem does not apply to it.
 
 ## The proofs
 
-[`logos-experience-report.md`](logos-experience-report.md) goes through every
-`sorry` this checker contains, in reading order, with what the same obligation
-cost Logos. Start with `@CALCULUS@/Proofs/Invariants/Extra.lean` — the one file
+The [Logos experience report](https://github.com/ajreynol/eudaimonia/blob/main/docs/logos-experience-report.md)
+goes through every `sorry` this checker contains, in reading order, with what
+the same obligation cost Logos. It is in the Eudaimonia repository, since it
+describes Logos rather than @CALCULUS@. Start with `@CALCULUS@/Proofs/Invariants/Extra.lean` — the one file
 that genuinely differs between two checkers, and the decision that most affects
 the rest.
 
