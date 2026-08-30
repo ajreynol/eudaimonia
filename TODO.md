@@ -381,6 +381,13 @@ and a re-check at install time where compiled output can settle it.
       *declared* rather than *derived*, with the reason recorded. `binders` and
       `value-ordering` are declared for the same underlying reason: the
       machinery is template-fixed in eoc.
+- [ ] **Datatype machinery is unconditional — now measured, not argued.**
+      `examples/hello` declares three constants and one rule, no datatypes and
+      no literals beyond `Bool`, and still gets `DatatypeType`, `DtCons`,
+      `DtSel`, `DatatypeDecl`, `Numeral`, `Rational` and `Binary`: **370 of its
+      2,395 generated lines, 15%, are machinery it cannot use.** The mechanism
+      to trim it now exists — see the indexed-operator item above — and is
+      simply not pointed here yet.
 - [ ] **None of the profile is a feature switch, and datatypes should be.**
       What a generated checker contains is decided by the signature and by eoc;
       only `--no-parser` changes anything. Trimming datatype machinery for a

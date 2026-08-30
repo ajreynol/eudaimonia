@@ -1,7 +1,9 @@
 module
 
--- This file is hand-written. A signature install leaves it alone, so what is
--- put here is kept.
+-- **Fixed (F).** Copied in complete by the generator: hand-written, but by the
+-- template rather than by you. A signature install leaves it alone, and so does
+-- everything else, so an edit here survives -- there is just no reason to make
+-- one unless you want to change what the checker does.
 --
 -- The side conditions of the soundness theorem: the predicates restricting a
 -- proof to terms the semantics gives a meaning to, together with the

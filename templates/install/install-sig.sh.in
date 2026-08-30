@@ -488,14 +488,15 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   d_scopes="$(detect "sed -n '/^def __eo_cmd_step_pop_proven/,/^\$/p' '${LEAN_DIR}/@CHECKER@.lean' | grep -q 'CRule\\.'")"
   # A rule with :list premises builds the list through __eo_mk_premise_list.
   d_list="$(detect "grep -q '__eo_mk_premise_list (Term.UOp' '${LEAN_DIR}/@CHECKER@.lean'")"
-  # The highest index arity the calculus actually uses. An arity it does not
-  # use still gets an enum, holding a single `| None` placeholder, so a real
-  # constructor is the signal.
+  # The highest index arity the calculus uses.
+  #
+  # The compiler emits `UserOp<n>` only for an arity the calculus actually has,
+  # so absence is the signal and the highest enum present is the answer. It did
+  # not always: an unused arity used to arrive holding a placeholder `| None`,
+  # which is why the count below ignores one if it sees it.
   d_idx=0
   for n in 1 2 3; do
-    # `grep -c` exits 1 when the count is nought, which under `set -e` would
-    # kill the run on exactly the calculus this is meant to recognise: one with
-    # no indexed operators at all.
+    grep -q "^inductive UserOp${n} : Type where" "${LEAN_DIR}/${EOC_CORE}Term.lean" 2>/dev/null || continue
     real="$(sed -n "/^inductive UserOp${n} : Type where/,/^deriving/p" \
       "${LEAN_DIR}/${EOC_CORE}Term.lean" 2>/dev/null \
       | grep -E '^[[:space:]]+[|]' | grep -vc 'None : ' || true)"

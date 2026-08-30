@@ -1,7 +1,8 @@
 module
 
--- This file is hand-written. A signature install leaves it alone, so what is
--- put here is kept.
+-- **Yours (H).** Hand-written, and hand-written *by you*: it arrives as a stub
+-- or a `sorry`, and nothing will fill it in. A signature install leaves it
+-- alone, so what is put here is kept.
 --
 -- **The seam every generated rule proof imports.** The compiler emits each rule
 -- as a statement in terms of the names below, so this is the one module that

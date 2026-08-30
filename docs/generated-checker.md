@@ -78,44 +78,71 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
   .gitignore
 ```
 
-## Generated or hand-written
+## Generated, fixed, or yours
 
-Every module under `<Calculus>/` carries a header saying which it is. The
-distinction is what makes regeneration safe.
+Every module under `<Calculus>/` says in its own header which it is. Knowing
+the difference is how you find the work.
 
-| | meaning | on reinstall |
-| --- | ------- | ------------ |
-| **G** | compiled from the signature | **overwritten** |
-| **H** | hand-written | **left alone** |
+| | kind | who wrote it | on reinstall |
+| --- | ---- | ------------ | ------------ |
+| **G** | **generated** | the compiler, from your signature | **overwritten** |
+| **F** | **fixed** | copied in complete by the generator | left alone |
+| **H** | **hand-written** | **you** — arrives as a stub or a `sorry` | left alone |
+
+**F is the category that is easy to miss, and it is most of what looks like
+work.** Those files are hand-written — but by the template, not by you. They
+arrive complete and working, they are not regenerated from the signature, and
+there is no reason to touch them unless you want to change what the checker
+does. An edit to one survives everything.
+
+In a CPC-sized checker that is 641 lines of already-working API layer, against
+**three files and the rules** that are actually yours.
 
 ```text
 <Calculus>/
-  SmtEval.lean           G  primitives the embedding is evaluated over
-  <Checker>Term.lean     G  the term datatype of the calculus
-  SmtModelDefs.lean      G  what the model semantics is built from
-  SmtValueOrder.lean     G  the order on values
-  SmtModel.lean          G  the model semantics of SMT-LIB
-  Spec.lean              G  <Calculus> <-> SMT-LIB, and satisfiability
-  <Checker>.lean         G  the core checker
-  Parser.lean            G  the operator table for this signature
-  Api.lean               H  what the executable does with a file
-  ApiChecks.lean         H  each check is the theorem component it stands for
-  ApiCorrect.lean        H  the soundness theorem, about the text of a file
-  Diagnostics.lean       H  where a rejected proof broke
-  Proofs/
-    Assumptions.lean     H  the side conditions, and deciding them
-    CheckerCore.lean     H  correctness of the core, rule-agnostic
-    RuleLemmas.lean      G  the dispatcher over the rules
-    Checker.lean         H  the soundness theorem
-    RuleSupport/         H  what rule statements are written against
-    Rules/               G+H  statement generated, proof yours
+  SmtEval.lean            G  primitives the embedding is evaluated over
+  <Checker>Term.lean      G  the term datatype of the calculus
+  SmtModelDefs.lean       G  what the model semantics is built from
+  SmtValueOrder.lean      G  the order on values
+  SmtModel.lean           G  the model semantics of SMT-LIB
+  Spec.lean               G  <Calculus> <-> SMT-LIB, and satisfiability
+  <Checker>.lean          G  the core checker
+  Parser.lean             G  the operator table for this signature
+  Proofs/RuleLemmas.lean  G  the dispatcher over the rules
+
+  Api.lean                F  parse, then the three checks
+  ApiChecks.lean          F  each check is the theorem component it stands for
+  ApiCorrect.lean         F  soundness about the text of a file
+  Diagnostics.lean        F  where a rejected proof broke
+  Proofs/Assumptions.lean F  the side conditions, and deciding them
+
+  Proofs/RuleSupport/Support.lean  H  what rule statements are written against
+  Proofs/CheckerCore.lean          H  correctness of the core, rule-agnostic
+  Proofs/Checker.lean              H  the soundness theorem
+  Proofs/Rules/                  G+H  statement generated, proof yours
 ```
 
-`Proofs/Rules/` is both, and is the one place where that matters: the compiler
-emits a rule's statement with `sorry` for its proof, the proof goes in that same
-file, and a reinstall **preserves** it. So a rule new to the signature arrives
-as a stub, and a rule whose statement changed keeps its old proof and therefore
-fails to build — which is the signal that a proof needs attention.
+Everything *outside* `<Calculus>/` is **F** as well: the format library, the
+scripts, the installer, the CI workflow, `Main.lean`, the Lake files. All copied
+in working.
+
+### Where to start
+
+`Proofs/RuleSupport/Support.lean`. Every generated rule statement is written
+against the names it is meant to supply, so until it is real no rule can be
+built at all — `scripts/build-rules.sh` says so rather than reporting hundreds
+of identical errors. After that, `Proofs/CheckerCore.lean` and
+`Proofs/Checker.lean`, then the rules.
+
+`Proofs/Assumptions.lean` is marked F because it arrives general and working,
+but expect to strengthen it per rule as the proofs turn out to need more than
+"the arguments translate".
+
+`Proofs/Rules/` is the one set that is both G and H: the compiler emits a rule's
+statement with `sorry` for its proof, the proof goes in that same file, and a
+reinstall **preserves** it. So a rule new to the signature arrives as a stub, and
+a rule whose statement changed keeps its old proof and therefore fails to build
+— which is the signal that a proof needs attention.
 
 ### Two names that are not what they look like
 

@@ -15,6 +15,53 @@ Where the two overlap it is noted; the two lists agree.
 
 ---
 
+## Priority
+
+**Top: item 5, seed the checker layer as templates.**
+
+It is the only item on this list that removes *work* rather than overhead.
+Measuring a generated checker by who has to write what:
+
+| | files | lines |
+| --- | ----: | ----: |
+| generated from the signature | 9 + one per rule | — |
+| copied in complete, working | 5 in the package, plus everything outside it | 641 in the package |
+| **left for the user to write** | **3, plus the rules** | — |
+
+Those three are `Proofs/RuleSupport/Support.lean`, `Proofs/CheckerCore.lean`
+and `Proofs/Checker.lean`. Item 5 moves the last of them — and plausibly the
+middle one and `Contract.lean` — out of that column, because
+`Cpc/Proofs/Checker.lean` is already byte-identical to `CpcMini`'s modulo the
+package name, names no `CRule` and no `UserOp`, and uses three `Term`
+constructors. The hard part is done; what is missing is that it is
+hand-maintained per package instead of seeded.
+
+It also does not wait on item 6. Stabilizing the SMT-LIB model is what would
+make this *library* reuse; seeding makes it *template* reuse, which is exactly
+what byte-identity across two packages already buys. Sequencing item 6 first
+would be right if the goal were sharing compiled proofs, and wrong if the goal
+is that a new checker starts with fewer blank files.
+
+Then, in order:
+
+2. **Item 1 — conditional datatype emission.** Now backed by a measurement
+   rather than an argument: 15% of the smallest possible calculus is machinery
+   it cannot use, and the mechanism to trim it shipped in 1b.
+3. **Item 2 — `--calc-name` and `--smt-semantics` on `main`.** Not a capability
+   request; a release one. Until it lands, every generated checker pins a
+   development branch and cannot honestly claim a reproducible build.
+4. **Item 3 — the premise-list nil diagnostic.** Small, and it turns a silently
+   broken package into one sentence.
+5. **Item 6 — stabilize the SMT-LIB model.** Still the biggest lever on total
+   cost, and still the right thing to do before anyone tries to share theory
+   proofs between two checkers. It is below the others here only because it is
+   the largest and unblocks nothing that is currently blocking.
+6. **Item 4 — generated `cmdTranslationOk`.** Worth doing when a second
+   consumer actually hits the hand-maintained table; Eudaimonia seeds the
+   generic version and has not yet.
+
+---
+
 ## 1. Emit feature machinery conditionally
 
 **The ask:** let what eoc emits depend on what the signature actually uses.
@@ -59,10 +106,27 @@ translation and type-preservation proofs for them — in a layer that is already
 the dominant cost (93,530 lines against a 4,474-line checker layer in Cpc; see
 `modularity.md` TODO 5).
 
-**Shape of the fix.** Key emission on what the signature declares. Datatypes are
-the clearest case — `declare-datatypes` is present or it is not — and are worth
-doing first. The same applies to binder machinery (`Term.Var`, closedness), to
-indexed-operator arities (item 1b), and plausibly to whole theories.
+**Shape of the fix.** Key emission on what the signature declares — which is
+exactly what item 1b now does for indexed operators, so the mechanism exists and
+the question is what else to point it at. Datatypes are the clearest remaining
+case: `declare-datatypes` is present or it is not. Then binder machinery
+(`Term.Var`, closedness), and plausibly whole theories.
+
+**Measured, no longer guessed.** `examples/hello` in Eudaimonia is a
+datatype-free signature with no literals beyond `Bool` — three declared
+constants and one rule. There was no such signature when this was first
+written, so `Term`'s constructor list could only be guessed at. Compiling it
+settles it:
+
+| constructor | in Hello's term module | Hello's signature declares it |
+| ----------- | ---------------------: | ----------------------------- |
+| `DatatypeType`, `DtCons`, `DtSel` | present | no |
+| `DatatypeDecl` | present | no |
+| `Numeral`, `Rational`, `Binary` | present | no |
+
+**370 of Hello's 2,395 generated lines — 15% — are datatype or literal
+machinery for a calculus that has neither.** Item 1b shows the mechanism to fix
+this exists; it is simply not pointed here yet.
 
 **What the template already does.** `install/defs/profile.conf` in a generated
 checker records the answers, including `PROFILE_DATATYPES` and
@@ -71,56 +135,30 @@ because nothing in the emitted output distinguishes them today. If eoc gains
 conditional emission, those keys are what a generated checker would key on, and
 they become derivable at the same moment.
 
-## 1b. Indexed operators: a fixed ladder of exactly three
+## 1b. Indexed operators — **done** (ethosEoc3, 2026-08-30)
 
-**The ask:** make the number of index arities depend on the signature — both
-downwards, so a calculus that indexes nothing does not carry three enums, and
-upwards, so one needing four indices can be expressed at all.
+`UserOp<n>` and the matching `Term.UOp<n>` are now emitted only for an arity the
+signature uses. Verified here:
 
-**Evidence.** `lean_meta_checker_term.lean` declares the ladder literally:
+| package | indexed arities used | `UserOp1/2/3` | `LogosTerm.lean` | `UOp1/2/3` mentions in the core |
+| ------- | -------------------: | ------------- | ---------------: | ------------------------------: |
+| `Cpc` | 3 | 14 / 4 / 2 | 305 | 260 |
+| `CpcMini` | 0 | **absent** | 105 | **0** |
+| `Hello` | 0 | **absent** | 99 | **0** |
 
-```lean
-inductive UserOp1 : Type where
-$LEAN_EO_THEORY_OP1_DEF$
-…
-inductive UserOp3 : Type where
-$LEAN_EO_THEORY_OP3_DEF$
-```
+Two things worth recording about the shape of the fix:
 
-There is no `UserOp4`, and there is no `UserOp0`-style omission.
+- **It keys on the compiled rule set, not just the signature.** `CpcMini` is
+  CPC's own signature reduced to five rules, and it now sheds all three arities.
+  That is the more useful behaviour and not the obvious one.
+- **Absence is the signal.** The placeholder `| None` constructor is gone, so a
+  consumer reads the answer off which enums exist. Eudaimonia's `indexed-ops`
+  profile check was updated accordingly, and still tolerates a placeholder if it
+  meets one.
 
-*The ceiling.* Three is the most indices an operator can take. A calculus
-wanting `(_ f i j k l)` cannot be compiled. Nothing warns; the signature simply
-cannot say it.
-
-*The floor.* An arity the calculus does not use is still emitted, holding a
-placeholder:
-
-```lean
-inductive UserOp1 : Type where
-  | None : UserOp1
-```
-
-That is `CpcMini`, which has one such constructor in each of `UserOp1`,
-`UserOp2` and `UserOp3` — against Cpc's 14, 4 and 2. The placeholder is there
-because the inductive has to be non-empty for the `deriving` clause, which is
-fair enough; the cost is that `Term` still gets `UOp1`, `UOp2` and `UOp3`
-constructors, and so every function matching on `Term` gets cases for all three.
-In a generated CPC package that is 260 lines of `Logos.lean`, 26 of
-`LogosTerm.lean`, 22 of `Parser.lean` and 20 of `Spec.lean`.
-
-**A difference from item 1 worth noting.** Unlike datatypes, this one is
-*derivable* from what is emitted: the placeholder is named `None`, so the
-highest arity holding a real constructor is exactly the arity the calculus uses.
-Eudaimonia derives it, and a generated checker records it as
-`PROFILE_INDEXED_OPS`. So the compiler already emits enough information to know
-the answer — it just does not act on it.
-
-**Shape of the fix.** Emit `UserOp<n>` and the matching `Term.UOp<n>` for
-`n = 1 … k`, where `k` is the greatest arity the signature actually uses, and
-let `k` range higher than 3 — five would cover anything plausible. `k = 0` (no
-indexed operators at all) should drop the constructors entirely rather than
-emit placeholders.
+This is the first item on this list to land, and it is the proof that the list
+is worth keeping: the request was written from measurements, and the fix
+matched them.
 
 ## 2. Put `--calc-name` and `--smt-semantics` on `main`
 
@@ -227,6 +265,8 @@ reuse: the same text about two different types.
 library with per-package pruning as an optimization is what would let two
 checkers share the theory proofs — and it is the precondition for items 1 and 5
 paying off, so it sequences first.
+
+---
 
 ---
 

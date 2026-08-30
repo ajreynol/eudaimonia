@@ -25,30 +25,44 @@ regenerates it and refers to nothing outside itself.
 | `Spec.lean` | G | @CALCULUS@ ↔ SMT-LIB, and satisfiability |
 | `@CHECKER@.lean` | G | the core checker |
 | `Parser.lean` | G | the operator table for this signature |
-| `Api.lean` | H | what the executable does with a file |
-| `ApiChecks.lean` | H | each check is the theorem component it stands for |
-| `ApiCorrect.lean` | H | the soundness theorem, about the text of a file |
-| `Diagnostics.lean` | H | where a rejected proof broke |
-| `Proofs/Assumptions.lean` | H | the side conditions, and deciding them |
-| `Proofs/CheckerCore.lean` | H | correctness of the core, rule-agnostic |
 | `Proofs/RuleLemmas.lean` | G | the dispatcher over the rules |
-| `Proofs/Checker.lean` | H | the soundness theorem |
-| `Proofs/RuleSupport/` | H | what every rule statement is written against |
-| `Proofs/Rules/` | G+H | one file per rule: statement generated, proof yours |
+| `Api.lean` | F | what the executable does with a file — parse, then the three checks |
+| `ApiChecks.lean` | F | each check is the theorem component it stands for. Proven |
+| `ApiCorrect.lean` | F | soundness, about the text of a file, derived from `Proofs/Checker.lean` |
+| `Diagnostics.lean` | F | where a rejected proof broke |
+| `Proofs/Assumptions.lean` | F | the side conditions, and deciding them. Strengthen per rule as proofs need it |
+| `Proofs/RuleSupport/Support.lean` | **H** | what every rule statement is written against. **Start here** |
+| `Proofs/CheckerCore.lean` | **H** | correctness of the core, independent of the rules |
+| `Proofs/Checker.lean` | **H** | the soundness theorem. Everything else exists to state it |
+| `Proofs/Rules/` | G+H | one file per rule: statement generated, **proof yours** |
 
-**G** is generated from the signature and overwritten by
-`install/install-@CALCLOWER@.sh`; **H** is hand-written and left alone. Each
-file says which it is in its own header.
+Three kinds of file, and knowing which is which is how you find the work.
 
-`Proofs/Rules/` is both, and that is the case that matters: a rule's statement
-is generated with `sorry` for its proof, the proof goes in that same file, and a
-reinstall preserves it.
+| | kind | who wrote it | on `install-@CALCLOWER@.sh` |
+| --- | ---- | ------------ | --------------------------- |
+| **G** | **generated** | the compiler, from your signature | **overwritten** |
+| **F** | **fixed** | copied in complete by the generator | left alone |
+| **H** | **hand-written** | **you** — these arrive as stubs and `sorry`s | left alone |
+
+**F is the category worth noticing.** Those files are copied in working and are
+not yours to write: they are hand-written, but by the template rather than by
+you. You *can* edit them, and there is no reason to unless you want to change
+what the checker does. They are not regenerated from the signature either, so an
+edit survives.
+
+So the work is **H**, and there is less of it than the file count suggests.
+
+`Proofs/Rules/` is the one file set that is both: a rule's statement is
+generated with `sorry` for its proof, the proof goes in that same file, and a
+reinstall **preserves** it.
 
 `@CHECKER@.lean` and `@CHECKER@Term.lean` are named after the *checker* rather
 than the calculus, because that is what they are — the core checking machinery
 and the term datatype it runs on.
 
 ### Everything else
+
+Everything here is **F** — copied in complete, working, and not yours to write.
 
 | path | what it is |
 | ---- | ---------- |

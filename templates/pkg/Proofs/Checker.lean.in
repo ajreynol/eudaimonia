@@ -1,7 +1,8 @@
 module
 
--- This file is hand-written. A signature install leaves it alone, so what is
--- put here is kept.
+-- **Yours (H).** Hand-written, and hand-written *by you*: it arrives as a stub
+-- or a `sorry`, and nothing will fill it in. A signature install leaves it
+-- alone, so what is put here is kept.
 --
 -- **The theorem this checker is for.** Everything else exists to state it, to
 -- compute it, or to connect it to what the executable prints.
