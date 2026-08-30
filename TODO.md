@@ -498,12 +498,21 @@ wrong.
       now send readers here first. Its coupling to `RuleSupport/Support.lean` —
       a load-bearing invariant needs a matching field in the premise evidence —
       is recorded, since the two are decided together.
-- [x] **`Proofs/Semantics.lean` — the central theorems, as stubs.** Type
-      preservation, the translation bridge, non-vacuity of `model_wf`, and
-      canonical values. Three `sorry`s; the two bridge theorems are *proven*
-      from them, so discharging the first gives the form rule proofs actually
-      apply. Closedness and variable-model results are deliberately not here:
-      they are conditional on binders and belong with the extra invariant.
+- [x] **The front-end theorems, one file each.** `ModelWf.lean` plus
+      `Proofs/{TypePreservation,TranslationTypePreservation,NonVacuity,Canonicity}.lean`.
+      Each is a leaf importing none of the others, so a `sorry` in one does not
+      block the rest — which chaining them did, since the package builds with
+      warnings as errors. `--theorems` selects which of the four are written.
+
+      `ModelWf.lean` ships proven, and is the honest illustration of the limit:
+      its proofs are the projections of the generated `model_wf`, so a change to
+      `smt.eos` breaks them. Only `TranslationTypePreservation` can never be
+      inherited — it is about `__eo_to_smt` for the user's operators. The rest
+      could arrive proven *while the SMT-LIB semantics is stock*, which is what
+      the `logos-smt` profile digest records.
+
+      Closedness and variable-model results are deliberately absent: they are
+      conditional on binders and belong with the extra invariant.
 - [ ] **`CheckerCore.lean` is nearly F too.** Its differences from `CpcMini`'s
       are simp-lemma lists and one namespace qualifier — drift between two
       hand-maintained copies, not calculus-specific content. Worth confirming

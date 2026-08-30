@@ -35,6 +35,36 @@ module
 -- evidence a rule receives about its premises -- in Logos, `true_in_var_model`
 -- alongside `true_here`. The two are decided together, up front, and are
 -- awkward to separate later.
+--
+-- ---------------------------------------------------------------------------
+-- What Logos does here
+-- ---------------------------------------------------------------------------
+--
+-- `Cpc/Proofs/Invariants/Stability.lean`, 552 lines against CpcMini's 488 --
+-- and the difference is not duplication: CpcMini defines
+-- `StableWhenTrueInAnyVarModel` as `True` and pays nothing, while Cpc points
+-- the slot at a real invariant.
+--
+-- CPC's invariant is *assumption stability*: every assumption on the checker
+-- stack stays true when the model's variable assignment is varied. Written out,
+-- it is a walk over the stack asserting `StableWhenTrueInAnyVarModel` of each
+-- `assume` and `assume_push` entry and nothing of `proven` entries.
+--
+-- **The cost is not in this file.** `StableWhenTrueInAnyVarModel` is defined in
+-- `Cpc/Proofs/Closed/Support.lean`, and `Closed/` is **32,274 lines** -- larger
+-- than the entire checker layer. CpcMini has none of it.
+--
+-- **And exactly one rule uses the slot.** Of 591 CPC rules, `Re_unfold_neg` is
+-- the only one whose proof reaches for `true_in_var_model`. (The `Closed/`
+-- machinery beneath is shared more widely -- `Quant_unused_vars` and other
+-- binder rules import it directly -- but the *invariant* has a single
+-- consumer.)
+--
+-- Two things to take from that. Leaving this at `True` is the common case and
+-- costs nothing, so do not reach for it speculatively. And when one rule does
+-- need it, the price is paid in the machinery it rests on rather than here --
+-- so the question to ask is not "do I want this invariant" but "am I prepared
+-- to build what it stands on".
 public import @CALCULUS@.Proofs.Assumptions
 import all @CALCULUS@.Proofs.Assumptions
 

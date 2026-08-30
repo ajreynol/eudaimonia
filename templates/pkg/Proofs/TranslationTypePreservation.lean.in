@@ -1,0 +1,92 @@
+module
+
+-- **Yours (H).** A front-end theorem: what the rule proofs stand on. It arrives
+-- as a `sorry` and a signature install leaves it alone.
+--
+-- **Translation type preservation** — the bridge between the two type systems.
+--
+-- The checker computes `__eo_typeof`; the semantics computes `__smtx_typeof`.
+-- This is what connects them: the type of a translated term is the translation
+-- of its type.
+--
+-- **This is the one front-end theorem that cannot arrive proven.** It is a
+-- statement about `__eo_to_smt` and `__eo_to_smt_type` for *your* operators,
+-- generated from *your* `@CALCULUS@.eos`, so no amount of upstream work can
+-- discharge it. Everything else on this list could in principle be inherited;
+-- this one is irreducibly the cost of having a calculus of your own.
+--
+-- ---------------------------------------------------------------------------
+-- What Logos does here
+-- ---------------------------------------------------------------------------
+--
+-- `Cpc/Proofs/Translation/`: **33,453 lines across 11 files**, against
+-- CpcMini's 5,141 across 5. The single largest is `Apply.lean` at 17,003 lines
+-- -- the application case, one arm per operator of the signature -- followed by
+-- `EoTypeofCore.lean` at 6,887 and `Full.lean` at 4,967.
+--
+-- That shape is the lesson: the work is a case analysis over the operator set,
+-- so it scales with **how many theories the calculus takes on**, not with how
+-- many rules it has. CpcMini has the same 591-operator signature but only five
+-- rules, and still pays 5,141 lines here.
+--
+-- It is also why this is the one front-end theorem nobody can hand you.
+--
+-- This file imports none of the other front-end theorems, and none of them
+-- imports it. That is deliberate: this package builds with warnings as errors,
+-- so a `sorry` in one file would otherwise stop the others from building at
+-- all, and they could not be worked on independently.
+--
+-- The corollaries below are *proven* from it, and are the forms rule proofs
+-- actually apply.
+public import @CALCULUS@.Spec
+import all @CALCULUS@.Spec
+public import @CALCULUS@.@CHECKER@
+import all @CALCULUS@.@CHECKER@
+
+@[expose] public section
+
+open Eo
+open Smtm
+
+namespace Eo
+
+/-- The type of a translated term is the translation of its type. -/
+theorem eo_to_smt_type_typeof_of_smt_type
+    (t : Term) {T : SmtType}
+    (_h : __smtx_typeof (__eo_to_smt t) = T)
+    (_hT : T ≠ SmtType.None) :
+    __eo_to_smt_type (__eo_typeof t) = T := by
+  sorry
+
+/-! ## Corollaries
+
+Proven from the theorem above. These are what rule proofs use: an EO typing is
+what the checker has in hand, and an SMT typing is what the semantics needs.
+-/
+
+/-- Read the SMT type off an EO typing. -/
+theorem eo_to_smt_well_typed_and_typeof_implies_smt_type
+    (t T : Term) (s : SmtTerm)
+    (hs : __eo_to_smt t = s)
+    (hNonNone : __smtx_typeof s ≠ SmtType.None)
+    (hTy : __eo_typeof t = T) :
+    __smtx_typeof s = __eo_to_smt_type T := by
+  subst hs
+  have h := eo_to_smt_type_typeof_of_smt_type t (rfl) hNonNone
+  exact h.symm.trans (congrArg __eo_to_smt_type hTy)
+
+/--
+The Boolean case.
+
+Used constantly: the checker only puts Boolean-typed terms on its stack, so this
+is the form most rule proofs need.
+-/
+theorem eo_to_smt_non_none_and_typeof_bool_implies_smt_bool
+    (t : Term) (s : SmtTerm)
+    (hs : __eo_to_smt t = s)
+    (hNonNone : __smtx_typeof s ≠ SmtType.None)
+    (hTy : __eo_typeof t = Term.Bool) :
+    __smtx_typeof s = SmtType.Bool :=
+  eo_to_smt_well_typed_and_typeof_implies_smt_type t Term.Bool s hs hNonNone hTy
+
+end Eo

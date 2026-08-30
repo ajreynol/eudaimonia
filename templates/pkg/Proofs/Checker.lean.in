@@ -34,8 +34,6 @@ module
 -- corresponds to.
 public import @CALCULUS@.Proofs.RuleLemmas
 import all @CALCULUS@.Proofs.RuleLemmas
-public import @CALCULUS@.Proofs.Semantics
-import all @CALCULUS@.Proofs.Semantics
 
 public section
 

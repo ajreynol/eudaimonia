@@ -32,8 +32,12 @@ regenerates it and refers to nothing outside itself.
 | `Diagnostics.lean` | F | where a rejected proof broke |
 | `Proofs/Assumptions.lean` | F | the side conditions, and deciding them. Strengthen per rule as proofs need it |
 | `Proofs/Checker.lean` | F\* | the soundness theorem. **Not calculus-specific** — see below |
+| `ModelWf.lean` | **H** | what a well-formed model gives you. **Proven** against the generated `model_wf` — change `smt.eos` and it becomes yours |
 | `Proofs/Invariants/Extra.lean` | **H** | **the calculus-specific seam. Start here.** What your rules need of the proof state beyond well-typed, translatable and locally true. `True` if they need nothing |
-| `Proofs/Semantics.lean` | **H** | type preservation, the translation bridge, non-vacuity of `model_wf`, canonical values. Three `sorry`s; the bridge is proven from them |
+| `Proofs/TypePreservation.lean` | **H** | a term the semantics types has a well-formed type |
+| `Proofs/TranslationTypePreservation.lean` | **H** | the type of a translated term is the translation of its type. **The one that cannot be inherited** |
+| `Proofs/NonVacuity.lean` | **H** | a well-formed model exists — without it soundness is vacuous |
+| `Proofs/Canonicity.lean` | **H** | evaluating a literal gives a value in normal form |
 | `Proofs/RuleSupport/Support.lean` | **H** | what every rule statement is written against |
 | `Proofs/CheckerCore.lean` | **H** | correctness of the core, independent of the rules |
 | `Proofs/Rules/` | G+H | one file per rule: statement generated, **proof yours** |
@@ -53,6 +57,29 @@ what the checker does. They are not regenerated from the signature either, so an
 edit survives.
 
 So the work is **H**, and there is less of it than the file count suggests.
+
+### The front-end theorems
+
+`ModelWf.lean` and the four under `Proofs/` are what the rule proofs stand on.
+Each is a **leaf** — none imports another — so a `sorry` in one does not stop
+the rest from building, and they can be worked on in any order.
+
+Only `TranslationTypePreservation` is irreducibly yours: it is about
+`__eo_to_smt` for *your* operators, generated from *your* `.eos`, so no upstream
+work can discharge it. The others could in principle arrive proven — **but only
+while the SMT-LIB semantics is the stock one.** Supply your own `smt.eos`,
+change what a type is or what makes a model well-formed, and they become yours
+regardless of what upstream ships. `ModelWf.lean` shows both sides of this: it
+is proven here, and its proofs are exactly what a change to `model_wf` would
+break.
+
+The `logos-smt` entry of `install/defs/profile.conf` records whether that
+semantics is still the stock one, and so whether anything proven against it can
+be trusted.
+
+`--theorems` at generation time selects which of the four are written;
+`Proofs/Invariants/Extra.lean` and `Proofs/TypePreservation.lean` are always
+there.
 
 **F\*** — `Proofs/Checker.lean` is marked apart because it is not yours to write
 and not yet copied in either. In Logos the corresponding file is byte-identical

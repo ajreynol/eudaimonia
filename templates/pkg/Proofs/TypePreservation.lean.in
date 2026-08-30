@@ -1,0 +1,50 @@
+module
+
+-- **Yours (H).** A front-end theorem: what the rule proofs stand on. It arrives
+-- as a `sorry` and a signature install leaves it alone.
+--
+-- **Type preservation** — the SMT side.
+--
+-- A term the semantics gives a type at all has a *well-formed* type. Without
+-- this nothing downstream may assume the types it is handed are ones the model
+-- can interpret, and every lemma that inspects a type has to re-establish it.
+--
+-- Could in principle arrive proven: the statement is about the generated
+-- `__smtx_typeof` and `__smtx_type_wf`, which come from `smt.eos` — the same
+-- for every calculus over ordinary SMT-LIB. It is left open here only because
+-- the template does not yet carry the proof.
+--
+-- ---------------------------------------------------------------------------
+-- What Logos does here
+-- ---------------------------------------------------------------------------
+--
+-- `Cpc/Proofs/TypePreservation/`: **17,691 lines across 16 files**, against
+-- CpcMini's 4,234 across 10. Files are organised by theory --
+-- `CoreArith.lean`, `BitVec.lean`, `Sets.lean`, `SeqStringRegex.lean` -- which
+-- is the clearest evidence that the cost here follows the theories rather than
+-- the rules.
+--
+-- Roughly half of it is invariant between the two packages:
+-- `Datatypes.lean` (1,334 lines) is byte-identical, `Common.lean` (529) differs
+-- by four lines. The theory-specific halves are where the size lives.
+--
+-- **Whether it can be inherited depends on your `smt.eos`.** The statement is
+-- about definitions generated from the SMT-LIB semantics, so a proof of it
+-- transfers only while that semantics is the stock one — which is exactly what
+-- the `logos-smt` entry of `install/defs/profile.conf` records. Supply your own
+-- `smt.eos`, change what a type is or what a well-formed model is, and this
+-- becomes yours no matter what upstream ships.
+public import @CALCULUS@.ModelWf
+import all @CALCULUS@.ModelWf
+
+@[expose] public section
+
+namespace Smtm
+
+/-- A term the semantics types has a well-formed type. -/
+theorem smtx_typeof_wf (s : SmtTerm) :
+    __smtx_typeof s ≠ SmtType.None ->
+    __smtx_type_wf (__smtx_typeof s) = true := by
+  sorry
+
+end Smtm

@@ -60,6 +60,10 @@ Options:
   --mini-rules "A B"    the rules that reduced package keeps. Taken from
                         <spec>/mini-rules when a --spec directory has one
   --[no-]hygiene-ci     whether CI rejects `sorry` from the first commit
+  --theorems LIST       which front-end theorems to include, comma-separated
+                        from: translation, nonvacuity, canonicity, modelwf.
+                        `all` (the default) or `none`. Type preservation and
+                        the invariant slot are always generated
   --dummy-rule          with no signature given, write a working starter
                         instead of a commented stub: a signature with one rule,
                         its semantics, and regression proofs covering every
@@ -124,6 +128,7 @@ MINI="${MINI:-no}"
 MINI_RULES="${MINI_RULES:-}"
 HYGIENE_CI="${HYGIENE_CI:-no}"
 FORMAT="${FORMAT:-Eunoia}"
+THEOREMS="${THEOREMS:-all}"
 DUMMY_RULE="${DUMMY_RULE:-no}"
 # shellcheck source=../config.sh
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
@@ -164,6 +169,8 @@ while [ $# -gt 0 ]; do
     --mini-rules=*) MINI_RULES="${1#*=}"; MINI=yes; shift ;;
     --dummy-rule) DUMMY_RULE=yes; shift ;;
     --no-dummy-rule) DUMMY_RULE=no; shift ;;
+    --theorems) THEOREMS="${2:?--theorems requires a value}"; shift 2 ;;
+    --theorems=*) THEOREMS="${1#*=}"; shift ;;
     --format-name) FORMAT="${2:?--format-name requires a value}"; shift 2 ;;
     --format-name=*) FORMAT="${1#*=}"; shift ;;
     --hygiene-ci) HYGIENE_CI=yes; shift ;;
@@ -409,9 +416,34 @@ render pkg/Proofs/Assumptions.lean.in  "${DEST}/${CALCULUS}/Proofs/Assumptions.l
 render pkg/Proofs/CheckerCore.lean.in  "${DEST}/${CALCULUS}/Proofs/CheckerCore.lean"
 render pkg/Proofs/RuleLemmas.lean.in   "${DEST}/${CALCULUS}/Proofs/RuleLemmas.lean"
 render pkg/Proofs/Checker.lean.in      "${DEST}/${CALCULUS}/Proofs/Checker.lean"
+# The front-end theorems: what the rule proofs stand on. The invariant slot and
+# type preservation are always generated; the rest are opt-out, because a
+# checker may not owe them -- a calculus whose translation is total needs no
+# translation bridge, and one over Booleans alone owes little canonicity.
+#
+# Each is a leaf, importing none of the others. That is deliberate: this package
+# builds with warnings as errors, so a `sorry` in one would otherwise stop the
+# rest from building and they could not be worked on independently.
 render pkg/Proofs/Invariants/Extra.lean.in \
        "${DEST}/${CALCULUS}/Proofs/Invariants/Extra.lean"
-render pkg/Proofs/Semantics.lean.in    "${DEST}/${CALCULUS}/Proofs/Semantics.lean"
+render pkg/Proofs/TypePreservation.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/TypePreservation.lean"
+case ",${THEOREMS}," in *,all,*|*,none,*) ;; esac
+want_theorem() {
+  case "${THEOREMS}" in
+    all) return 0 ;;
+    none) return 1 ;;
+    *) case ",${THEOREMS}," in *",$1,"*) return 0 ;; *) return 1 ;; esac ;;
+  esac
+}
+want_theorem modelwf      && render pkg/ModelWf.lean.in \
+       "${DEST}/${CALCULUS}/ModelWf.lean" || true
+want_theorem translation  && render pkg/Proofs/TranslationTypePreservation.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/TranslationTypePreservation.lean" || true
+want_theorem nonvacuity   && render pkg/Proofs/NonVacuity.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/NonVacuity.lean" || true
+want_theorem canonicity   && render pkg/Proofs/Canonicity.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/Canonicity.lean" || true
 render pkg/Proofs/RuleSupport/Support.lean.in \
        "${DEST}/${CALCULUS}/Proofs/RuleSupport/Support.lean"
 render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.md"
@@ -440,7 +472,8 @@ if [ "${MINI}" = "yes" ]; then
     "pkg/Proofs/RuleLemmas.lean.in:Proofs/RuleLemmas.lean" \
     "pkg/Proofs/Checker.lean.in:Proofs/Checker.lean" \
     "pkg/Proofs/Invariants/Extra.lean.in:Proofs/Invariants/Extra.lean" \
-    "pkg/Proofs/Semantics.lean.in:Proofs/Semantics.lean" \
+    "pkg/Proofs/TypePreservation.lean.in:Proofs/TypePreservation.lean" \
+    "pkg/ModelWf.lean.in:ModelWf.lean" \
     "pkg/Proofs/RuleSupport/Support.lean.in:Proofs/RuleSupport/Support.lean" \
     "pkg/Proofs/Rules/README.md.in:Proofs/Rules/README.md" ; do
     src="${spec%%:*}"; dst="${spec#*:}"

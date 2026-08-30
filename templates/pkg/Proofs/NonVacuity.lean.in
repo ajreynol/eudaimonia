@@ -1,0 +1,50 @@
+module
+
+-- **Yours (H).** A front-end theorem: what the rule proofs stand on. It arrives
+-- as a `sorry` and a signature install leaves it alone.
+--
+-- **Non-vacuity** — that a well-formed model exists at all.
+--
+-- Easy to overlook and fatal to omit. Soundness says the assumptions of a
+-- checked proof hold in *no* well-formed model. If `model_wf` were satisfied by
+-- nothing, that would be true of every proof, and the whole development would
+-- prove nothing while appearing to prove everything.
+--
+-- Could arrive proven: it asks for one model, and the obvious one — every
+-- symbol mapped to the default value of its type — is generated. In Logos the
+-- corresponding file constructs exactly that.
+--
+-- ---------------------------------------------------------------------------
+-- What Logos does here
+-- ---------------------------------------------------------------------------
+--
+-- `Cpc/Proofs/TypePreservation/Nonvacuity.lean`, and it is **104 lines** -- by
+-- far the cheapest thing on this list.
+--
+-- The proof constructs a model rather than arguing one exists: every symbol is
+-- mapped to a default value of its declared type, and the three conjuncts of
+-- `model_wf` are then discharged against that construction. It reduces to one
+-- lemma about the value types -- that every well-formed type has a canonical
+-- inhabitant -- and the rest is bookkeeping.
+--
+-- So the shape to copy is: find a canonical inhabitant per type, then the model
+-- is immediate. If your types are the stock SMT-LIB ones this is nearly free.
+--
+-- **Whether it can be inherited depends on your `smt.eos`.** The statement is
+-- about definitions generated from the SMT-LIB semantics, so a proof of it
+-- transfers only while that semantics is the stock one — which is exactly what
+-- the `logos-smt` entry of `install/defs/profile.conf` records. Supply your own
+-- `smt.eos`, change what a type is or what a well-formed model is, and this
+-- becomes yours no matter what upstream ships.
+public import @CALCULUS@.ModelWf
+import all @CALCULUS@.ModelWf
+
+@[expose] public section
+
+namespace Smtm
+
+/-- Well-formed models exist. -/
+theorem model_wf_nonvacuous : ∃ M : SmtModel, model_wf M := by
+  sorry
+
+end Smtm

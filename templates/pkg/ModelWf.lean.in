@@ -1,0 +1,60 @@
+module
+
+-- **Yours (H), and proven — for as long as the definition holds.**
+--
+-- What a well-formed model gives you, in the form rule proofs apply.
+--
+-- `model_wf` is generated in `SmtModel.lean`, currently as a three-way
+-- conjunction, and these are its projections. They are proven here because
+-- against *that* definition they are immediate.
+--
+-- **They are not proven in general.** `model_wf` comes from `smt.eos`. Supply
+-- your own, change what a type is or what makes a model well-formed, and these
+-- projections change with it — the statements may no longer hold, and the
+-- proofs certainly will not. The build will say so, which is the useful
+-- behaviour: this file is where a change to well-formedness first shows up.
+--
+-- The `logos-smt` entry of `install/defs/profile.conf` records whether the
+-- SMT-LIB semantics is still the stock one, and so whether anything proven
+-- against it can be trusted.
+--
+-- ---------------------------------------------------------------------------
+-- What Logos does here
+-- ---------------------------------------------------------------------------
+--
+-- Logos has no file at this name. `model_wf` is used directly, its conjuncts
+-- destructured at each site that needs one, throughout `Proofs/`.
+--
+-- Naming the projections is this template's suggestion rather than Logos's
+-- practice, on the grounds that a checker whose definition of well-formedness
+-- may change is better off with one place that breaks than with the same
+-- destructuring repeated across a proof development. If you keep the stock
+-- semantics the difference is cosmetic; if you do not, this file is where you
+-- will be glad the change surfaced.
+public import @CALCULUS@.SmtModel
+import all @CALCULUS@.SmtModel
+
+@[expose] public section
+
+namespace Smtm
+
+variable {M : SmtModel}
+
+/-- In a well-formed model, a symbol of a well-formed type has a value of that type. -/
+theorem model_wf_typeof (h : model_wf M)
+    (isVar : SmtEval.native_Bool) (s : SmtEval.native_String) (T : SmtType) :
+    __smtx_type_wf T = true ->
+    __smtx_typeof_value (M.values { isVar := isVar, name := s, ty := T }) = T :=
+  h.1 isVar s T
+
+/-- In a well-formed model, those values are canonical. -/
+theorem model_wf_canonical (h : model_wf M)
+    (isVar : SmtEval.native_Bool) (s : SmtEval.native_String) (T : SmtType) :
+    __smtx_type_wf T = true ->
+    __smtx_value_canonical (M.values { isVar := isVar, name := s, ty := T }) = true :=
+  h.2.1 isVar s T
+
+/-- A well-formed model has well-formed functions. -/
+theorem model_wf_fun (h : model_wf M) : model_fun_wf M := h.2.2
+
+end Smtm

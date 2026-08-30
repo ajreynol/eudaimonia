@@ -1,0 +1,55 @@
+module
+
+-- **Yours (H).** A front-end theorem: what the rule proofs stand on. It arrives
+-- as a `sorry` and a signature install leaves it alone.
+--
+-- **Canonicity** — that evaluating a literal gives a value in normal form.
+--
+-- The semantics keeps values canonical: bit-vectors reduced modulo their width,
+-- maps ordered and without redundant entries. A rule reasoning about a literal
+-- needs to know the model produces *that* form, not merely some representative
+-- of the same value.
+--
+-- One theorem per literal kind the calculus has. A calculus over Booleans alone
+-- owes only the first; add the others as the signature grows.
+--
+-- Could arrive proven: canonicity is a property of the SMT-LIB value types,
+-- which come from `smt.eos` and are the same for every calculus over ordinary
+-- SMT-LIB.
+--
+-- ---------------------------------------------------------------------------
+-- What Logos does here
+-- ---------------------------------------------------------------------------
+--
+-- `Cpc/Proofs/Canonical/`: **10,083 lines across 11 files** -- against
+-- CpcMini's **228 in one**.
+--
+-- That ratio, 44 to 1, is the sharpest illustration on this list of cost
+-- following theories. The one file CpcMini keeps,
+-- `Canonical/TypeDefaultBasic.lean`, is byte-identical to Cpc's. Everything
+-- else -- `Maps.lean`, `Seq.lean`, `Ops.lean`, `Pump.lean`,
+-- `FiniteSoundness.lean` -- exists because CPC has arrays, sequences, strings
+-- and sets, each with its own notion of when a value is in normal form.
+--
+-- A calculus over Booleans owes the one file. Add a theory with structured
+-- values and you buy its canonicity development with it.
+--
+-- **Whether it can be inherited depends on your `smt.eos`.** The statement is
+-- about definitions generated from the SMT-LIB semantics, so a proof of it
+-- transfers only while that semantics is the stock one — which is exactly what
+-- the `logos-smt` entry of `install/defs/profile.conf` records. Supply your own
+-- `smt.eos`, change what a type is or what a well-formed model is, and this
+-- becomes yours no matter what upstream ships.
+public import @CALCULUS@.ModelWf
+import all @CALCULUS@.ModelWf
+
+@[expose] public section
+
+namespace Smtm
+
+/-- A Boolean literal evaluates to a canonical value. -/
+theorem model_eval_boolean_canonical (M : SmtModel) (b : SmtEval.native_Bool) :
+    __smtx_value_canonical (__smtx_model_eval M (SmtTerm.Boolean b)) = true := by
+  sorry
+
+end Smtm

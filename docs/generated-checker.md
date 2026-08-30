@@ -117,8 +117,13 @@ In a CPC-sized checker that is 641 lines of already-working API layer, against
   Proofs/Assumptions.lean F  the side conditions, and deciding them
   Proofs/Checker.lean     F* the soundness theorem -- not calculus-specific
 
+  ModelWf.lean                     H  what a well-formed model gives you
   Proofs/Invariants/Extra.lean     H  ** the calculus-specific seam **
-  Proofs/Semantics.lean            H  what the calculus means
+  Proofs/TypePreservation.lean     H  a typed term has a well-formed type
+  Proofs/TranslationTypePreservation.lean
+                                   H  ** cannot be inherited **
+  Proofs/NonVacuity.lean           H  a well-formed model exists
+  Proofs/Canonicity.lean           H  literals evaluate to normal form
   Proofs/RuleSupport/Support.lean  H  what rule statements are written against
   Proofs/CheckerCore.lean          H  correctness of the core, rule-agnostic
   Proofs/Rules/                  G+H  statement generated, proof yours
@@ -151,11 +156,38 @@ The choice is coupled to `Proofs/RuleSupport/Support.lean`: making the extra
 invariant load-bearing means adding a matching field to the evidence a rule gets
 about its premises. Decide both together, up front.
 
-Then **`Proofs/Semantics.lean`** — type preservation, the translation bridge,
-non-vacuity of `model_wf`, canonical values. Three `sorry`s, and the bridge
-theorems are already proven from them. This is the part that scales with how
-many SMT theories the calculus takes on, and in Logos it is the dominant cost:
-61,000 lines against a 4,500-line checker layer.
+Then **the front-end theorems** — `ModelWf.lean` and the four under `Proofs/`.
+These are what the rule proofs stand on, and they scale with how many SMT
+theories the calculus takes on rather than with how many rules it has. In Logos
+the corresponding material is 61,000 lines against a 4,500-line checker layer:
+the dominant cost of a new checker.
+
+| file | what it says | inheritable? |
+| ---- | ------------ | ------------ |
+| `ModelWf.lean` | what `model_wf` gives you | **proven here**, against the current definition |
+| `Proofs/TypePreservation.lean` | a typed term has a well-formed type | in principle |
+| `Proofs/TranslationTypePreservation.lean` | the type of a translated term is the translation of its type | **no** |
+| `Proofs/NonVacuity.lean` | a well-formed model exists | in principle |
+| `Proofs/Canonicity.lean` | literals evaluate to normal form | in principle |
+
+Each is a **leaf**: none imports another, so a `sorry` in one does not stop the
+rest from building and they can be taken in any order.
+
+Only the translation bridge is irreducibly yours — it is about `__eo_to_smt` for
+*your* operators, generated from *your* `.eos`. "In principle" for the others
+means *while the SMT-LIB semantics is the stock one*: supply your own
+`smt.eos`, change what a type is or what makes a model well-formed, and they
+become yours regardless of what upstream ships. `ModelWf.lean` shows both sides
+— proven here, and its proofs are precisely what a change to `model_wf` breaks.
+The `logos-smt` entry of `install/defs/profile.conf` records which case you are
+in.
+
+Non-vacuity is the one easiest to skip and worst to omit: soundness says the
+assumptions hold in *no* well-formed model, so if nothing satisfied `model_wf`
+the development would prove nothing while appearing to prove everything.
+
+`--theorems` selects which four are generated; the invariant slot and type
+preservation are always there.
 
 Then `Proofs/RuleSupport/Support.lean` — every generated rule statement is
 written against the names it supplies, so until it is real no rule can be built
