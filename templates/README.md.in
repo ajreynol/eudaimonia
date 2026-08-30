@@ -31,9 +31,11 @@ regenerates it and refers to nothing outside itself.
 | `ApiCorrect.lean` | F | soundness, about the text of a file, derived from `Proofs/Checker.lean` |
 | `Diagnostics.lean` | F | where a rejected proof broke |
 | `Proofs/Assumptions.lean` | F | the side conditions, and deciding them. Strengthen per rule as proofs need it |
-| `Proofs/RuleSupport/Support.lean` | **H** | what every rule statement is written against. **Start here** |
+| `Proofs/Checker.lean` | F\* | the soundness theorem. **Not calculus-specific** — see below |
+| `Proofs/Invariants/Extra.lean` | **H** | **the calculus-specific seam. Start here.** What your rules need of the proof state beyond well-typed, translatable and locally true. `True` if they need nothing |
+| `Proofs/Semantics.lean` | **H** | type preservation, the translation bridge, non-vacuity of `model_wf`, canonical values. Three `sorry`s; the bridge is proven from them |
+| `Proofs/RuleSupport/Support.lean` | **H** | what every rule statement is written against |
 | `Proofs/CheckerCore.lean` | **H** | correctness of the core, independent of the rules |
-| `Proofs/Checker.lean` | **H** | the soundness theorem. Everything else exists to state it |
 | `Proofs/Rules/` | G+H | one file per rule: statement generated, **proof yours** |
 
 Three kinds of file, and knowing which is which is how you find the work.
@@ -51,6 +53,15 @@ what the checker does. They are not regenerated from the signature either, so an
 edit survives.
 
 So the work is **H**, and there is less of it than the file count suggests.
+
+**F\*** — `Proofs/Checker.lean` is marked apart because it is not yours to write
+and not yet copied in either. In Logos the corresponding file is byte-identical
+between a 591-rule package and a 5-rule one that differ in signature *and* in
+which invariants their rules need; it names no rule and no operator. It is a
+proof about a stack machine, not about a calculus. It should arrive complete,
+and does not only because upstream still maintains it per package. So it carries
+a `sorry` today, but **it is not where the calculus-specific work is** — that is
+`Proofs/Invariants/Extra.lean`.
 
 `Proofs/Rules/` is the one file set that is both: a rule's statement is
 generated with `sorry` for its proof, the proof goes in that same file, and a

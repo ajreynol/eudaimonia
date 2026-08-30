@@ -483,6 +483,45 @@ wrong.
       constructor list is conditional on the signature. That test was not
       possible before this existed.
 
+## 4g. The calculus-specific seam
+
+- [x] **`Proofs/Checker.lean` reclassified F\*.** It is not calculus-specific:
+      in Logos it is byte-identical between `Cpc` (591 rules) and `CpcMini` (5),
+      packages differing in rule set, signature *and* required invariants, and
+      it names no rule and no `UserOp`. It carries a `sorry` here only because
+      upstream maintains it per package rather than seeding it. The template now
+      says so rather than presenting it as work.
+- [x] **`Proofs/Invariants/Extra.lean` — the seam, ported from Logos.** The four
+      slot abbrevs (`checkerExtraInvariant`, `cmdExtraOk`, `CmdListExtraOk`,
+      `extraAssumptionListOk`) plus the preservation obligation, all pointed at
+      `True`. This is what actually differs between two checkers, and the docs
+      now send readers here first. Its coupling to `RuleSupport/Support.lean` —
+      a load-bearing invariant needs a matching field in the premise evidence —
+      is recorded, since the two are decided together.
+- [x] **`Proofs/Semantics.lean` — the central theorems, as stubs.** Type
+      preservation, the translation bridge, non-vacuity of `model_wf`, and
+      canonical values. Three `sorry`s; the two bridge theorems are *proven*
+      from them, so discharging the first gives the form rule proofs actually
+      apply. Closedness and variable-model results are deliberately not here:
+      they are conditional on binders and belong with the extra invariant.
+- [ ] **`CheckerCore.lean` is nearly F too.** Its differences from `CpcMini`'s
+      are simp-lemma lists and one namespace qualifier — drift between two
+      hand-maintained copies, not calculus-specific content. Worth confirming
+      against upstream, since it would move another file out of the H column.
+
+## 4h. Upstream regression, caught by dev mode
+
+- [ ] **ethosEoc3 tip `af638bb3` emits `native_z_uneg` without defining it.**
+      CPC's generated `SmtModel.lean` calls it nine times; nothing in the
+      generated tree declares it, so the package does not build. Hello is
+      unaffected — it has no arithmetic — which is why a second, smaller
+      calculus is worth having.
+
+      `install/get-eo-compiler.sh --pinned` (commit `1c0f95e1`) builds and passes
+      all four CI groups, so the escape hatch works as designed. This is exactly
+      the risk `DEV_MODE=1` documents: report upstream, and pin until it is
+      fixed.
+
 ## 5. Build and CI
 
 - [ ] **A build script with a toolchain fallback.** Logos's `scripts/build.sh`

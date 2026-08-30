@@ -115,12 +115,24 @@ In a CPC-sized checker that is 641 lines of already-working API layer, against
   ApiCorrect.lean         F  soundness about the text of a file
   Diagnostics.lean        F  where a rejected proof broke
   Proofs/Assumptions.lean F  the side conditions, and deciding them
+  Proofs/Checker.lean     F* the soundness theorem -- not calculus-specific
 
+  Proofs/Invariants/Extra.lean     H  ** the calculus-specific seam **
+  Proofs/Semantics.lean            H  what the calculus means
   Proofs/RuleSupport/Support.lean  H  what rule statements are written against
   Proofs/CheckerCore.lean          H  correctness of the core, rule-agnostic
-  Proofs/Checker.lean              H  the soundness theorem
   Proofs/Rules/                  G+H  statement generated, proof yours
 ```
+
+**F\*** — `Proofs/Checker.lean` is neither yours to write nor yet copied in. In
+Logos the corresponding file is **byte-identical** between `Cpc` (591 rules) and
+`CpcMini` (5 rules) — packages differing in rule set, in signature, *and* in
+which invariants their rules need. It names no rule and no operator, and uses
+three `Term` constructors: it is a proof about a stack machine that pushes
+assumptions and proven facts, not about a calculus. It should arrive complete,
+and does not only because upstream maintains it per package rather than seeding
+it (`docs/eoc-requests.md` item 5, the top of that list). It carries a `sorry`
+today; it is still not where the calculus-specific work is.
 
 Everything *outside* `<Calculus>/` is **F** as well: the format library, the
 scripts, the installer, the CI workflow, `Main.lean`, the Lake files. All copied
@@ -128,11 +140,27 @@ in working.
 
 ### Where to start
 
-`Proofs/RuleSupport/Support.lean`. Every generated rule statement is written
-against the names it is meant to supply, so until it is real no rule can be
-built at all — `scripts/build-rules.sh` says so rather than reporting hundreds
-of identical errors. After that, `Proofs/CheckerCore.lean` and
-`Proofs/Checker.lean`, then the rules.
+**`Proofs/Invariants/Extra.lean`.** This is what actually differs between two
+checkers. The core maintains three invariants of the proof state on its own —
+well typed, translatable, locally true — and this slot is for whatever *your*
+rules need beyond them. A calculus needing nothing leaves it pointed at `True`
+and pays nothing; CPC uses it for variable stability, so that binder-sensitive
+rules can be given premise truth in a variable-variant model.
+
+The choice is coupled to `Proofs/RuleSupport/Support.lean`: making the extra
+invariant load-bearing means adding a matching field to the evidence a rule gets
+about its premises. Decide both together, up front.
+
+Then **`Proofs/Semantics.lean`** — type preservation, the translation bridge,
+non-vacuity of `model_wf`, canonical values. Three `sorry`s, and the bridge
+theorems are already proven from them. This is the part that scales with how
+many SMT theories the calculus takes on, and in Logos it is the dominant cost:
+61,000 lines against a 4,500-line checker layer.
+
+Then `Proofs/RuleSupport/Support.lean` — every generated rule statement is
+written against the names it supplies, so until it is real no rule can be built
+at all, and `scripts/build-rules.sh` says so rather than reporting hundreds of
+identical errors. Then `Proofs/CheckerCore.lean`, then the rules.
 
 `Proofs/Assumptions.lean` is marked F because it arrives general and working,
 but expect to strengthen it per rule as the proofs turn out to need more than

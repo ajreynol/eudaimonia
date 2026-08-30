@@ -1,8 +1,22 @@
 module
 
--- **Yours (H).** Hand-written, and hand-written *by you*: it arrives as a stub
--- or a `sorry`, and nothing will fill it in. A signature install leaves it
--- alone, so what is put here is kept.
+-- **Fixed, in waiting (F).** This file is *not* calculus-specific, and is not
+-- meant to be written per checker.
+--
+-- In Logos the corresponding file is byte-identical between `Cpc` (591 rules)
+-- and `CpcMini` (5 rules) -- packages that differ in rule set, in signature and
+-- in which invariants their rules need. It names no rule and no operator, and
+-- uses three `Term` constructors. It is a proof about a stack machine that
+-- pushes assumptions and proven facts, and about the invariants that machine
+-- maintains.
+--
+-- So it should arrive copied in, like `Api.lean` and `ApiChecks.lean` do. It
+-- does not yet, because upstream still maintains it per package rather than
+-- seeding it -- see `docs/eoc-requests.md` in Eudaimonia, item 5, which is the
+-- top of that list for exactly this reason.
+--
+-- **Do not start here.** What genuinely differs between two checkers is
+-- `Proofs/Invariants/Extra.lean`, and that is where to look first.
 --
 -- **The theorem this checker is for.** Everything else exists to state it, to
 -- compute it, or to connect it to what the executable prints.
@@ -20,6 +34,8 @@ module
 -- corresponds to.
 public import @CALCULUS@.Proofs.RuleLemmas
 import all @CALCULUS@.Proofs.RuleLemmas
+public import @CALCULUS@.Proofs.Semantics
+import all @CALCULUS@.Proofs.Semantics
 
 public section
 

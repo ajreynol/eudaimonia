@@ -1,0 +1,81 @@
+module
+
+-- **Yours (H).** Hand-written, and hand-written *by you*: it arrives as a stub
+-- or a `sorry`, and nothing will fill it in. A signature install leaves it
+-- alone, so what is put here is kept.
+--
+-- ###########################################################################
+-- ## THE CALCULUS-SPECIFIC SEAM. START HERE.                               ##
+-- ###########################################################################
+--
+-- `Proofs/Checker.lean` -- the ~25 preservation theorems and the soundness
+-- theorem -- is *not* calculus-specific. In Logos it is byte-identical between
+-- `Cpc` (591 rules) and `CpcMini` (5 rules), two packages that differ in rule
+-- set, in signature, *and* in which invariants their rules need. It names no
+-- rule and no operator.
+--
+-- What differs between those two packages is this file.
+--
+-- The core checker maintains three invariants of the proof state on its own:
+-- everything on the stack is well typed, translatable, and locally true. If
+-- your rules need something more of the state than that, it goes in the slot
+-- below, and `Checker.lean` is written against these four names without ever
+-- mentioning what they stand for.
+--
+-- **A calculus that needs nothing extra leaves this as it is** -- pointed at
+-- `True` -- and pays nothing for it. That is what `CpcMini` does.
+--
+-- In CPC the slot holds *variable stability*, which exists so that
+-- binder-sensitive rules (`instantiate`, `skolemize`, `alpha_equiv`) can be
+-- given premise truth in a variable-variant model. If your calculus has such
+-- rules, this is where that lives.
+--
+-- **This choice is coupled to `Proofs/RuleSupport/Support.lean`.** Making the
+-- extra invariant load-bearing means adding a corresponding field to the
+-- evidence a rule receives about its premises -- in Logos, `true_in_var_model`
+-- alongside `true_here`. The two are decided together, up front, and are
+-- awkward to separate later.
+public import @CALCULUS@.Proofs.Assumptions
+import all @CALCULUS@.Proofs.Assumptions
+
+@[expose] public section
+
+open Eo
+open Smtm
+
+namespace Eo
+
+/--
+Whatever your rules need of the proof state beyond well-typed, translatable and
+locally true.
+
+`True` if they need nothing.
+-/
+abbrev checkerExtraInvariant (_M : SmtModel) (_s : CState) : Prop := True
+
+/-- What a single command must satisfy for the extra invariant to survive it. -/
+abbrev cmdExtraOk (_M : SmtModel) (_c : CCmd) : Prop := True
+
+/-- The same over a command list. -/
+abbrev CmdListExtraOk (_M : SmtModel) (_cs : CCmdList) : Prop := True
+
+/-- What the input assumptions must satisfy for the extra invariant to hold initially. -/
+abbrev extraAssumptionListOk (_M : SmtModel) (_F : Term) : Prop := True
+
+/--
+Running a command preserves the extra invariant.
+
+The one obligation the slot carries. `Checker.lean` applies it and never looks
+inside; with the definitions above at `True` it is immediate, and it becomes
+real work exactly when they do.
+-/
+theorem invoke_cmd_preserves_extraInvariant_nonstuck
+    (M : SmtModel) (s : CState) (c : CCmd) :
+    s ≠ CState.Stuck ->
+    cmdExtraOk M c ->
+    checkerExtraInvariant M s ->
+    checkerExtraInvariant M (__eo_invoke_cmd s c) := by
+  intro _ _ _
+  trivial
+
+end Eo

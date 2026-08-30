@@ -339,7 +339,7 @@ echo "    executable  ${EXE}"
 echo "    toolchain   ${TOOLCHAIN}"
 
 rm -rf "${DEST}"
-mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/${CALCULUS}/Proofs/RuleSupport" \
+mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/${CALCULUS}/Proofs/RuleSupport" "${DEST}/${CALCULUS}/Proofs/Invariants" \
          "${DEST}/install/defs" "${DEST}/${FORMAT}" \
          "${DEST}/scripts" "${DEST}/docs" "${DEST}/test/regress" \
          "${DEST}/.github/workflows"
@@ -409,6 +409,9 @@ render pkg/Proofs/Assumptions.lean.in  "${DEST}/${CALCULUS}/Proofs/Assumptions.l
 render pkg/Proofs/CheckerCore.lean.in  "${DEST}/${CALCULUS}/Proofs/CheckerCore.lean"
 render pkg/Proofs/RuleLemmas.lean.in   "${DEST}/${CALCULUS}/Proofs/RuleLemmas.lean"
 render pkg/Proofs/Checker.lean.in      "${DEST}/${CALCULUS}/Proofs/Checker.lean"
+render pkg/Proofs/Invariants/Extra.lean.in \
+       "${DEST}/${CALCULUS}/Proofs/Invariants/Extra.lean"
+render pkg/Proofs/Semantics.lean.in    "${DEST}/${CALCULUS}/Proofs/Semantics.lean"
 render pkg/Proofs/RuleSupport/Support.lean.in \
        "${DEST}/${CALCULUS}/Proofs/RuleSupport/Support.lean"
 render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.md"
@@ -419,7 +422,8 @@ render pkg/Proofs/Rules/README.md.in   "${DEST}/${CALCULUS}/Proofs/Rules/README.
 # work in, not only a package to build.
 if [ "${MINI}" = "yes" ]; then
   echo "==> Generating ${MINI_CALC}, the reduced package"
-  mkdir -p "${DEST}/${MINI_CALC}/Proofs/Rules" "${DEST}/${MINI_CALC}/Proofs/RuleSupport"
+  mkdir -p "${DEST}/${MINI_CALC}/Proofs/Rules" "${DEST}/${MINI_CALC}/Proofs/RuleSupport" \
+           "${DEST}/${MINI_CALC}/Proofs/Invariants"
   render MiniRoot.lean.in "${DEST}/${MINI_CALC}.lean"
   # The same modules as the full package, under the reduced name. Api*, Parser
   # and Diagnostics are left out: nothing here reads a proof file.
@@ -435,6 +439,8 @@ if [ "${MINI}" = "yes" ]; then
     "pkg/Proofs/CheckerCore.lean.in:Proofs/CheckerCore.lean" \
     "pkg/Proofs/RuleLemmas.lean.in:Proofs/RuleLemmas.lean" \
     "pkg/Proofs/Checker.lean.in:Proofs/Checker.lean" \
+    "pkg/Proofs/Invariants/Extra.lean.in:Proofs/Invariants/Extra.lean" \
+    "pkg/Proofs/Semantics.lean.in:Proofs/Semantics.lean" \
     "pkg/Proofs/RuleSupport/Support.lean.in:Proofs/RuleSupport/Support.lean" \
     "pkg/Proofs/Rules/README.md.in:Proofs/Rules/README.md" ; do
     src="${spec%%:*}"; dst="${spec#*:}"

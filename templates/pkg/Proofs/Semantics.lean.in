@@ -1,0 +1,117 @@
+module
+
+-- **Yours (H).** Hand-written, and hand-written *by you*: it arrives as a stub
+-- or a `sorry`, and nothing will fill it in. A signature install leaves it
+-- alone, so what is put here is kept.
+--
+-- The central facts about what the calculus *means*, as `sorry` stubs.
+--
+-- These are what the rule proofs stand on. None of them is about any one rule,
+-- and every one of them is about the generated `Spec.lean` and `SmtModel.lean`
+-- for *your* operators -- which is why they cannot be inherited and have to be
+-- proven per calculus. In Logos this material is `Proofs/Translation*`,
+-- `Proofs/TypePreservation*` and `Proofs/Canonical*`: 61,000 lines against a
+-- 4,500-line checker layer, and the dominant cost of a new checker.
+--
+-- They scale with how many SMT theories the calculus takes on, not with how
+-- many rules it has. A calculus over Booleans alone owes very little here; one
+-- over arithmetic, bit-vectors, strings and sets owes a great deal.
+--
+-- Order matters: type preservation is what the translation bridge rests on,
+-- and both are what the rule proofs use.
+--
+-- What is *not* here, because it is conditional: if the calculus has
+-- binder-sensitive rules it also owes closedness and variable-model results,
+-- which belong with the extra invariant in `Proofs/Invariants/Extra.lean`
+-- rather than here.
+public import @CALCULUS@.Proofs.Invariants.Extra
+import all @CALCULUS@.Proofs.Invariants.Extra
+
+@[expose] public section
+
+open Eo
+open Smtm
+
+namespace Eo
+
+/-! ## Type preservation
+
+The translation respects typing: an EO term whose translation the semantics
+gives a type at all has *the translated type*.
+
+This is the load-bearing one. Without it nothing connects `__eo_typeof`, which
+the checker computes, to `__smtx_typeof`, which the semantics computes -- and
+the checker's type invariant would say nothing about the model.
+-/
+
+/-- The type of a translated term is the translation of its type. -/
+theorem eo_to_smt_type_typeof_of_smt_type
+    (t : Term) {T : SmtType}
+    (_h : __smtx_typeof (__eo_to_smt t) = T)
+    (_hT : T ≠ SmtType.None) :
+    __eo_to_smt_type (__eo_typeof t) = T := by
+  sorry
+
+/-! ## The translation bridge
+
+The equality-oriented form of the above, which is what rule proofs actually
+apply: given an EO typing, read off the SMT typing.
+-/
+
+/-- Recover the SMT type from an EO typing. -/
+theorem eo_to_smt_well_typed_and_typeof_implies_smt_type
+    (t T : Term) (s : SmtTerm)
+    (hs : __eo_to_smt t = s)
+    (hNonNone : __smtx_typeof s ≠ SmtType.None)
+    (hTy : __eo_typeof t = T) :
+    __smtx_typeof s = __eo_to_smt_type T := by
+  subst hs
+  have h := eo_to_smt_type_typeof_of_smt_type t (rfl) hNonNone
+  exact h.symm.trans (congrArg __eo_to_smt_type hTy)
+
+/--
+The Boolean case, specialised.
+
+Used constantly: the checker only ever puts Boolean-typed terms on its stack,
+so this is the form most rule proofs need.
+-/
+theorem eo_to_smt_non_none_and_typeof_bool_implies_smt_bool
+    (t : Term) (s : SmtTerm)
+    (hs : __eo_to_smt t = s)
+    (hNonNone : __smtx_typeof s ≠ SmtType.None)
+    (hTy : __eo_typeof t = Term.Bool) :
+    __smtx_typeof s = SmtType.Bool :=
+  eo_to_smt_well_typed_and_typeof_implies_smt_type t Term.Bool s hs hNonNone hTy
+
+/-! ## Non-vacuity
+
+That a well-formed model exists at all.
+
+Easy to overlook and fatal to omit. Soundness says the assumptions hold in *no*
+model; if `model_wf` were satisfied by nothing, that would be true of every
+proof and the theorem would say nothing. This is what rules that out.
+-/
+
+/-- Well-formed models exist. -/
+theorem model_wf_nonvacuous : ∃ M : SmtModel, model_wf M := by
+  sorry
+
+/-! ## Canonical values
+
+That evaluating a literal gives a value in canonical form.
+
+The semantics represents values in a normal form -- bit-vectors reduced modulo
+their width, maps ordered and without redundant entries -- and rules that reason
+about literals need to know the model produces that form rather than merely some
+representative of it.
+
+One per literal kind the calculus has. A calculus over Booleans alone owes only
+the first.
+-/
+
+/-- A Boolean literal evaluates to a canonical value. -/
+theorem model_eval_boolean_canonical (M : SmtModel) (b : SmtEval.native_Bool) :
+    __smtx_value_canonical (__smtx_model_eval M (SmtTerm.Boolean b)) = true := by
+  sorry
+
+end Eo
