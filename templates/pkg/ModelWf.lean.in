@@ -1,6 +1,12 @@
 module
 
--- **Yours (H), and proven — for as long as the definition holds.**
+-- **FINISHED.** You will not need to edit this file. It is complete as it
+-- stands; a signature install leaves it alone, and so does everything else.
+--
+-- It may still fail to build, if something it *depends on* is open. That is not
+-- a defect in this file and not a reason to change it.
+--
+-- Proven here — for as long as the definition holds.
 --
 -- What a well-formed model gives you, in the form rule proofs apply.
 --

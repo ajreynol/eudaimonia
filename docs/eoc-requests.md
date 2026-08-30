@@ -17,7 +17,11 @@ Where the two overlap it is noted; the two lists agree.
 
 ## Priority
 
-**Top: item 5, seed the checker layer as templates.**
+**Top: item 5, seed the checker layer as templates** — and within it, the one
+small change that unblocks everything else: make `Checker.lean` take its two
+rule-bridge theorems as hypotheses instead of importing `RuleLemmas`. Four call
+sites, 1,063 lines, and it is what stands between a generated checker and a
+soundness proof it does not have to write.
 
 It is the only item on this list that removes *work* rather than overhead.
 Measuring a generated checker by who has to write what:
@@ -25,16 +29,26 @@ Measuring a generated checker by who has to write what:
 | | files | lines |
 | --- | ----: | ----: |
 | generated from the signature | 9 + one per rule | — |
-| copied in complete, working | 5 in the package, plus everything outside it | 641 in the package |
-| **left for the user to write** | **3, plus the rules** | — |
+| copied in complete, working | 5 in the package, plus everything outside it | 651 in the package |
+| **left for the user** | **6, plus the rules** | — |
 
-Those three are `Proofs/RuleSupport/Support.lean`, `Proofs/CheckerCore.lean`
-and `Proofs/Checker.lean`. Item 5 moves the last of them — and plausibly the
-middle one and `Contract.lean` — out of that column, because
+Those six are `Proofs/{TypePreservation, TranslationTypePreservation, NonVacuity,
+Canonicity}.lean`, `Proofs/RuleSupport/Support.lean` and
+`Proofs/CheckerCore.lean`. A seventh, `Proofs/Checker.lean`, carries a `sorry`
+but should not: it is what item 5 would remove, because
 `Cpc/Proofs/Checker.lean` is already byte-identical to `CpcMini`'s modulo the
 package name, names no `CRule` and no `UserOp`, and uses three `Term`
 constructors. The hard part is done; what is missing is that it is
 hand-maintained per package instead of seeded.
+
+`Proofs/CheckerCore.lean` is the likely second: its differences from CpcMini's
+are simp-lemma lists and one namespace qualifier — drift between two
+hand-maintained copies rather than calculus-specific content.
+
+Of the four front-end theorems, only `TranslationTypePreservation` is
+unconditionally the user's; the rest could arrive proven while the SMT-LIB
+semantics is the stock one. See
+[the Logos experience report](logos-experience-report.md).
 
 It also does not wait on item 6. Stabilizing the SMT-LIB model is what would
 make this *library* reuse; seeding makes it *template* reuse, which is exactly
@@ -223,22 +237,61 @@ that table at all.
 
 ## 5. Seed the checker layer as templates
 
-`modularity.md` TODO 2. From this side it is the missing third file category.
-
-A generated project sorts its files into **G** (generated, overwritten on
-reinstall) and **H** (hand-written, preserved). What the checker layer wants is
-a third: files a project *inherits* — installed once, preserved thereafter,
-never written by hand. That is exactly the treatment `Proofs/Rules/*.lean`
-already gets.
+`modularity.md` TODO 2. From this side it is the missing third file category: a
+generated project sorts files into **G** (generated, overwritten) and **F**
+(copied in complete). The checker layer wants to be F and is not.
 
 `Cpc/Proofs/Checker.lean` is byte-identical to `CpcMini`'s modulo the package
-name (verified), names no `CRule` and no `UserOp`, and uses three `Term`
-constructors. It is ready to be seeded. `CheckerState.lean`,
-`RuleSupport/Contract.lean` and a generic `Assumptions.lean` are the rest of the
-set.
+name, names no `CRule` and no `UserOp`, and uses three `Term` constructors. It
+is ready to be seeded. `CheckerState.lean`, `RuleSupport/Contract.lean` and a
+generic `Assumptions.lean` are the rest of the set.
 
-Until then, a generated checker ships those as stubs describing what belongs in
-them, which is a poor substitute for shipping the thing itself.
+### What actually blocks it, measured
+
+Taking the transitive closure of `CpcMini/Proofs/Checker.lean` — the smaller
+package, so the honest lower bound — gives **15,868 hand-written lines across 25
+files**. Two distinct obstacles, and they are very different in character.
+
+**(a) The semantics layer, and it is small.** The closure reaches
+`Proofs/Translation/` and `Proofs/TypePreservation/` — 10,880 of those lines —
+through exactly one import: `Proofs/Common.lean`. But `Common.lean` uses only
+**15 distinct names** from them, and two of those are
+`eo_to_smt_well_typed_and_typeof_implies_smt_type` and
+`eo_to_smt_non_none_and_typeof_bool_implies_smt_bool` — the front-end theorems a
+generated checker already declares.
+
+So this is not a 10,880-line dependency. It is a 15-name interface, and a
+seeded checker layer could rest on the consumer's front-end stubs instead of on
+Logos's developments. That leaves ~4,988 lines of genuine checker layer to seed.
+
+**(b) The rule set, and this one is structural.**
+`Proofs/RuleLemmas.lean` does a non-public `import Cpc.Proofs.Rules.X` for
+**every one of the 591 rules**, and `Checker.lean` imports `RuleLemmas`. So
+`Checker.lean` cannot be *built* until every rule proof compiles — which in a
+freshly generated checker is never, since every rule is a `sorry`.
+
+No amount of seeding fixes that. It is why Logos excludes `Checker` and
+`ApiCorrect` from CI, and why `modularity.md` TODO 7 proposes a canary that
+typechecks `Checker.lean` with the two bridge theorems replaced by `sorry`.
+
+### The fix that would work
+
+`Checker.lean` uses **two** theorems from `RuleLemmas` —
+`cmd_step_proven_facts_of_invariants` and
+`cmd_step_pop_proven_facts_of_invariants` — in **four places** across 1,063
+lines.
+
+Take them as hypotheses rather than imports. `Checker.lean` then depends on no
+rule, builds standalone and proven, and the application to a particular rule set
+happens where `RuleLemmas` is: at the point that actually knows the rules.
+
+That is a small, local change with a large consequence. It would make
+`Checker.lean` genuinely what it already almost is — a proof about a stack
+machine, parameterized over "the rules do what they claim" — and it is the
+precondition for a generated checker ever shipping it proven.
+
+It also subsumes TODO 7's canary: a `Checker.lean` that does not import the
+rules is checked by every ordinary build, so no canary is needed.
 
 ## 6. Stabilize the SMT-LIB model
 

@@ -71,6 +71,16 @@ proven="${#done_[@]}"
 remaining="${#stubs[@]}"
 percent=$(( proven * 100 / total ))
 
+# The build does not tell you what to work on: most of what fails in a fresh
+# checker fails because something it depends on is open, not because it is
+# unfinished. The files that say OPEN in their header are the real list.
+open_files="$(grep -rl '^-- \*\*OPEN' @CALCULUS@/ 2>/dev/null | sort || true)"
+if [ -n "${open_files}" ]; then
+  echo "==> Open files (work that is yours, in that file):"
+  printf '    %s\n' ${open_files}
+  echo
+fi
+
 echo "==> @CALCULUS@ rules: ${total} total"
 printf '    %4s proven\n' "${proven}"
 printf '    %4s still `sorry`\n' "${remaining}"

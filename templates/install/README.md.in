@@ -59,17 +59,22 @@ calculus is not the signature.
 
 Generated, and overwritten by every install:
 
-```text
-@CALCULUS@/@CHECKER@.lean       @CALCULUS@/SmtModelDefs.lean
-@CALCULUS@/@CHECKER@Term.lean   @CALCULUS@/SmtValueOrder.lean
-@CALCULUS@/Parser.lean          @CALCULUS@/SmtModel.lean
-@CALCULUS@/SmtEval.lean         @CALCULUS@/Spec.lean
-                                @CALCULUS@/Proofs/RuleLemmas.lean
-```
+- `@CALCULUS@/@CHECKER@.lean` — the core checker
+- `@CALCULUS@/@CHECKER@Term.lean` — the term datatype
+- `@CALCULUS@/Parser.lean` — the operator table for this signature
+- `@CALCULUS@/SmtEval.lean`
+- `@CALCULUS@/SmtModelDefs.lean`
+- `@CALCULUS@/SmtValueOrder.lean`
+- `@CALCULUS@/SmtModel.lean`
+- `@CALCULUS@/Spec.lean`
+- `@CALCULUS@/Proofs/RuleLemmas.lean` — the dispatcher over the rules
+
+The compiler names the first two after Logos, whatever this checker is called;
+the installer renames them and rewrites the imports.
 
 Hand-written, and left alone: `@CALCULUS@/Api*.lean`,
-`@CALCULUS@/Diagnostics.lean`, and everything under `@CALCULUS@/Proofs/` other
-than `RuleLemmas.lean` and `Rules/`.
+`@CALCULUS@/Diagnostics.lean`, `@CALCULUS@/ModelWf.lean`, and everything under
+`@CALCULUS@/Proofs/` other than `RuleLemmas.lean` and `Rules/`.
 
 **Rule files are preserved.** The compiler emits each rule as its statement
 with `sorry` for a proof, and the proof then lives in that same file, so an

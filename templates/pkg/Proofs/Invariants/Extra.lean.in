@@ -1,8 +1,10 @@
 module
 
--- **Yours (H).** Hand-written, and hand-written *by you*: it arrives as a stub
--- or a `sorry`, and nothing will fill it in. A signature install leaves it
--- alone, so what is put here is kept.
+-- **FINISHED.** You will not need to edit this file. It is complete as it
+-- stands; a signature install leaves it alone, and so does everything else.
+--
+-- It may still fail to build, if something it *depends on* is open. That is not
+-- a defect in this file and not a reason to change it.
 --
 -- ###########################################################################
 -- ## THE CALCULUS-SPECIFIC SEAM. START HERE.                               ##

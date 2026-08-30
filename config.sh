@@ -78,5 +78,40 @@ PROFILE_PARSER="yes"
 # Whether install/defs/smt.eos is Logos's, unmodified, is not set here: it is
 # a fact about the file, so the generator computes it.
 
+# ---------------------------------------------------------------------------
+# Development scaffolding.
+#
+# What the generated project contains, as opposed to facts about the calculus.
+# ---------------------------------------------------------------------------
+
+# Also generate <CALCULUS>Mini: the same signature compiled with a handful of
+# rules and no parser, so proofs about the checker build in seconds rather than
+# minutes. Off by default -- it is a second package to keep in step.
+MINI="no"
+
+# Which rules that reduced package keeps. Taken from <spec>/mini-rules when a
+# --spec directory has one, so this is usually left empty.
+MINI_RULES=""
+
+# Whether CI rejects `sorry` from the first commit. Off by default: a checker
+# scaffolded from a large signature starts with one `sorry` per rule and would
+# be red from the start.
+HYGIENE_CI="no"
+
+# With no signature given, write a working starter -- a one-rule signature, its
+# semantics and regression proofs covering every verdict -- instead of commented
+# stubs. Off by default; `--dummy-rule` turns it on.
+DUMMY_RULE="no"
+
+# The library that reads the input proof format. Named for the format rather
+# than for a checker, since the checker's own name is yours to choose. Must not
+# collide with CHECKER or CALCULUS.
+FORMAT="Eunoia"
+
+# Which front-end theorems to generate: `all`, `none`, or a comma-separated
+# list from translation, nonvacuity, canonicity, modelwf. The invariant slot and
+# type preservation are always generated.
+THEOREMS="all"
+
 # The Lean toolchain the generated project pins.
 TOOLCHAIN="leanprover/lean4:v4.33.0"

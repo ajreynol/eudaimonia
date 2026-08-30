@@ -56,7 +56,7 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
   <Format>/Parser.lean         parser. Independent of the calculus.
 
   <Calculus>.lean            the calculus library root
-  <Calculus>/                the calculus: 17 modules, G or H (see below)
+  <Calculus>/                the calculus: 23 modules, G / F / H (see below)
     Proofs/Rules/            one file per rule of the signature
     Proofs/RuleSupport/      what every rule statement is written against
 
@@ -82,25 +82,47 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
   .gitignore
 ```
 
-## Generated, fixed, or yours
+## Finished, open, generated
 
-Every module under `<Calculus>/` says in its own header which it is. Knowing
-the difference is how you find the work.
+A file in a generated checker is one of three things, and every file says which
+in its own header.
 
-| | kind | who wrote it | on reinstall |
-| --- | ---- | ------------ | ------------ |
-| **G** | **generated** | the compiler, from your signature | **overwritten** |
-| **F** | **fixed** | copied in complete by the generator | left alone |
-| **H** | **hand-written** | **you** — arrives as a stub or a `sorry` | left alone |
+| | meaning | you edit it? |
+| --- | ------- | ------------ |
+| **GENERATED** | the compiler writes it from your signature | never — the next install overwrites it |
+| **FINISHED** | copied in complete by the generator | never — there is nothing missing |
+| **OPEN** | work you have to do, in that file | **yes** |
 
-**F is the category that is easy to miss, and it is most of what looks like
-work.** Those files are hand-written — but by the template, not by you. They
-arrive complete and working, they are not regenerated from the signature, and
-there is no reason to touch them unless you want to change what the checker
-does. An edit to one survives everything.
+**A `sorry` in a dependency does not make a file open.** This is the distinction
+that matters, and it is easy to get backwards.
 
-In a CPC-sized checker that is 641 lines of already-working API layer, against
-**three files and the rules** that are actually yours.
+A file is *finished* when you will not need to edit it. That is a statement
+about the file, not about whether it builds. `ApiCorrect.lean` is finished: it
+states soundness about the text of a proof file and derives it from
+`Proofs/Checker.lean`. It will not build until that theorem is discharged — and
+that is not a defect in `ApiCorrect.lean`, and no reason to open it.
+
+A file is *open* when it contains a `sorry`, or a gap, **that is yours to close
+there**. `Proofs/NonVacuity.lean` is open: the `sorry` in it is the work.
+
+So the question to ask of a red build is not "which file failed" but "which
+*open* file is still open". `scripts/rule-status.sh` and
+`scripts/run-ci.sh hygiene` answer that; the build does not.
+
+### Why the distinction earns its keep
+
+Without it, a generated checker looks like it has far more work in it than it
+does. Almost everything that fails to build in a fresh checker fails because
+something downstream of it is open — not because it is unfinished. Counting
+build errors would suggest dozens of files need attention; counting *open* files
+gives the real number, which is six plus the rules.
+
+It also names a goal precisely. `Proofs/Checker.lean` is **open and should be
+finished**: it is byte-identical between Logos's two packages, names no rule and
+no operator, and is a proof about a stack machine rather than about a calculus.
+Getting it to arrive finished — carrying a `sorry` only in what it depends on —
+is the single largest improvement available, and is item 5 of
+[eoc-requests.md](eoc-requests.md).
 
 ```text
 <Calculus>/
@@ -237,6 +259,8 @@ happen.
 | `--mini` | `<Calculus>Mini.lean`, `<Calculus>Mini/`, and a second `lean_lib` |
 | `--mini-rules "A B"` | which rules that package keeps (`MINI_RULES` in the install script) |
 | `--hygiene-ci` | whether `hygiene` is among the default groups of `scripts/run-ci.sh` |
+| `--theorems LIST` | which front-end theorems are written: `all`, `none`, or from `translation`, `nonvacuity`, `canonicity`, `modelwf`. `Proofs/Invariants/Extra.lean` and `Proofs/TypePreservation.lean` are always generated |
+| `--force` / `--clobber` | regenerating over an existing project. `--force` refuses if it holds rule proofs or a git repository; `--clobber` deletes it regardless, and is not recoverable |
 | profile flags (`--[no-]scopes`, `--[no-]list-premises`, `--[no-]datatypes`, `--[no-]binders`, `--[no-]value-ordering`, `--indexed-ops N`, `--[no-]parser`) | `install/defs/profile.conf`, which the installer re-checks against the compiled signature |
 
 Two things are decided *after* generation, by the install script rather than by

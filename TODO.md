@@ -108,60 +108,76 @@ has a `signature/` directory and no way to turn it into Lean.
       soundness about the text of a file, deriving it from the one theorem the
       user fills in. All of it proven except that theorem.
 
-- [ ] **Superseded:** the note that once stood here said the parser was the
-      blocking item for a usable checker. It is done. Logos's `Logos/Sexp.lean`
-      (an s-expression reader, ~156 lines) and `Logos/Parser.lean` (a
-      table-driven proof parser, ~913 lines) are genuinely calculus-agnostic:
-      the generated `Cpc/Parser.lean` is only the operator table that plugs into
-      them. This is the largest piece of Logos that could be reused as-is, and
-      until it exists the generated `Parser.lean` has nothing to plug into.
-- [ ] **Decide how it is delivered** — vendored into each generated project, or
-      a Lake dependency the generated `lakefile.toml` requires. A dependency
-      keeps generated projects thin and lets fixes propagate; vendoring keeps
-      them self-contained, which is what they are today.
-- [ ] **Document the accepted syntax**, as Logos does in `docs/parser.md`. The
-      generated `docs/calculus.md` has a placeholder section for it.
+## 3. The correctness development — **the user's, not the framework's**
 
-Note that the parser is *unverified* in Logos, deliberately: the soundness
-theorem is stated about whatever the parser read out of the file. That is a
-property to preserve and to state plainly, not a gap.
+This section used to list the proofs as roadmap items. They are not: they are
+what someone writing a checker owes for *their* calculus, and no amount of
+framework work discharges them.
 
-## 3. The correctness development
+What the framework can do here, it has done — the obligations now arrive as
+named, individually-buildable stubs rather than as absence:
 
-- [ ] **The core checker proof** (`Cpc/Proofs/CheckerCore.lean`, ~3,000 lines).
-      Rule-agnostic — it is about the machinery of proof checking, not about any
-      calculus — so it is the other strong candidate for reuse across checkers.
-- [ ] **The side conditions** (`Cpc/Proofs/Assumptions.lean`, ~257 lines): the
-      predicates restricting a proof to terms the semantics models, *and* the
-      `Decidable` instances that decide them. Both from one definition, so that
-      what the rule proofs assume and what the executable checks cannot drift.
-- [ ] **The soundness theorem** (`Cpc/Proofs/Checker.lean`, ~1,063 lines):
-      `correct___eo_is_refutation`.
-- [ ] **Per-rule correctness proofs** (`Cpc/Proofs/Rules/`). Generated as
-      `sorry` stubs, discharged by hand. For scale: **591 files in Logos.** This
-      is the bulk of the work in building a checker and cannot be automated
-      away; everything else on this list exists to make it tractable.
-- [ ] **Shared rule support lemmas** (`Cpc/Proofs/RuleSupport/`) — per-theory
-      lemma libraries the individual rule proofs draw on.
+- [x] **Stated as front-end theorems.** `ModelWf.lean` plus
+      `Proofs/{TypePreservation, TranslationTypePreservation, NonVacuity,
+      Canonicity}.lean`, each a leaf so a `sorry` in one does not block the
+      others.
+- [x] **Sized honestly.** [docs/logos-experience-report.md](docs/logos-experience-report.md)
+      reports what each obligation cost Logos, with the Cpc/CpcMini pair
+      separating costs that follow the signature from costs that follow the rule
+      count.
+- [x] **The seam identified.** `Proofs/Invariants/Extra.lean` is what actually
+      differs between two checkers; everything else in the checker layer is
+      shared or should be.
 
-## 4. From the theorem to the executable
+Still framework work, because these should not be the user's at all:
 
-The part that makes the printed verdict mean the theorem, rather than an
-informal argument about it.
+- [ ] **`Proofs/Checker.lean` should arrive proven, not stubbed.** Byte-identical
+      between Logos's two packages. Two things block it, measured from the
+      transitive closure of `CpcMini/Proofs/Checker.lean` (15,868 hand-written
+      lines, 25 files):
 
-- [ ] **One function for what the executable does** (`Cpc/Api.lean`): parse,
-      then run the checks standing for the theorem's hypotheses.
-- [ ] **Proofs that each check is the component it stands for**
-      (`Cpc/ApiChecks.lean`) — this is what licenses an efficient
-      implementation, e.g. a constant-stack fold in place of a recursion.
-- [ ] **The theorem restated about file text** (`Cpc/ApiCorrect.lean`):
-      `correct___logos_check_proof`.
-- [ ] **Three verdicts, not two.** `correct` / `incorrect` / `incomplete`, with
-      `incomplete` for a proof the checker accepts that mentions something the
-      semantics does not model. Collapsing it into `correct` would overstate
-      what the theorem says.
-- [ ] **Diagnostics** (`Cpc/Diagnostics.lean`): say *which* assumption or
-      command took a proof outside the modelled fragment.
+      *The semantics layer is not the problem.* It enters through one import,
+      `Proofs/Common.lean`, which uses only **15 distinct names** from
+      `Translation/` and `TypePreservation/` — two of them the front-end
+      theorems a generated checker already declares. A seeded checker layer
+      could rest on those stubs, leaving ~4,988 lines of real checker layer.
+
+      *The rule set is.* `RuleLemmas.lean` imports **all 591 rule modules**, and
+      `Checker.lean` imports `RuleLemmas` — so it cannot build until every rule
+      proof compiles, which in a fresh checker is never.
+
+      **The fix:** `Checker.lean` uses two theorems from `RuleLemmas`, in four
+      places. Take them as hypotheses instead. It then builds standalone and
+      proven, and the rule set is applied where it is known. See
+      [docs/eoc-requests.md](docs/eoc-requests.md) item 5.
+- [ ] **`Proofs/CheckerCore.lean` likewise, probably.** Its differences from
+      `CpcMini`'s are simp-lemma lists and one namespace qualifier.
+- [ ] **`Proofs/RuleSupport/Support.lean` needs at least a shape.** Today it is
+      a stub with no content, and until it is real no rule can be built at all.
+      Logos's `RuleSupport/` is 352,795 lines, so this cannot be shipped whole —
+      but `Contract.lean`, the 164-line seam that defines `StepRuleProperties`,
+      could be.
+
+## 4. From the theorem to the executable — **done**
+
+The part that makes the printed verdict mean the theorem rather than an
+informal argument about it. All of it is now generated, working, and in the
+**F** category — copied in complete rather than left for the user.
+
+- [x] **One function for what the executable does.** `Api.lean`:
+      `check_proof : String -> Except String Verdict` — parse, then the three
+      checks standing for the theorem's hypotheses.
+- [x] **Proofs that each check is the component it stands for.** `ApiChecks.lean`,
+      eight theorems, **no `sorry`** — including that the constant-stack fold
+      over the parser's list is the same run as the recursion over the
+      `and`-chain, which is what licenses the efficient implementation.
+- [x] **The theorem restated about file text.** `ApiCorrect.lean`:
+      `correct___check_proof`, derived from `Proofs/Checker.lean`.
+- [x] **Three verdicts, not two.** `correct` / `incorrect` / `incomplete`, all
+      three reachable for the right reasons, with a regression proof each.
+- [x] **Diagnostics.** Both rejections are localized: `incorrect` replays the
+      proof and names the command that got stuck, `incomplete` names what the
+      semantics does not model.
 
 ## 4b. Modularizing Logos — what is actually reusable
 
@@ -422,7 +438,7 @@ and a re-check at install time where compiled output can settle it.
       checker calls `incomplete` is agreement, not a disagreement — the script
       knows this, and a checker that reported `incorrect` there would not be
       excused.
-- [ ] **Notes for the eoc developer.** [docs/eoc-requests.md](docs/eoc-requests.md)
+- [x] **Notes for the eoc developer.** [docs/eoc-requests.md](docs/eoc-requests.md)
       collects what a template needs from the compiler, with the evidence for
       each: conditional feature emission, `--calc-name`/`--smt-semantics` on
       `main`, a diagnostic for a premise-list operator with no nil, generated
@@ -542,16 +558,15 @@ wrong.
       rules that are actually proven, since a `sorry` cannot build under
       warnings-as-errors and attempting all of them would bury the real
       question — after a regeneration, which existing proofs still hold?
-- [ ] **CI groups** (`scripts/run-ci.sh`): build a representative subset of
-      proofs rather than all of them, plus the regeneration check.
-- [ ] **Proof hygiene** (`scripts/check-proof-hygiene.sh`): reject `sorry`,
-      `admit` and `axiom` textually, without building. This is what stops an
-      unproven rule landing silently when CI does not build every proof — worth
-      having from the very first day there is a proof.
-- [ ] **A cut-down calculus.** Logos generates `CpcMini` from the same
-      signature with five rules and no parser, for developing the proofs
-      against something that builds in seconds. `install-sig.sh --rules` and
-      `--mini` are how. Cheap to support and disproportionately useful.
+- [x] **CI groups.** `scripts/run-ci.sh` with five: build, regress, ethos,
+      regeneration, hygiene. The first four run by default and pass; hygiene is
+      opt-in via `--hygiene-ci`. Deliberately no group builds every per-rule
+      proof: that takes hours.
+- [x] **Proof hygiene.** `scripts/check-proof-hygiene.sh`, textual and
+      instant. Out of CI by default because a fresh checker is full of stubs;
+      `--hygiene-ci` turns it on.
+- [x] **A cut-down calculus.** `--mini`; measured 8s against 83s. Superseded
+      note follows.
 - [x] **Progress reporting.** `scripts/rule-status.sh` counts proven versus
       `sorry` rules and names what is left. Textual and instant, and it counts
       what is in the files rather than what has been built, so a proof counts as
@@ -560,32 +575,56 @@ wrong.
       specification, the checker, the parser and the proof separately, which is
       how the shape of the development stays legible.
 
-## 6. Future work
+## 6. Stretch goals
 
-Tracked, but **overkill for now**. These earn their cost once a checker is
-being developed in earnest; before that they are infrastructure for work that
-is not happening yet, or polish on work that has not started.
+Not on the critical path, and each would change what the framework *is* rather
+than making it more complete.
 
-- [x] **A mini calculus alongside the full one.** `--mini` generates
-      `<Calculus>Mini` and `install-<calc>.sh --mini` compiles the signature
-      into it with `--rules` and no parser. Measured on CPC: **8s against 83s**,
-      2,130 lines against 20,350, 5 rule files against 591. The rule subset
-      comes from `--mini-rules` or a `mini-rules` file in the specification
-      directory. The profile check is skipped for it, since the profile
-      describes the calculus and a reduced package is not it.
+- [ ] **Seed the checker layer from Logos, not just describe it.** The largest
+      single win available: `Proofs/Checker.lean` is byte-identical across
+      Logos's two packages, and `CheckerCore.lean` nearly so. Shipping them
+      would take a generated checker from "six obligations plus the rules" to
+      "four plus the rules", and turn the soundness theorem from something the
+      user proves into something they inherit. Blocked on upstream seeding them;
+      tracked as item 5 of [docs/eoc-requests.md](docs/eoc-requests.md), which
+      is the top of that list.
+
+- [ ] **A verified parser.** The s-expression reader and proof parser are
+      unverified by design, so the soundness theorem is about the assumptions
+      *as parsed*. Verifying them would close the last gap between "this file
+      says X" and "X is unsatisfiable" — and is a substantial project in its own
+      right. Logos has not done it either.
+
+- [ ] **Check the proof against an original input problem.** Independent of the
+      above and arguably more valuable: today nothing relates a proof's
+      assumptions to the SMT-LIB file they supposedly came from, and `include`
+      and `reference` are ignored. A checker that accepted a problem alongside
+      the proof, and verified the assumptions match, would close a gap the
+      parser work does not.
+
+- [ ] **A second worked specification that is not CPC.** `examples/hello` is
+      minimal by design; CPC is enormous. Something in between — one real theory,
+      a dozen rules — would exercise the parts of the template that neither
+      currently reaches, and would be the honest test of whether this generalises
+      or merely parameterises Logos.
+
+- [ ] **Generate the rule-proof skeletons, not just the statements.** Many rule
+      proofs in Logos follow a small number of shapes. If eoc emitted a proof
+      sketch per shape rather than a bare `sorry`, the 591-file problem would
+      change character. Speculative, and the payoff is unknown until someone has
+      proven enough rules to see the shapes.
 
 - [ ] **A native proof format** — Logos's second executable, `logos-native`
       (`MainNative.lean`, `Cpc/Native/`), reading an internal format instead of
-      s-expressions.
-- [ ] **Regression tests** (`test/regress/`), including proofs that are
-      *expected* to come back `incomplete`.
-- [ ] **The written specification.** Logos's `docs/smt-model-definitions.tex`
-      is where the semantics and the correctness argument are set out in prose,
-      with the built PDF committed so it can be read without LaTeX.
-- [ ] **Performance.** Logos is explicit that it has not been optimized and is
-      significantly slower than unverified checkers.
+      s-expressions. Deliberately not mimicked so far.
 
----
+- [ ] **The written specification.** Logos's `docs/smt-model-definitions.tex`
+      sets out the semantics and the correctness argument in prose, with the
+      built PDF committed so it can be read without LaTeX. A generated checker
+      has no equivalent, and for a verified artefact that is a real gap.
+
+- [ ] **Performance.** Logos is explicit that it has not been optimized and is
+      significantly slower than unverified checkers. Nothing here changes that.
 
 ## What is not on this list
 

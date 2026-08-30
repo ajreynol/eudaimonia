@@ -1,9 +1,10 @@
 module
 
--- **Fixed (F).** Copied in complete by the generator: hand-written, but by the
--- template rather than by you. A signature install leaves it alone, and so does
--- everything else, so an edit here survives -- there is just no reason to make
--- one unless you want to change what the checker does.
+-- **FINISHED.** You will not need to edit this file. It is complete as it
+-- stands; a signature install leaves it alone, and so does everything else.
+--
+-- It may still fail to build, if something it *depends on* is open. That is not
+-- a defect in this file and not a reason to change it.
 --
 -- What the executable prints besides the verdict. Two independent questions,
 -- one per rejecting verdict:

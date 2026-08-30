@@ -1,7 +1,7 @@
 module
 
--- **Yours (H).** A front-end theorem: what the rule proofs stand on. It arrives
--- as a `sorry` and a signature install leaves it alone.
+-- **OPEN.** This file is yours: it contains work you have to do, here, and
+-- nothing will fill it in. A signature install leaves it alone.
 --
 -- **Canonicity** — that evaluating a literal gives a value in normal form.
 --
