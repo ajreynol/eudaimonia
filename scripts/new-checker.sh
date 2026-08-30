@@ -60,6 +60,13 @@ Options:
   --mini-rules "A B"    the rules that reduced package keeps. Taken from
                         <spec>/mini-rules when a --spec directory has one
   --[no-]hygiene-ci     whether CI rejects `sorry` from the first commit
+  --dummy-rule          with no signature given, write a working starter
+                        instead of a commented stub: a signature with one rule,
+                        its semantics, and regression proofs covering every
+                        verdict. The result compiles and runs, so a new calculus
+                        starts from something that works rather than nothing
+  --format-name NAME    the library that reads the input proof format
+                        (default: Eunoia, which is what the format is called)
   --force               regenerate an existing project directory. It is
                         deleted and written again, so this replaces the
                         scaffolding and nothing is carried across. It refuses
@@ -116,6 +123,8 @@ PROFILE_INDEXED_OPS="${PROFILE_INDEXED_OPS:-3}"
 MINI="${MINI:-no}"
 MINI_RULES="${MINI_RULES:-}"
 HYGIENE_CI="${HYGIENE_CI:-no}"
+FORMAT="${FORMAT:-Eunoia}"
+DUMMY_RULE="${DUMMY_RULE:-no}"
 # shellcheck source=../config.sh
 [ -f "${repo_root}/config.sh" ] && . "${repo_root}/config.sh"
 
@@ -153,6 +162,10 @@ while [ $# -gt 0 ]; do
     --no-mini) MINI=no; shift ;;
     --mini-rules) MINI_RULES="${2:?--mini-rules requires a value}"; MINI=yes; shift 2 ;;
     --mini-rules=*) MINI_RULES="${1#*=}"; MINI=yes; shift ;;
+    --dummy-rule) DUMMY_RULE=yes; shift ;;
+    --no-dummy-rule) DUMMY_RULE=no; shift ;;
+    --format-name) FORMAT="${2:?--format-name requires a value}"; shift 2 ;;
+    --format-name=*) FORMAT="${1#*=}"; shift ;;
     --hygiene-ci) HYGIENE_CI=yes; shift ;;
     --no-hygiene-ci) HYGIENE_CI=no; shift ;;
     --parser) PROFILE_PARSER=yes; shift ;;
@@ -185,6 +198,13 @@ check_name() {
 }
 check_name checker "${CHECKER}"
 check_name calculus "${CALCULUS}"
+check_name format "${FORMAT}"
+if [ "${FORMAT}" = "${CALCULUS}" ] || [ "${FORMAT}" = "${CHECKER}" ]; then
+  echo "error: --format-name ${FORMAT} collides with the ${CHECKER}/${CALCULUS} names." >&2
+  echo "The format library and the calculus library are separate Lake targets," >&2
+  echo "so they cannot share a name. Pick another." >&2
+  exit 2
+fi
 [ -n "${TOOLCHAIN}" ] || { echo "error: no Lean toolchain. Set TOOLCHAIN in config.sh or use --toolchain." >&2; exit 2; }
 
 # A specification is a signature and the two semantics it is read against, and
@@ -208,6 +228,11 @@ fi
 # specification directory can name them, as it can carry its own tests.
 if [ -z "${MINI_RULES}" ] && [ -n "${SPEC_DIR}" ] && [ -f "${SPEC_DIR}/mini-rules" ]; then
   MINI_RULES="$(tr '\n' ' ' < "${SPEC_DIR}/mini-rules" | tr -s ' ')"
+fi
+# The starter signature knows its own rule, so a starter project can have a
+# reduced package without being told anything.
+if [ -z "${MINI_RULES}" ] && [ "${DUMMY_RULE}" = "yes" ] && [ -z "${SIGNATURE}" ]; then
+  MINI_RULES="$(tr -d '\n' < "${script_dir}/../templates/starter/mini-rules.in")"
 fi
 
 for named in "${SIGNATURE}" "${SEMANTICS}" "${SMT_SEMANTICS}"; do
@@ -282,6 +307,7 @@ render() {
       -e "s|@EXE@|${EXE}|g" \
       -e "s|@CALCLOWER@|${CALCLOWER}|g" \
       -e "s|@MINI@|${MINI_CALC}|g" \
+      -e "s|@FORMAT@|${FORMAT}|g" \
       -e "s|@MINI_RULES@|${MINI_RULES}|g" \
       -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
       "${template}" > "${out}"
@@ -314,7 +340,7 @@ echo "    toolchain   ${TOOLCHAIN}"
 
 rm -rf "${DEST}"
 mkdir -p "${DEST}/${CALCULUS}/Proofs/Rules" "${DEST}/${CALCULUS}/Proofs/RuleSupport" \
-         "${DEST}/install/defs" "${DEST}/Eunoia" \
+         "${DEST}/install/defs" "${DEST}/${FORMAT}" \
          "${DEST}/scripts" "${DEST}/docs" "${DEST}/test/regress" \
          "${DEST}/.github/workflows"
 
@@ -335,12 +361,15 @@ fi
 render lakefile.toml.in   "${DEST}/lakefile.toml"
 # Substituted after rendering: the value is multi-line, which sed cannot carry
 # through a s|| replacement.
-python3 - "${DEST}/lakefile.toml" "${MINI_LIB}" "${MINI_TARGET}" <<'PYLAKE'
+python3 - "${DEST}/lakefile.toml" "${MINI_LIB}" "${MINI_TARGET}" "${FORMAT}" <<'PYLAKE'
 import sys, pathlib
-path, lib, target = sys.argv[1], sys.argv[2], sys.argv[3]
+path, lib, target, fmt = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 p = pathlib.Path(path); t = p.read_text()
 t = t.replace("@MINI_LIB@", lib)
-t = t.replace('defaultTargets = ["Eunoia", ', 'defaultTargets = ["Eunoia"%s, ' % target)
+# Keyed on the format library's actual name, which --format-name can change.
+anchor = 'defaultTargets = ["%s", ' % fmt
+assert anchor in t, "lakefile default targets not found"
+t = t.replace(anchor, 'defaultTargets = ["%s"%s, ' % (fmt, target))
 p.write_text(t)
 PYLAKE
 render lean-toolchain.in  "${DEST}/lean-toolchain"
@@ -359,9 +388,9 @@ render README.md.in       "${DEST}/README.md"
 # Logos calls them Cpc/Logos.lean and Cpc/LogosTerm.lean.
 # Reading the Eunoia proof format. Hand-written, calculus-independent, and the
 # thing the generated operator table plugs into.
-render eunoia/Root.lean.in    "${DEST}/Eunoia.lean"
-render eunoia/Sexp.lean.in    "${DEST}/Eunoia/Sexp.lean"
-render eunoia/Parser.lean.in  "${DEST}/Eunoia/Parser.lean"
+render eunoia/Root.lean.in    "${DEST}/${FORMAT}.lean"
+render eunoia/Sexp.lean.in    "${DEST}/${FORMAT}/Sexp.lean"
+render eunoia/Parser.lean.in  "${DEST}/${FORMAT}/Parser.lean"
 
 render pkg/SmtEval.lean.in        "${DEST}/${CALCULUS}/SmtEval.lean"
 render pkg/Term.lean.in           "${DEST}/${CALCULUS}/${CHECKER}Term.lean"
@@ -415,6 +444,8 @@ if [ "${MINI}" = "yes" ]; then
         -e "s|@EXE@|${EXE}|g" \
         -e "s|@CALCLOWER@|${CALCLOWER}|g" \
         -e "s|@MINI@|${MINI_CALC}|g" \
+        -e "s|@FORMAT@|${FORMAT}|g" \
+      -e "s|@FORMAT@|${FORMAT}|g" \
         -e "s|@TOOLCHAIN@|${TOOLCHAIN}|g" \
         "${templates_dir}/${src}" > "${DEST}/${MINI_CALC}/${dst}"
   done
@@ -449,8 +480,27 @@ render     test/regress-README.md.in "${DEST}/test/regress/README.md"
 render_exe test/run.sh.in              "${DEST}/test/regress/run.sh"
 
 echo "==> Installing the specification into install/defs"
-install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/install/defs/${CALCULUS}.eo"
-install_or_stub "${SEMANTICS}"     semantics.eos.in "${DEST}/install/defs/${CALCULUS}.eos"
+if [ "${DUMMY_RULE}" = "yes" ] && [ -z "${SIGNATURE}" ] && [ -z "${SEMANTICS}" ]; then
+  # A starter rather than a stub: one rule, its semantics, and proofs covering
+  # every verdict. The point is that a new calculus begins from something that
+  # compiles and runs, so the first thing to do is change a working checker
+  # rather than fill in blanks.
+  render starter/signature.eo.in   "${DEST}/install/defs/${CALCULUS}.eo"
+  render starter/semantics.eos.in  "${DEST}/install/defs/${CALCULUS}.eos"
+  echo "    $(rel "${DEST}/install/defs/${CALCULUS}.eo")  (starter, one rule)"
+  echo "    $(rel "${DEST}/install/defs/${CALCULUS}.eos")  (starter)"
+  for f in "${templates_dir}"/starter/test/*; do
+    base="$(basename "${f}")"
+    case "${base}" in
+      *.in) render "starter/test/${base}" "${DEST}/test/regress/${base%.in}" ;;
+      *) cp "${f}" "${DEST}/test/regress/${base}" ;;
+    esac
+  done
+  echo "    $(rel "${DEST}/test/regress")  (starter proofs, one per verdict)"
+else
+  install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/install/defs/${CALCULUS}.eo"
+  install_or_stub "${SEMANTICS}"     semantics.eos.in "${DEST}/install/defs/${CALCULUS}.eos"
+fi
 # The SMT-LIB semantics is the one file with no stub: leaving it out means the
 # calculus is written against whatever base semantics the toolchain supplies,
 # which is a choice rather than something left to fill in.
@@ -469,6 +519,22 @@ fi
 if [ -n "${SMT_SEMANTICS}" ]; then
   cp "${SMT_SEMANTICS}" "${DEST}/install/defs/smt.eos"
   echo "    $(rel "${DEST}/install/defs/smt.eos")  <- ${SMT_SEMANTICS}"
+fi
+
+# A specification directory can state its own profile, as it can carry its
+# tests and its mini rules: these are facts about the calculus it describes.
+if [ -n "${SPEC_DIR}" ] && [ -f "${SPEC_DIR}/profile" ]; then
+  # shellcheck source=/dev/null
+  . "${SPEC_DIR}/profile"
+fi
+
+# The starter signature is known: one rule, no assumption discharge, no list
+# premises, no indexed operators. Recording that rather than the conservative
+# defaults means a starter project's profile is right from the first install.
+if [ "${DUMMY_RULE}" = "yes" ] && [ -z "${SIGNATURE}" ]; then
+  PROFILE_SCOPES=no
+  PROFILE_LIST_PREMISES=no
+  PROFILE_INDEXED_OPS=0
 fi
 
 # Whether the SMT-LIB semantics is Logos's is a property of the file, so it is
@@ -501,6 +567,13 @@ for k in SCOPES LIST_PREMISES DATATYPES BINDERS VALUE_ORDERING INDEXED_OPS LOGOS
   printf '    %-22s %s\n' "$(printf '%s' "${k}" | tr 'A-Z_' 'a-z-')" "${v}"
 done
 
+if [ "${MINI}" = "yes" ]; then
+  MINI_HINT="  install/install-${CALCLOWER}.sh --mini    # the reduced package
+"
+else
+  MINI_HINT=""
+fi
+
 cat <<DONE
 
 ==> Done.
@@ -512,7 +585,7 @@ To replace the stubs with the calculus compiled from install/defs:
 
   install/get-eo-compiler.sh          # once: build the Eunoia compiler
   install/install-${CALCLOWER}.sh
-  scripts/build.sh
+${MINI_HINT}  scripts/build.sh
 
 See its README.md, docs/development.md and install/README.md.
 DONE

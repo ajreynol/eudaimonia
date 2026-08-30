@@ -25,8 +25,8 @@ module
 -- live at the end of `Cpc/Api.lean`.
 public import @CALCULUS@.Api
 import all @CALCULUS@.Api
-public import Eunoia.Parser
-import all Eunoia.Parser
+public import @FORMAT@.Parser
+import all @FORMAT@.Parser
 
 public section
 
@@ -108,11 +108,11 @@ nothing. Only the proof-stack commands are kept, so the positions line up with
 the `CCmdList` a run was over.
 -/
 private def proofCommandLabels (proof : String) : List String :=
-  match Eunoia.Sexp.Parser.manySexps!.run proof with
+  match @FORMAT@.Sexp.Parser.manySexps!.run proof with
   | .error _ => []
-  | .ok ss => (Eunoia.Parser.unwrapProof ss).filterMap label?
+  | .ok ss => (@FORMAT@.Parser.unwrapProof ss).filterMap label?
 where
-  label? : Eunoia.Sexp -> Option String
+  label? : @FORMAT@.Sexp -> Option String
     | .expr (.atom "assume-push" :: .atom name :: _) => some s!"assume-push {name}"
     | .expr (.atom "step" :: .atom name :: _) => some s!"step {name}"
     | .expr (.atom "step-pop" :: .atom name :: _) => some s!"step-pop {name}"

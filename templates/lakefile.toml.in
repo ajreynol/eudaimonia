@@ -1,12 +1,12 @@
 name = "@CHECKER@"
 version = "0.1.0"
-defaultTargets = ["Eunoia", "@CALCULUS@", "@EXE@"]
+defaultTargets = ["@FORMAT@", "@CALCULUS@", "@EXE@"]
 
-# Reading the Eunoia proof format: the s-expression reader and the table-driven
+# Reading the input proof format: the s-expression reader and the table-driven
 # proof parser. Independent of the calculus -- @CALCULUS@/Parser.lean is the
 # operator table it reads, and that is what is generated from the signature.
 [[lean_lib]]
-name = "Eunoia"
+name = "@FORMAT@"
 
 # The calculus: the proof rules, the terms they are stated about, and the
 # semantics they are proven correct against. The modules compiled from

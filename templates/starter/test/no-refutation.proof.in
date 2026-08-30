@@ -1,0 +1,4 @@
+; Assumptions but no derivation: nothing reaches false.
+; Expected verdict: incorrect.
+(declare-const P Bool)
+(assume @p0 P)

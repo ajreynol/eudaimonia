@@ -1,0 +1,6 @@
+; The smallest complete proof: two contradictory assumptions and one step.
+; Expected verdict: correct.
+(declare-const P Bool)
+(assume @p0 P)
+(assume @p1 (not P))
+(step @p2 :rule contra :premises (@p0 @p1))

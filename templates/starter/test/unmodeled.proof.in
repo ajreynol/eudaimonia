@@ -1,0 +1,9 @@
+; A sort constructor applied to a sort: the SMT-LIB formalization has no
+; counterpart, so the side condition fails and the theorem does not apply.
+; Expected verdict: incomplete.
+(declare-sort U 1)
+(declare-const a (U Bool))
+(declare-const Q (-> (U Bool) Bool))
+(assume @p0 (Q a))
+(assume @p1 (not (Q a)))
+(step @p2 :rule contra :premises (@p0 @p1))

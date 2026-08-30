@@ -1,0 +1,3 @@
+; Unbalanced parentheses: the reader rejects this outright.
+; Expected: error.
+(declare-const P Bool

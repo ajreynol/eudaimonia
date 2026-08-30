@@ -15,7 +15,7 @@ public import Std.Internal.Parsec.String
 
 public section
 
-namespace Eunoia
+namespace @FORMAT@
 
 /-- The type of S-expressions. -/
 inductive Sexp where
@@ -156,4 +156,4 @@ def sexp! : Parser Sexp := do
 
 end Sexp.Parser
 
-end Eunoia
+end @FORMAT@

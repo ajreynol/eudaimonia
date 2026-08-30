@@ -7,7 +7,7 @@ s-expression syntax the Ethos proof checker reads, whose commands are
 
 The parser is independent of any particular signature. Everything specific to a
 calculus -- its operators, its literals and its proof rules -- is supplied by a
-`Eunoia.Parser.Config`, and `@CALCULUS@/Parser.lean` is that configuration,
+`@FORMAT@.Parser.Config`, and `@CALCULUS@/Parser.lean` is that configuration,
 generated from the signature in `install/defs/`. So this module is hand-written
 and stays put across a regeneration, while the table it reads is regenerated
 with the calculus.
@@ -22,12 +22,12 @@ is a separate concern this does not address.
 -/
 
 public import Std.Data.HashMap
-public import Eunoia.Sexp
-import all Eunoia.Sexp
+public import @FORMAT@.Sexp
+import all @FORMAT@.Sexp
 
 public section
 
-namespace Eunoia.Parser
+namespace @FORMAT@.Parser
 
 variable {T R C CL : Type}
 
@@ -920,4 +920,4 @@ def parseProof (cfg : Config T R C CL) (input : String) : Except String (List T 
   let ss ← Sexp.Parser.manySexps!.run input
   (parseCommands cfg (unwrapProof ss)).run' (State.ofOps cfg.ops)
 
-end Eunoia.Parser
+end @FORMAT@.Parser

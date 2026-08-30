@@ -1,0 +1,26 @@
+; Hello: the smallest calculus that does anything.
+;
+; A starting point for a new one, not a calculus anyone should keep. It has the
+; two operators the checker layer requires and one rule, which is enough to
+; write a proof that refutes its assumptions -- and so enough to exercise the
+; whole pipeline: parser, checker, semantics, verdict.
+;
+; `Bool`, `true` and `false` are Eunoia builtins and need no declaration.
+
+; Required by the checker layer. `and` must carry `:right-assoc-nil true`
+; because rules gathering `:list` premises build the list through its nil; this
+; calculus has no such rule, but keeping the attribute means adding one later
+; does not turn into a puzzle.
+(declare-const and (-> Bool Bool Bool) :right-assoc-nil true)
+
+; Not required by the checker -- only by rules. This one needs it.
+(declare-const not (-> Bool Bool))
+
+; The one rule: from a formula and its negation, derive false.
+;
+; Enough to make a refutation possible, which is what the checker is *for*: its
+; verdict is whether the proof reached `false`.
+(declare-rule contra ((F Bool))
+  :premises (F (not F))
+  :conclusion false
+)

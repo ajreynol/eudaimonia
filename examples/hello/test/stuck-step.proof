@@ -1,0 +1,5 @@
+; `contra` needs a formula and its negation; given one premise it gets stuck.
+; Expected verdict: incorrect, localized to the step.
+(declare-const P Bool)
+(assume @p0 P)
+(step @p1 :rule contra :premises (@p0))

@@ -1,6 +1,6 @@
 module
 
--- The root of the `Eunoia` library: reading the Eunoia proof format.
+-- The root of the `@FORMAT@` library: reading the Eunoia proof format.
 --
 -- This library is independent of the calculus. It is the s-expression reader
 -- and the table-driven proof parser that `@CALCULUS@/Parser.lean` -- which is
@@ -8,9 +8,9 @@ module
 -- the calculus does not touch anything here.
 --
 -- Adapted from the parser of Logos (https://github.com/cvc5/logos).
-public import Eunoia.Sexp
-import all Eunoia.Sexp
-public import Eunoia.Parser
-import all Eunoia.Parser
+public import @FORMAT@.Sexp
+import all @FORMAT@.Sexp
+public import @FORMAT@.Parser
+import all @FORMAT@.Parser
 
 public section

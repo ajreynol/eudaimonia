@@ -173,14 +173,18 @@ cd checkers/Aletheia && lake build
 ## The Eunoia compiler
 
 Turning a signature into Lean needs `ethos-eoc`, built from
-[cvc5/ethos](https://github.com/cvc5/ethos). Fetch and build it once:
+[cvc5/ethos](https://github.com/cvc5/ethos). **It lives in the generated
+checker, not here** — a checker owns the compiler that regenerates it, so it
+stays self-contained:
 
 ```bash
-scripts/get-eo-compiler.sh
+cd checkers/<Checker>
+install/get-eo-compiler.sh      # once
+install/install-<calc>.sh       # signature -> Lean
 ```
 
-It lands in `deps/`, which is not kept in git, and records its paths in
-`deps/eoc-env.sh`.
+It lands in that project's `install/deps/`, which is not kept in git, and
+records its paths in `install/deps/eoc-env.sh`.
 
 > **Currently in development mode.** The script builds the *head* of
 > `ethosEoc3`, resolved at run time, rather than a fixed commit. That build is
@@ -208,14 +212,14 @@ compile.
 Two modes, set by `DEV_MODE` in the script and overridable per run:
 
 ```bash
-scripts/get-eo-compiler.sh            # DEV_MODE as set in the script
-scripts/get-eo-compiler.sh --tip      # build the branch head, resolved now
-scripts/get-eo-compiler.sh --pinned   # build the recorded ETHOS_VERSION
+install/get-eo-compiler.sh            # DEV_MODE as set in the script
+install/get-eo-compiler.sh --tip      # build the branch head, resolved now
+install/get-eo-compiler.sh --pinned   # build the recorded ETHOS_VERSION
 ```
 
 A tip build still resolves to one concrete commit before doing anything, and
-records it in `deps/eoc-env.sh` along with `EOC_DEV_MODE=1`. So what was built
-is always *known*, even when it is not reproducible.
+records it in `install/deps/eoc-env.sh` along with `EOC_DEV_MODE=1`. So what was
+built is always *known*, even when it is not reproducible.
 
 ### Leaving development mode
 
@@ -228,7 +232,7 @@ ETHOS_VERSION="<the commit it just built>"
 
 Pinning what was just built changes nothing about the compiler — only whether
 the next run is allowed to move. Do this before anyone else relies on the
-repository.
+generated checker.
 
 ### Ethos is already there
 
@@ -252,6 +256,26 @@ cannot see the difference between `correct` and `incomplete`. Accepting a proof
 the generated checker calls `incomplete` is agreement, not a disagreement.
 
 `install/get-eo-compiler.sh --no-ethos` skips building it.
+
+### Starting a new calculus
+
+```bash
+scripts/new-checker.sh --checker Demo --calculus Logic --dummy-rule --mini
+cd checkers/Demo
+install/get-eo-compiler.sh
+install/install-logic.sh
+scripts/build.sh
+test/regress/run.sh
+```
+
+`--dummy-rule` writes a **working** starter instead of a commented stub: a
+signature with one rule (`contra` — from a formula and its negation, derive
+`false`), its semantics, and five regression proofs covering every verdict. The
+result builds in about 12 seconds and passes its own tests, so a new calculus
+begins by *changing something that works* rather than filling in blanks.
+
+`examples/hello` is the same thing as a specification directory, if you would
+rather start from `--spec`.
 
 ### Development scaffolding
 
@@ -426,6 +450,7 @@ templates/                 what it renders, one file per generated file
   docs/ ci/ test/         its documentation, CI workflow and test layout
 docs/eoc-requests.md       what a template needs from the eoc compiler
 examples/cpc/              a worked specification: CPC, as Logos compiles it
+examples/hello/            the smallest one that works: one rule, five proofs
 checkers/                  where runs write, ignored by git
 deps/                      the Ethos tree and ethos-eoc, ignored by git
 TODO.md                    what Logos has that a generated checker still needs

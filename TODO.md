@@ -459,6 +459,23 @@ wrong.
       calculi whose translation is total, where a permanently-unreachable
       `incomplete` is a verdict that can only mislead.
 
+## 4f. Starting from something that works
+
+- [x] **A starter signature.** `--dummy-rule` writes a working one-rule calculus
+      instead of a commented stub — signature, semantics, and five regression
+      proofs covering every verdict. Builds in ~12s and passes its own tests.
+      `examples/hello` is the same as a specification directory.
+- [x] **A second calculus, which paid for itself immediately.** Compiling
+      anything other than CPC exposed three bugs that CPC could not:
+      the installer only worked for a checker named `Logos`; the indexed-op
+      detection crashed on a calculus with no indexed operators; and its regex
+      matched every line. All three were invisible while CPC was the only test.
+- [ ] **Use the starter to settle the open derivability questions.** It is a
+      datatype-free, literal-free signature, which is exactly what §4b and
+      `docs/eoc-requests.md` §1 need in order to test whether `Term`'s
+      constructor list is conditional on the signature. That test was not
+      possible before this existed.
+
 ## 5. Build and CI
 
 - [ ] **A build script with a toolchain fallback.** Logos's `scripts/build.sh`
