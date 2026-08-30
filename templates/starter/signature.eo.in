@@ -7,10 +7,13 @@
 ;
 ; `Bool`, `true` and `false` are Eunoia builtins and need no declaration.
 
-; Required by the checker layer. `and` must carry `:right-assoc-nil true`
-; because rules gathering `:list` premises build the list through its nil; this
-; calculus has no such rule, but keeping the attribute means adding one later
-; does not turn into a puzzle.
+; Required by the checker layer: the soundness statement is about the
+; conjunction of a proof's assumptions.
+;
+; `:right-assoc-nil true` is *not* required by the checker -- it is needed only
+; by rules that gather `:list` premises with `and`, and this calculus has none.
+; It is kept because adding such a rule later then needs no thought, and because
+; without it the parser will not accept n-ary `(and a b c)`.
 (declare-const and (-> Bool Bool Bool) :right-assoc-nil true)
 
 ; Not required by the checker -- only by rules. This one needs it.

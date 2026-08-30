@@ -99,16 +99,27 @@ The correctness development is stated in terms of one operator of the signature,
 named as a constructor of the `UserOp` enum that `install/defs/@CALCULUS@.eo`
 compiles to.
 
+**Always required:**
+
 | requirement | why |
 | ----------- | --- |
-| an operator **`and`** | the soundness statement is about the conjunction of a proof's assumptions |
-| declared **`:right-assoc-nil true`** | Not decoration. The checker reads the input problem as an `and`-chain terminated by `true`, and every `:list`-premise rule depends on the nil the attribute generates. |
-| **`and` sent to `SmtTerm.and`** by the semantics | A signature that declared `and` and translated it elsewhere would break soundness *silently*: nothing downstream re-checks that seam. |
-| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is literally "has `false` been proven" — and `true` is the unit of the assumption chain. |
+| a binary operator **`and`** | the soundness statement is about the conjunction of a proof's assumptions, and the checker folds its proof stack with it |
+| **`and` sent to `SmtTerm.and`** | a signature that declared `and` and translated it elsewhere would still compile and still check proofs, with the conclusion about the wrong formula. Nothing downstream re-checks this |
+| **`true`** / **`false`** | `false` is the refutation target, `true` terminates the assumption chain. Eunoia builtins, so nothing declares them |
 
-`install/install-@CALCLOWER@.sh` checks all four before installing anything, so
-a signature that does not meet the contract is refused with the reason rather
-than failing later inside a generated file.
+**Required only if rules gather `:list` premises with `and`:**
+
+| requirement | why |
+| ----------- | --- |
+| `and` declared **`:right-assoc-nil true`** | such a rule builds its premise list through `__eo_nil`, and the arm returning `true` for `and` exists only because of the attribute |
+
+The second is not a core requirement: with a plain binary `and` the assumption
+chain, the refutation test and the SMT translation are unchanged, and only the
+surface syntax for n-ary `(and a b c)` is lost.
+
+`install/install-@CALCLOWER@.sh` checks these against the compiler's output
+before installing anything, and checks the conditional one conditionally: it
+fails only when the compiled core gathers premises with `and` and no nil exists.
 
 ## Building
 

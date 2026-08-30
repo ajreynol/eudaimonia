@@ -46,76 +46,66 @@ ways.
 
 ### The signature contract
 
-The correctness development is not neutral about vocabulary. It is stated in
-terms of one operator, named as a constructor of the `UserOp` enum the signature
-compiles to.
+The correctness development is stated in terms of one operator of the calculus,
+named as a constructor of the `UserOp` enum the signature compiles to.
+
+**Always required:**
 
 | requirement | why |
 | ----------- | --- |
-| an operator **`and`** | The soundness statement is about the *conjunction* of a proof's assumptions, and the checker folds its proof stack with the same operator. |
-| declared **`:right-assoc-nil true`** | Not decoration. The checker reads the input problem as an `and`-chain terminated by `true`, and every `:list`-premise rule depends on the nil the attribute generates. |
-| **`and` sent to `SmtTerm.and`** by the semantics | A signature that declared `and` and translated it elsewhere would break soundness *silently*: nothing downstream re-checks that seam. |
-| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is literally "has `false` been proven" — and `true` is the unit of the assumption chain. |
+| a binary operator **`and`** | The soundness statement is about the *conjunction* of a proof's assumptions. The checker walks the input problem as `(and F rest)` and folds its proof stack the same way. |
+| **`and` sent to `SmtTerm.and`** by the semantics | A signature that declared `and` and translated it elsewhere would still compile and still check proofs, and the conclusion would be about the wrong formula. Nothing downstream re-checks this seam. |
+| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is "has `false` been proven" — and `true` terminates the assumption chain. Both are Eunoia builtins, so no signature has to declare them. |
 
-That is the whole list, and it is short because Logos worked at making it short:
-`not`, `=` and `imp` were all required at some point and none are now. Two
-things drove the shrinking — a conjunction is what the *statement* of soundness
-needs, and everything else a calculus has is its own business.
+**Required only if rules gather `:list` premises with `and`:**
 
-**All four are checked**, on the compiler's output rather than on the signature
-text — the name an operator compiles to need not be its spelling, and the
-attribute is only visible in what it generates. `install/install-<calc>.sh`
-refuses before installing anything, naming what is missing.
+| requirement | why |
+| ----------- | --- |
+| `and` declared **`:right-assoc-nil true`** | Such a rule builds its premise list through `__eo_nil`, and the arm returning `true` for `and` exists only because of the attribute. Without it those rules go `Stuck`. |
+
+This second one is *not* a core requirement. With a plain binary `and` the
+assumption chain, the refutation test and the SMT translation are byte-identical;
+what changes is that the parser stops accepting n-ary `(and a b c)`, which is
+surface syntax. A calculus with no `:list`-premise rules needs no nil, and
+`examples/hello` is one.
+
+`install/install-<calc>.sh` checks all of this against the compiler's output
+before installing anything — the name an operator compiles to need not be its
+spelling, and the attribute is only visible in what it generates. The
+conditional requirement is checked conditionally: it fails only when the
+compiled core gathers premises with `and` and no nil exists for it.
 
 ### The calculus profile
 
-A second kind of question, distinct from the contract above: the contract is
-what a signature *must* satisfy, while these are facts about the calculus that
-describe what a checker needs, must prove, and can inherit. They are one
-category and treated uniformly — each is a yes/no flag of
-`scripts/new-checker.sh`, each is recorded in the generated
-`install/defs/profile.conf`, and each is re-checked at install time where the
-compiled output can settle it.
+Distinct from the contract: the contract is what a signature *must* satisfy,
+while these are facts about the calculus that describe what a checker needs,
+must prove, and can inherit. Each is a flag of `scripts/new-checker.sh`,
+recorded in the generated `install/defs/profile.conf`, and re-checked at install
+time where the compiled output can settle it.
 
-**None of them is a feature switch.** What a generated checker contains is
-decided by the signature and by the eoc compiler. Nothing here trims anything,
-and there is no eoc option that would — the only entry that changes what is
-installed is `--no-parser`. The profile describes the calculus; it does not
-configure it.
+**These flags describe the calculus; they do not configure it.** What a checker
+contains is decided by the signature and by the compiler. `--no-parser` is the
+one that changes what is installed.
 
 | question | flag | kind |
 | -------- | ---- | ---- |
 | Do rules discharge assumptions (`scope`, compiling to step-pop)? | `--[no-]scopes` | **derived** — the step-pop dispatch arms are emitted per rule |
-| Do rules gather `:list` premises? | `--[no-]list-premises` | **derived** — the premise-list calls are emitted per rule, and the nil for the gathering operator either exists or does not |
+| Do rules gather `:list` premises? | `--[no-]list-premises` | **derived** — the premise-list calls are emitted per rule, and the nil either exists or does not |
+| How many indices do operators take, at most? | `--indexed-ops N` | **derived** — the compiler emits `UserOp<n>` only for an arity the calculus uses, so the highest one present is the answer |
 | Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | **derived** — by digest |
-| How many indices do operators take, at most? | `--indexed-ops N` | **derived** — an unused arity still gets an enum, but holding a placeholder `\| None`, so a real constructor is the signal |
-| Should the generated parser be installed? | `--[no-]parser` | **derived**, and the only entry that is also a *choice*: `--no-parser` really does change what is installed |
-| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | **declared** — eoc emits the datatype machinery for every signature |
+| Should the generated parser be installed? | `--[no-]parser` | **derived**, and the one entry that is also a choice |
+| Does the calculus have algebraic datatypes? | `--[no-]datatypes` | **declared** — the machinery is emitted for every signature, so nothing distinguishes the answers |
 | Are any rules binder-sensitive? | `--[no-]binders` | **declared** — likewise unconditional, and a binder in the signature does not imply a rule reasoning under one |
-| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | **declared** — eoc emits the same `SmtValueOrder` either way |
+| Does the semantics lean on a total order on values? | `--[no-]value-ordering` | **declared** — the same `SmtValueOrder` is emitted either way |
 
-The **derived / declared** split is not cosmetic, and it is the reason this list
-is honest rather than aspirational. Three of these are declared because the
-machinery they name lives in a *fixed eoc template* rather than being generated
-from the signature — `plugins/lean_meta/lean_meta_checker_term.lean` declares
-`Term` and `DatatypeDecl` unconditionally, for instance — so a calculus with
-datatypes and one without compile to the same thing. Claiming to verify them
-would be checking something that can only ever answer one way.
+**Derived** answers are checked against the compiled signature and any
+disagreement is reported. **Declared** ones are taken on trust, because the
+machinery they name is emitted unconditionally — a calculus with the feature and
+one without compile to the same thing, so claiming to verify them would be
+checking something that can only answer one way.
 
-Indexed operators are the sharpest example that the compiler already knows more
-than it acts on: the ladder is fixed at exactly three arities, an unused one is
-emitted holding a placeholder constructor, and four indices cannot be expressed
-at all — yet the answer is readable straight off the emitted code.
-
-Datatypes are still worth recording, and worth targeting: about 330 lines of a
-generated package mention them, none of it trimmable today. Making that
-conditional is compiler work, written up for whoever does it in
+Making those conditional is compiler work, set out in
 **[docs/eoc-requests.md](docs/eoc-requests.md)**.
-
-Defaults are the conservative answers. Answering wrongly does not break a build
-— the calculus is whatever the signature says — it makes the documentation
-wrong, which is why `install-<calc>.sh` prints declared against derived and
-names any that disagree.
 
 ### The proof format is fixed
 
@@ -151,7 +141,7 @@ scripts/new-checker.sh
 Or give the settings on the command line, which override that file:
 
 ```bash
-scripts/new-checker.sh --checker Aletheia --calculus Lra \
+scripts/new-checker.sh --checker Apodeixis --calculus Lra \
   --signature ~/sigs/Lra.eo --semantics ~/sigs/Lra.eos
 ```
 
@@ -167,7 +157,7 @@ scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
 `scripts/new-checker.sh --help` lists the rest. Then build what it wrote:
 
 ```bash
-cd checkers/Aletheia && lake build
+cd checkers/Apodeixis && lake build
 ```
 
 ## The Eunoia compiler
@@ -237,23 +227,20 @@ generated checker.
 ### Ethos is already there
 
 Building the compiler also builds **ethos** itself — the reference proof checker
-for Eunoia, from the same source tree. That matters more than it sounds:
+for Eunoia, from the same source tree.
 
-- **It reads your signature directly.** No Lean, nothing generated. So from the
-  first day of writing a `.eo` you can check proofs against it, long before the
-  Lean development can say anything at all.
-- **It gives the generated checker a second opinion.**
-  `scripts/check-with-ethos.sh` asks both the same question — with ethos's
-  `--require-proof-of-false` — and compares. `scripts/run-ci.sh` runs it as the
-  `ethos` group.
+- **It reads your signature directly.** No Lean, nothing generated, so it works
+  from the first day of writing a `.eo`.
+- **It gives the checker a second opinion.** `scripts/check-with-ethos.sh` asks
+  both the same question, using ethos's `--require-proof-of-false`, and
+  compares. `scripts/run-ci.sh` runs it as the `ethos` group.
 
-Ethos is *not* verified, so agreeing with it proves nothing. What it is good at
-is catching a compiled calculus that has drifted from the signature it came
-from, which is the failure a generated checker is most exposed to.
+Ethos is not verified, so agreement proves nothing. It catches a compiled
+calculus that has drifted from the signature it came from.
 
-One asymmetry the cross-check knows about: ethos has no SMT-LIB semantics, so it
-cannot see the difference between `correct` and `incomplete`. Accepting a proof
-the generated checker calls `incomplete` is agreement, not a disagreement.
+One asymmetry the cross-check accounts for: ethos has no SMT-LIB semantics and
+cannot distinguish `correct` from `incomplete`, so accepting a proof the checker
+calls `incomplete` is agreement, not disagreement.
 
 `install/get-eo-compiler.sh --no-ethos` skips building it.
 
@@ -316,7 +303,7 @@ generated package — and that belongs in a repository of its own rather than in
 the generator's. Generate it there:
 
 ```bash
-scripts/new-checker.sh --checker Aletheia --out ~/aletheia
+scripts/new-checker.sh --checker Apodeixis --out ~/apodeixis
 ```
 
 A generated project is self-contained and does not refer back to this one, so
@@ -404,21 +391,18 @@ says:
   ok malformed.proof     error        the parser rejects it
 ```
 
-A rejection says *where*, not just that it rejected. `incorrect` replays the
-proof and names the command that got stuck — `the checker became stuck at step
-@p3 (proof command 2)` — which is the difference between a usable diagnostic and
-a verdict on a thousand-step derivation. `incomplete` names what the semantics
-does not model.
+A rejection says *where*: `incorrect` replays the proof and names the command
+that got stuck — `the checker became stuck at step @p3 (proof command 2)` —
+and `incomplete` names what the semantics does not model.
 
-What a fresh checker cannot say is that any of this has been *proven*.
-`Proofs/Checker.lean` holds the soundness theorem and it is a `sorry`, as is
-every rule. So `correct` reports that the checks passed, not that the
-assumptions are provably unsatisfiable.
+What it cannot say is that any of this is *proven*. `Proofs/Checker.lean` holds
+the soundness theorem and it is a `sorry`, as is every rule, so `correct` reports
+that the checks passed rather than that the assumptions are provably
+unsatisfiable.
 
-Those are separate axes and are reported separately on purpose. Everything above
-the theorem is already wired to it — `ApiCorrect.lean` states correctness about
-the *text* of a proof file and derives it from `Proofs/Checker.lean` — so
-discharging that one theorem closes the gap with no other file changing.
+The two are separate axes. `ApiCorrect.lean` already states correctness about the
+text of a proof file and derives it from `Proofs/Checker.lean`, so discharging
+that one theorem closes the gap with no other file changing.
 `scripts/rule-status.sh` is where progress shows, not the verdict.
 
 ## This repository
