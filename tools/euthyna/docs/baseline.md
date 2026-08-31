@@ -1,11 +1,11 @@
 # Baseline
 
-The first measurement. Logos at `d4a03a5961fb`, committed 2026-08-30, measured
-2026-08-31. Snapshot `data/snapshots/2026-08-31-d4a03a5961fb-dirty/`.
+The first measurement. Logos at `373d56c5bb24`, measured 2026-08-31. Snapshot
+`data/snapshots/2026-08-31-373d56c5bb24-dirty/`.
 
-The tree carried one untracked file (`ai-estimate.txt`, not a Lean source), so
-the snapshot is marked dirty and is not exactly reproducible. Nothing measured
-here depends on it.
+The tree carried two untracked files (`ai-estimate.txt` and a regression input,
+neither a Lean source under `Cpc`), so the snapshot is marked dirty and is not
+exactly reproducible. Nothing measured here depends on either.
 
 Every number below is from that snapshot; `bin/euthyna show` reprints the
 report it came from. What the numbers mean is in [measures.md](measures.md);
@@ -155,6 +155,103 @@ The `__eo_prog_` implementations are small: median 280 lines, 251,336 across
 all 591. The median rule's proof reaches 47 lines for every line of the
 checker code it is about.
 
+## Cost, partitioned
+
+Everything above is reach. The `rule-partition` measure replaces it with a
+disjoint share: every file of the rule-proof layer claimed by the most core
+rule that reaches it, under the order in `analysis/rule-order.txt`. How the
+attribution works and what it does and does not license is in
+[partition.md](partition.md).
+
+It reconciles exactly, which is the point of doing it this way:
+
+```
+631,572 partitioned  +  2,816 unattributed  =  634,388  (bucket (f))
+```
+
+The 2,816 unattributed lines are three files — `Proofs/CheckerCore`,
+`Proofs/CheckerState`, `Proofs/Invariants/Stability` — that `Checker.lean`
+imports directly and no rule reaches. They are checker scaffolding, not any
+rule's cost, and are reported rather than folded in.
+
+| | min | p25 | median | p75 | max | total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| lines of proof claimed | 18 | 154 | 315 | 557 | 55,045 | 631,572 |
+| lines of rule claimed | 1 | 4 | 6 | 8 | 761 | 7,206 |
+
+The median rule claims **315 lines of proof**. Against a median *reach* of
+15,400, that is the size of the correction: 98% of what a rule's proof touches,
+it shares with rules more core than itself.
+
+Concentration is worse than reach suggested — the heaviest tenth holds **70.0%**
+of all partitioned proof, against 48.8% of surplus. Partitioning moves weight
+onto the rules that genuinely introduce it.
+
+| rule | rule LOC | proof LOC | ratio |
+| ---- | ---: | ---: | ---: |
+| `Bv_bitblast_step` | 294 | 55,045 | 187× |
+| `Instantiate` | 44 | 46,731 | 1,062× |
+| `Str_in_re_consume` | 153 | 43,154 | 282× |
+| `String_reduction` | 196 | 38,034 | 194× |
+| `Cong` | 20 | 28,035 | 1,402× |
+| `Evaluate` | 333 | 25,589 | 77× |
+| `Aci_norm` | 79 | 22,569 | 286× |
+
+## The scatter
+
+`rules.html` in the snapshot, drawn by `euthyna plot`. Lines of rule on x,
+lines of proof on y, both logarithmic, one point per rule.
+
+The relationship is real but loose — Pearson *r* = 0.49 on the raw values, 0.56
+on the logs. Bigger rules do cost more to prove, and the residual is where the
+interest is: **proof per line of rule spans 0.45× to 1,593×, a 3,505-fold
+spread, around a median of 58×.** Two rules of the same size can differ by
+three orders of magnitude in what they cost to prove.
+
+**Short rule, hard to prove** — the top-left corner:
+
+| rule | rule LOC | proof LOC | ratio |
+| ---- | ---: | ---: | ---: |
+| `Arrays_ext` | 5 | 7,965 | 1,593× |
+| `Arrays_read_over_write_1` | 3 | 4,437 | 1,479× |
+| `Cong` | 20 | 28,035 | 1,402× |
+| `Instantiate` | 44 | 46,731 | 1,062× |
+| `Sets_choose_singleton` | 3 | 2,857 | 952× |
+
+**Large rule, easy to prove** — the bottom-right:
+
+| rule | rule LOC | proof LOC | ratio |
+| ---- | ---: | ---: | ---: |
+| `Chain_resolution` | 44 | 20 | 0.45× |
+| `Chain_m_resolution` | 34 | 20 | 0.59× |
+| `Bv_and_concat_pullup3` | 18 | 19 | 1.06× |
+| `Bv_or_concat_pullup3` | 18 | 19 | 1.06× |
+
+The two corners are different in kind, and that is the finding. The expensive
+corner is **semantic**: extensionality, congruence, instantiation — rules whose
+statement is three lines and whose justification reaches into the model theory.
+The cheap corner is **syntactic**: chained resolution and bitvector
+concatenation pull-ups, where the implementation does the work and the proof
+follows it mechanically. Rule size does not predict proof cost; what the rule
+has to *mean* does.
+
+By family, partitioned:
+
+| family | rules | proof LOC | share |
+| ------ | ---: | ---: | ---: |
+| core / other | 150 | 195,480 | 31.0% |
+| strings | 201 | 192,758 | 30.5% |
+| bitvectors | 140 | 149,845 | 23.7% |
+| arithmetic | 49 | 35,546 | 5.6% |
+| quantifiers | 8 | 18,101 | 2.9% |
+| arrays | 10 | 16,218 | 2.6% |
+| datatypes | 10 | 15,501 | 2.5% |
+| sets | 23 | 8,123 | 1.3% |
+
+Quantifiers are eight rules holding 2.9% — 2,263 lines of proof per rule,
+against 959 for strings and 1,070 for bitvectors. Families are grouped by
+rule-name prefix, which is a heuristic and not a taxonomy.
+
 ## What the baseline sets up
 
 Three things to carry into the next iteration.
@@ -168,9 +265,15 @@ Three things to carry into the next iteration.
    floor helps every rule a little. Attacking the heaviest 59 rules addresses
    half the variable cost. These are not the same work and should not be
    argued about as if they were.
-3. **Reach is not authorship, and the gap now matters.** Every number in this
-   section is transitive-closure arithmetic. Until a measure separates a rule
-   file's own lines from what it imports, "the heaviest rules" means "the
-   rules with the largest dependency cone", which is related to but not the
-   same as the rules that were most work. That measure is first on the
-   [roadmap](roadmap.md).
+3. **The two corners of the scatter want different work.** The semantic corner
+   — `Arrays_ext`, `Cong`, `Instantiate` — is where a small statement costs a
+   thousand lines, and it is also where a calculus-independent argument would
+   pay off most, because those rules are about equality, extensionality and
+   instantiation rather than about CPC. The syntactic corner is already cheap
+   and there is nothing to win there. A generality effort that starts anywhere
+   else is starting in the wrong place.
+4. **Partitioned is still not authorship.** A rule's share is what it adds
+   *given the order*, so the first rule to touch a shared file carries all of
+   it, and the order's leading positions absorb the base by construction. The
+   remaining step is to separate a rule file's own lines from the support it
+   happens to claim first — see [measures.md](measures.md#gaps).

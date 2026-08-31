@@ -20,6 +20,10 @@ point:
 - **reach** — for one rule, how much of the development its correctness proof
   transitively depends on. Reach is *not* a partition: two rules that share a
   support file each count it.
+- **share** — for one rule, how much of the rule-proof layer it *claims*, under
+  an order that gives shared files to the most core rule that reaches them.
+  This one is a partition: the shares are disjoint and sum to the layer, and
+  the run fails if they do not. See [partition.md](partition.md).
 - **structure** — invariants of the checker layer that are supposed to hold
   and have each drifted at least once, checked textually.
 
@@ -39,8 +43,10 @@ with the numbers Logos itself reports.
 
 So the scripts are copied, not reimplemented, and copied *unedited*:
 
-- `analysis/upstream/` holds them byte for byte, with `MANIFEST` recording the
-  origin commit and a SHA-256 of each file.
+- `analysis/upstream/` holds the whole of Logos's `scripts/` directory byte for
+  byte, with `MANIFEST` recording the origin commit and a SHA-256 of each file.
+  All of it, not the subset that runs: which scripts measure a proof is a
+  judgement that will change, and which existed at a commit is a fact.
 - `bin/euthyna verify` re-checks those digests. A vendored script that has
   been touched is a script whose output is evidence about Euthyna's edit
   rather than about Logos.
@@ -48,10 +54,18 @@ So the scripts are copied, not reimplemented, and copied *unedited*:
   manifest, reporting which files changed. Upstream drift is a thing to
   notice deliberately, on a date, not a thing to absorb silently.
 
-Anything Euthyna wants that upstream does not provide goes in
-`analysis/derive.py`, which reads the vendored scripts' *output* and never
-their internals. The seam is deliberate: upstream answers what it answers, and
-everything downstream of that is Euthyna's own and clearly marked as such.
+Anything Euthyna wants that upstream does not provide goes in `analysis/`,
+alongside rather than inside. `derive.py` and `plot-rules.py` keep the seam
+strictly: they read the vendored scripts' *output* and never their internals.
+
+`euthyna_lean.py` is the one exception, and it is worth naming as one. The
+partition has to agree with `cpc-loc-summary.py` about two things — what counts
+as a line, and which files belong to the rule-proof layer — and it cannot get
+either by reading a report. So it restates them, which means it can drift.
+What keeps it honest is arithmetic rather than discipline: the partition must
+sum to the layer total that `cpc-loc-summary.py` independently computes, and
+`rule-partition.py` exits non-zero if it does not. A restatement that has
+drifted stops reconciling, loudly, in the same run.
 
 ## The staging copy
 
@@ -93,9 +107,10 @@ verbatim, plus:
 | `meta.json` | what was measured: Logos commit and date, whether the tree was dirty, which manifest commit the scripts came from, when the run started and ended |
 | `measures.tsv` | which measures ran, which were skipped, and their exit status |
 | `summary.json` | the derived analysis, machine-readable |
+| `rules.html` | the rule scatter — the one file not kept in git, since `euthyna plot` regenerates it exactly from `rule-partition.csv` |
 | `<measure>.err` | present only if that measure wrote to stderr |
 
-Snapshots are kept in git — about 120 KB each. That is the point: a single
+Snapshots are kept in git — about 150 KB each. That is the point: a single
 measurement says what the proof is like, and a series of them says what it is
 *doing*, which is the more useful thing and cannot be recovered later.
 
@@ -108,9 +123,14 @@ Worth stating plainly, because each of these is an easy misreading:
 
 - **Reach is not cost.** That a rule's proof transitively reaches 15,400 lines
   does not mean 15,400 lines were written for it. Most of that is shared, and
-  the same lines are counted again for the next rule. `derive.py` reports
-  *surplus over the floor* precisely to separate the two, and even surplus is
-  reach-based, not authorship-based.
+  the same lines are counted again for the next rule. The `rule-partition`
+  measure exists to replace reach with a disjoint share; where a number is
+  reach-based it is named `reach` and should be read as a dependency cone.
+- **A partitioned share is not authorship either.** It is what a rule adds
+  *given every rule more core than it*, so the first rule to touch a shared
+  file carries the whole of it. It is much closer to cost than reach was, and
+  it is still an attribution rather than a measurement of who wrote what. See
+  [partition.md](partition.md#reading-a-point).
 - **Lines are not difficulty.** A 300-line proof that took a week and a
   3,000-line one that a tactic generated look the same here. Nothing in this
   directory measures effort, and no conclusion should be drawn about it.

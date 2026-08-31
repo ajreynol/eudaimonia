@@ -40,6 +40,12 @@ So this reads a snapshot's raw outputs and derives:
                 the rule is proven about -- the price, in lines of proof, of a
                 line of checker.
 
+  partition     the same questions asked of `rule-partition.py`'s disjoint
+                shares rather than of reach: the spread of proof-per-line-of-rule,
+                how correlated the two axes are, and the extremes of each
+                corner of the scatter. This is the block the chart is drawn
+                from, and the one to read when reach and share disagree.
+
 Usage:
   analysis/derive.py <snapshot>            emit summary.json on stdout
   analysis/derive.py --report <snapshot>   print the human-readable report
@@ -49,6 +55,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import re
 import statistics as stats
 import sys
@@ -138,6 +145,74 @@ def read_rule_loc(path: Path) -> list[dict] | None:
             for r in csv.DictReader(fh)
         ]
     return rows or None
+
+
+def read_partition(path: Path) -> list[dict] | None:
+    """The rows of a rule-partition.py --csv run."""
+    if not path.is_file():
+        return None
+    with path.open() as fh:
+        rows = [
+            {k: (v if k == "rule" else int(v)) for k, v in r.items()}
+            for r in csv.DictReader(fh)
+        ]
+    return rows or None
+
+
+def derive_partition(rows: list[dict], rule_layer_lines: int | None) -> dict:
+    """The scatter's own statistics: cost, price, and where they disagree."""
+    proof = [r["proof_loc"] for r in rows]
+    code = [r["rule_loc"] for r in rows]
+    ratios = sorted(r["proof_loc"] / max(r["rule_loc"], 1) for r in rows)
+
+    ordered = sorted(rows, key=lambda r: -r["proof_loc"])
+    decile = max(1, len(rows) // 10)
+    total = sum(proof)
+
+    def extremes(key, reverse, n=8):
+        picked = sorted(rows, key=key, reverse=reverse)[:n]
+        return [
+            {
+                "rule": r["rule"],
+                "rule_loc": r["rule_loc"],
+                "proof_loc": r["proof_loc"],
+                "ratio": round(r["proof_loc"] / max(r["rule_loc"], 1), 2),
+            }
+            for r in picked
+        ]
+
+    def pearson(xs, ys):
+        mx, my = stats.mean(xs), stats.mean(ys)
+        num = sum((a - mx) * (b - my) for a, b in zip(xs, ys))
+        den = math.sqrt(sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys))
+        return round(num / den, 3) if den else None
+
+    logs = ([math.log10(max(v, 1)) for v in code], [math.log10(max(v, 1)) for v in proof])
+
+    out = {
+        "count": len(rows),
+        "proof_loc": quantiles(proof),
+        "rule_loc": quantiles(code),
+        "correlation": {"raw": pearson(code, proof), "log_log": pearson(*logs)},
+        "top_decile_share": round(sum(r["proof_loc"] for r in ordered[:decile]) / total, 4)
+        if total else 0.0,
+        "ratio": {
+            "min": round(ratios[0], 2),
+            "median": round(ratios[len(ratios) // 2], 1),
+            "max": round(ratios[-1], 1),
+            "spread": round(ratios[-1] / ratios[0], 1) if ratios[0] else None,
+        },
+        "heaviest": extremes(lambda r: r["proof_loc"], True),
+        "short_and_hard": extremes(lambda r: r["proof_loc"] / max(r["rule_loc"], 1), True),
+        "large_and_easy": extremes(lambda r: r["proof_loc"] / max(r["rule_loc"], 1), False),
+    }
+    if rule_layer_lines:
+        out["reconciles"] = {
+            "partitioned": total,
+            "rule_layer_lines": rule_layer_lines,
+            "unattributed": rule_layer_lines - total,
+        }
+    return out
 
 
 def read_checks(snapshot: Path) -> dict:
@@ -249,6 +324,9 @@ def summarize(snapshot: Path) -> dict:
         "layers": layers,
         "rules": derive_rules(rows, rule_layer_lines) if rows else None,
     }
+
+    part = read_partition(snapshot / "rule-partition.csv")
+    summary["partition"] = derive_partition(part, rule_layer_lines) if part else None
     return summary
 
 
@@ -342,6 +420,39 @@ def report(summary: dict) -> str:
         w("Heaviest rules by surplus")
         for entry in sp["heaviest"][:10]:
             w(f"  {entry['rule']:<40} {thousands(entry['surplus']):>9}")
+
+    part = summary.get("partition")
+    if part:
+        pl, cl = part["proof_loc"], part["rule_loc"]
+        w("")
+        w(f"Partitioned per rule  ({part['count']} rules; central theorems excluded)")
+        w(f"  proof  min {thousands(pl['min'])}   median {thousands(pl['median'])}"
+          f"   p75 {thousands(pl['p75'])}   max {thousands(pl['max'])}"
+          f"   total {thousands(pl['total'])}")
+        w(f"  rule   min {thousands(cl['min'])}   median {thousands(cl['median'])}"
+          f"   p75 {thousands(cl['p75'])}   max {thousands(cl['max'])}"
+          f"   total {thousands(cl['total'])}")
+        rec = part.get("reconciles")
+        if rec:
+            w(f"  reconciles: {thousands(rec['partitioned'])} partitioned +"
+              f" {thousands(rec['unattributed'])} unattributed ="
+              f" {thousands(rec['rule_layer_lines'])} rule-proof layer")
+        r = part["ratio"]
+        w(f"  proof per line of rule: median {r['median']}x"
+          f"   range {r['min']}x to {r['max']}x   ({r['spread']}x spread)")
+        w(f"  top-decile share {part['top_decile_share'] * 100:.1f}% of partitioned proof")
+        co = part.get("correlation") or {}
+        if co.get("raw") is not None:
+            w(f"  rule size vs proof size: r = {co['raw']}  (log-log {co['log_log']})")
+        w("")
+        w(f"  {'short rule, hard to prove':<34} {'rule':>6} {'proof':>8} {'ratio':>8}")
+        for e in part["short_and_hard"][:5]:
+            w(f"    {e['rule']:<32} {e['rule_loc']:>6} {thousands(e['proof_loc']):>8}"
+              f" {e['ratio']:>7.0f}x")
+        w(f"  {'large rule, easy to prove':<34} {'rule':>6} {'proof':>8} {'ratio':>8}")
+        for e in part["large_and_easy"][:5]:
+            w(f"    {e['rule']:<32} {e['rule_loc']:>6} {thousands(e['proof_loc']):>8}"
+              f" {e['ratio']:>7.2f}x")
 
     return "\n".join(out)
 

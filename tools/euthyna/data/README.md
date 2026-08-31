@@ -5,7 +5,7 @@
 `meta.json` (what was measured), `measures.tsv` (what ran), and `summary.json`
 (the derived analysis).
 
-These are kept in git, at about 120 KB each. A single snapshot says what the
+These are kept in git, at about 150 KB each — everything but the scatter, which `euthyna plot` regenerates. A single snapshot says what the
 proof is like; a series says what it is doing, which is the more useful thing
 and cannot be reconstructed after the fact.
 

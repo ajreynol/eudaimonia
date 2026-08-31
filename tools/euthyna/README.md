@@ -46,17 +46,32 @@ That is an intellectual debt, not a technical one, and it is repaid in prose.
 The measuring is not Euthyna's invention. Logos already carries scripts that
 count its own proof — rule status, lines by layer, per-rule cost, structural
 invariants — and those are better evidence about Logos than anything written
-from outside it would be. They are vendored here unedited, under
-[`analysis/upstream/`](analysis/upstream/), pinned to a Logos commit and
-checksummed.
+from outside it would be. The whole of its `scripts/` directory is snapshotted
+here unedited, under [`analysis/upstream/`](analysis/upstream/), pinned to a
+Logos commit and checksummed. Which of them measure a proof is a judgement that
+will change; which of them existed at a commit is a fact, and the fact is what
+is kept.
 
-What Euthyna adds is on top of them: a harness that runs all of them together
-against one Logos revision and keeps the result
-([`bin/euthyna`](bin/euthyna)), and a derivation that reads those results and
-asks what they say about the *shape* of the proof
-([`analysis/derive.py`](analysis/derive.py)) — how much of every rule's proof
-is a fixed cost paid once, how much is the rule's own, how concentrated that
-cost is, and what one line of checker costs in lines of proof.
+What Euthyna adds sits on top of them:
+
+- a harness that runs the measuring ones together against one Logos revision
+  and keeps the result ([`bin/euthyna`](bin/euthyna));
+- a **partition** of the rule-proof layer across the rules
+  ([`analysis/rule-partition.py`](analysis/rule-partition.py)). Upstream reports
+  each rule's transitive *reach*, which double-counts everything shared and sums
+  to twenty times the layer it measures. This gives every shared file to the
+  most core rule that uses it, so the columns are disjoint and sum to the layer
+  exactly — and the run fails if they do not;
+- the **coreness order** that partition is a function of
+  ([`analysis/rule-order.txt`](analysis/rule-order.txt)), maintained here and
+  append-only, so two snapshots stay comparable;
+- the **scatter** those two axes exist for
+  ([`analysis/plot-rules.py`](analysis/plot-rules.py)): proof size against rule
+  size, one point per rule, which is where "short but hard to prove" and "large
+  but easy to prove" become visible as places on a chart;
+- and a derivation over all of it ([`analysis/derive.py`](analysis/derive.py))
+  — the fixed cost every rule pays, how concentrated the variable cost is, and
+  what a line of rule costs in lines of proof.
 
 ## Layout
 
@@ -64,8 +79,12 @@ cost is, and what one line of checker costs in lines of proof.
 | ---- | ------------- |
 | `bin/euthyna` | the harness: stage a Logos checkout, run every measure, write a snapshot |
 | `euthyna.conf` | where Logos is, where snapshots go |
-| `analysis/upstream/` | Logos's own measurement scripts, vendored verbatim, with `MANIFEST` |
+| `analysis/upstream/` | the whole of Logos's `scripts/`, snapshotted verbatim, with `MANIFEST` |
+| `analysis/rule-order.txt` | the coreness order over the rules — append-only, maintained here |
+| `analysis/rule-partition.py` | the partitioned per-rule proof and rule sizes |
+| `analysis/plot-rules.py` | the scatter, as a standalone HTML page |
 | `analysis/derive.py` | Euthyna's derived metrics, over those scripts' output |
+| `analysis/euthyna_lean.py` | the Lean line count, import graph and bucket attribution the three share |
 | `data/snapshots/` | one directory per measurement run, kept in git |
 | `docs/` | what is measured, how, what it showed, and where it goes next |
 
@@ -76,15 +95,22 @@ tools/euthyna/bin/euthyna measure --logos ~/logos
 ```
 
 Fifteen seconds, no build required, no write to the checkout. It stages a copy
-of the Logos tree, runs the eight measures, writes
-`data/snapshots/<date>-<commit>/`, and prints the report.
+of the Logos tree, runs the nine measures, writes
+`data/snapshots/<date>-<commit>/`, draws the scatter, and prints the report.
 
 ```
 tools/euthyna/bin/euthyna measures      # the catalogue: what runs, what it needs
 tools/euthyna/bin/euthyna show          # re-print the newest snapshot's report
+tools/euthyna/bin/euthyna plot          # redraw the newest snapshot's scatter
+tools/euthyna/bin/euthyna rules check   # is the coreness order current?
+tools/euthyna/bin/euthyna rules update  # append new rules, drop departed ones
 tools/euthyna/bin/euthyna verify        # vendored scripts vs. MANIFEST
-tools/euthyna/bin/euthyna sync          # re-vendor from a Logos checkout
+tools/euthyna/bin/euthyna sync          # re-snapshot from a Logos checkout
 ```
+
+The run writes `rules.html` into the snapshot and tells you where. It is the
+one file a snapshot does not keep in git — it is derived from
+`rule-partition.csv`, and `euthyna plot` puts it back.
 
 ## Where to read next
 
@@ -92,6 +118,8 @@ tools/euthyna/bin/euthyna sync          # re-vendor from a Logos checkout
   what these numbers are and are not evidence of.
 - [docs/measures.md](docs/measures.md) — the catalogue: every measure, its
   unit, and the derived metrics built on it.
+- [docs/partition.md](docs/partition.md) — how the partition works, why the
+  order is append-only, and how to read a point on the scatter.
 - [docs/baseline.md](docs/baseline.md) — the first measurement, and what it
   says.
 - [docs/roadmap.md](docs/roadmap.md) — the analyses and visualizations this is

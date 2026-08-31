@@ -42,9 +42,13 @@ usage: euthyna <command> [options]
               snapshot under data/snapshots/.
   measures    List the measure catalogue: what runs, and what it reports.
   show [ID]   Print the headline numbers of a snapshot (default: the newest).
+  plot [ID]   Redraw a snapshot's rule scatter as rules.html.
+  rules SUB   Maintain the coreness order the partition depends on:
+              'check' (default) reports drift, 'update' appends new rules and
+              removes departed ones, 'seed' writes it from scratch (once).
   verify      Check the vendored scripts against analysis/upstream/MANIFEST.
-  sync        Re-copy the vendored scripts from a Logos checkout and rewrite
-              the manifest. Prints what changed.
+  sync        Re-snapshot the whole of Logos's scripts/ and rewrite the
+              manifest. Prints what changed.
 
 options:
   --logos PATH   The Logos checkout to measure (default: from euthyna.conf).
@@ -61,13 +65,15 @@ USAGE
 #
 # `needs` is `source` for a measure that reads source text only, or `build`
 # for one that needs a Logos that has been through `lake build`. The command
-# runs with the staging directory as its working directory.
+# runs with the staging directory as its working directory, with
+# ${EUTHYNA_ROOT} pointing back here so Euthyna's own analyses can be named.
 # ---------------------------------------------------------------------------
 measures() {
   cat <<'CATALOGUE'
 rule-status|source|./scripts/classify-rule-status.py Cpc|rule-status.tsv
 core-rule-status|source|./scripts/classify-core-rule-status.sh|core-rule-status.tsv
 rule-loc|source|./scripts/cpc-rule-loc.py --csv|rule-loc.csv
+rule-partition|source|"${EUTHYNA_ROOT}/analysis/rule-partition.py" --root . --csv|rule-partition.csv
 loc-summary|source|./scripts/cpc-loc-summary.py --files --deps|loc-summary.txt
 proof-hygiene|source|./scripts/check-proof-hygiene.sh|proof-hygiene.txt
 proof-modularity|source|./scripts/check-proof-modularity.sh|proof-modularity.txt
@@ -130,22 +136,40 @@ cmd_verify() {
     "$(awk '$1=="commit"{print substr($2,1,12)}' "${upstream}/MANIFEST")"
 }
 
+# Re-snapshot the whole of Logos's scripts/ directory, not a chosen subset.
+# Which scripts measure a proof is a judgement that changes; which scripts
+# existed at a commit is a fact, and the fact is what is worth keeping. The
+# measure catalogue decides what actually runs.
 cmd_sync() {
   [ -d "${LOGOS_ROOT}/scripts" ] || die "no scripts/ under ${LOGOS_ROOT}"
   local commit date changed=0 name
   commit="$(git -C "${LOGOS_ROOT}" rev-parse HEAD)"
   date="$(git -C "${LOGOS_ROOT}" log -1 --format=%cI HEAD)"
 
-  while read -r kw _ name; do
-    [ "${kw}" = "sha256" ] || continue
-    [ -f "${LOGOS_ROOT}/scripts/${name}" ] || { printf '  GONE     %s\n' "${name}"; continue; }
-    if cmp -s "${LOGOS_ROOT}/scripts/${name}" "${upstream}/${name}"; then
+  # Departed: vendored here, no longer upstream.
+  for path in "${upstream}"/*; do
+    name="$(basename "${path}")"
+    [ "${name}" = "MANIFEST" ] && continue
+    if [ ! -f "${LOGOS_ROOT}/scripts/${name}" ]; then
+      printf '  GONE     %s\n' "${name}"
+      rm -f "${path}"
+      changed=1
+    fi
+  done
+
+  # Arrived or changed.
+  for path in "${LOGOS_ROOT}"/scripts/*; do
+    [ -f "${path}" ] || continue
+    name="$(basename "${path}")"
+    if [ ! -f "${upstream}/${name}" ]; then
+      printf '  NEW      %s\n' "${name}"; changed=1
+    elif cmp -s "${path}" "${upstream}/${name}"; then
       printf '  same     %s\n' "${name}"
     else
       printf '  updated  %s\n' "${name}"; changed=1
     fi
-    cp -p "${LOGOS_ROOT}/scripts/${name}" "${upstream}/${name}"
-  done < "${upstream}/MANIFEST"
+    cp -p "${path}" "${upstream}/${name}"
+  done
 
   local head tmp
   tmp="$(mktemp)"
@@ -153,12 +177,44 @@ cmd_sync() {
   printf '%s\n' "${head}" |
     sed -e "s|^commit .*|commit  ${commit}|" -e "s|^date .*|date    ${date}|" > "${tmp}"
   printf '\n' >> "${tmp}"
-  ( cd "${upstream}" && sha256sum *.py *.sh core-rules.txt ) | sed 's/^/sha256  /' >> "${tmp}"
+  ( cd "${upstream}" && sha256sum -- * 2>/dev/null | grep -v ' MANIFEST$' ) |
+    sed 's/^/sha256  /' >> "${tmp}"
   mv "${tmp}" "${upstream}/MANIFEST"
 
-  printf 'Manifest now at %s.\n' "${commit:0:12}"
+  printf 'Manifest now at %s (%s files).\n' "${commit:0:12}" \
+    "$(grep -c '^sha256' "${upstream}/MANIFEST")"
   [ "${changed}" -eq 0 ] && printf 'No script content changed.\n'
   return 0
+}
+
+# The coreness order. Delegated wholesale to analysis/rule-order.py, which is
+# where the append-only discipline is enforced and explained.
+cmd_rules() {
+  local sub="${1:-check}"
+  case "${sub}" in
+    seed|check|update) ;;
+    *) die "unknown 'rules' subcommand: ${sub} (seed|check|update)" ;;
+  esac
+  shift || true
+  "${root}/analysis/rule-order.py" "${sub}" \
+    --logos "${LOGOS_ROOT}" \
+    --date "$(date -u +%Y-%m-%d)" \
+    --commit "$(git -C "${LOGOS_ROOT}" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)" \
+    "$@"
+}
+
+cmd_plot() {
+  local snap="${1:-}"
+  if [ -z "${snap}" ]; then
+    snap="$(newest_snapshot)"
+  elif [ ! -d "${snap}" ]; then
+    snap="${root}/${SNAPSHOT_DIR}/${snap}"
+  fi
+  [ -f "${snap}/rule-partition.csv" ] || die "no rule-partition.csv in ${snap}"
+  "${root}/analysis/plot-rules.py" \
+    --partition "${snap}/rule-partition.csv" \
+    --meta "${snap}/meta.json" \
+    --out "${snap}/rules.html"
 }
 
 cmd_measure() {
@@ -180,9 +236,18 @@ cmd_measure() {
     trap "rm -rf '${stage}'" EXIT
   fi
 
+  # The partition is a function of the coreness order, so a stale order makes
+  # it quietly wrong for the rules it omits. Warn, but measure anyway -- a
+  # snapshot with a noted gap beats no snapshot.
+  if ! "${root}/analysis/rule-order.py" check --logos "${LOGOS_ROOT}" >/dev/null 2>&1; then
+    note "  warning: the coreness order is out of date; 'euthyna rules update'"
+    "${root}/analysis/rule-order.py" check --logos "${LOGOS_ROOT}" 2>/dev/null | sed 's/^/  /' >&2 || true
+  fi
+
   note "staging ${LOGOS_ROOT} -> ${stage}"
   stage_logos "${LOGOS_ROOT}" "${stage}"
   mkdir -p "${snap}"
+  export EUTHYNA_ROOT="${root}"
 
   local id needs command out status started ended
   started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -225,10 +290,17 @@ META
   sed -i 's/"build_measures": no/"build_measures": false/' "${snap}/meta.json"
 
   "${root}/analysis/derive.py" "${snap}" > "${snap}/summary.json"
+  if [ -s "${snap}/rule-partition.csv" ]; then
+    "${root}/analysis/plot-rules.py" \
+      --partition "${snap}/rule-partition.csv" \
+      --meta "${snap}/meta.json" \
+      --out "${snap}/rules.html" >/dev/null
+  fi
   note ""
   cmd_show "${snap}"
   note ""
   note "snapshot: ${snap#"${root}/"}"
+  [ -f "${snap}/rules.html" ] && note "scatter:  ${snap#"${root}/"}/rules.html"
 }
 
 newest_snapshot() {
@@ -253,6 +325,21 @@ cmd_show() {
 [ $# -gt 0 ] || { usage; exit 2; }
 cmd="$1"; shift
 
+# `rules` forwards its own flags (--out, --force) to analysis/rule-order.py, so
+# its arguments bypass the option loop below. --logos is still honoured here.
+if [ "${cmd}" = "rules" ]; then
+  forwarded=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --logos)   LOGOS_ROOT="$2"; shift 2 ;;
+      --logos=*) LOGOS_ROOT="${1#*=}"; shift ;;
+      *)         forwarded+=("$1"); shift ;;
+    esac
+  done
+  cmd_rules ${forwarded[@]+"${forwarded[@]}"}
+  exit $?
+fi
+
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -272,6 +359,7 @@ case "${cmd}" in
   measure)  cmd_measure ;;
   measures) cmd_measures ;;
   show)     cmd_show "${positional[0]:-}" ;;
+  plot)     cmd_plot "${positional[0]:-}" ;;
   verify)   cmd_verify ;;
   sync)     cmd_sync ;;
   -h|--help|help) usage ;;

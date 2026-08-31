@@ -1,19 +1,20 @@
 {
-  "snapshot": "2026-08-31-d4a03a5961fb-dirty",
+  "snapshot": "2026-08-31-373d56c5bb24-dirty",
   "meta": {
     "logos_root": "/home/andrew-reynolds/logos",
-    "logos_commit": "d4a03a5961fb159711257e7fc636e3ca9fcc28ee",
+    "logos_commit": "373d56c5bb24821bdf7c9641223291906721166b",
     "logos_dirty": true,
-    "logos_commit_date": "2026-08-30T20:16:46-05:00",
-    "upstream_manifest_commit": "d4a03a5961fb159711257e7fc636e3ca9fcc28ee",
-    "started": "2026-08-31T10:51:51Z",
-    "ended": "2026-08-31T10:52:05Z",
+    "logos_commit_date": "2026-08-31T06:11:50-05:00",
+    "upstream_manifest_commit": "373d56c5bb24821bdf7c9641223291906721166b",
+    "started": "2026-08-31T11:35:15Z",
+    "ended": "2026-08-31T11:35:35Z",
     "build_measures": false
   },
   "checks": {
     "rule-status": "pass",
     "core-rule-status": "pass",
     "rule-loc": "pass",
+    "rule-partition": "pass",
     "loc-summary": "pass",
     "proof-hygiene": "pass",
     "proof-modularity": "pass",
@@ -44,7 +45,7 @@
       "2": {
         "title": "Proof checker  [Cpc.Logos + dependencies]",
         "files": 3,
-        "lines": 8573
+        "lines": 8572
       },
       "3": {
         "title": "Proof parser  [Cpc.Parser + dependencies, excluding (2)]",
@@ -213,6 +214,195 @@
       "rule_layer_lines": 634388,
       "factor": 19.9,
       "marginal_lines_per_rule": 1073.4
+    }
+  },
+  "partition": {
+    "count": 591,
+    "proof_loc": {
+      "n": 591,
+      "min": 18,
+      "p25": 154,
+      "median": 315,
+      "p75": 557,
+      "max": 55045,
+      "mean": 1068.6,
+      "total": 631572
+    },
+    "rule_loc": {
+      "n": 591,
+      "min": 1,
+      "p25": 4,
+      "median": 6,
+      "p75": 8,
+      "max": 761,
+      "mean": 12.2,
+      "total": 7206
+    },
+    "correlation": {
+      "raw": 0.49,
+      "log_log": 0.561
+    },
+    "top_decile_share": 0.7005,
+    "ratio": {
+      "min": 0.45,
+      "median": 58.0,
+      "max": 1593.0,
+      "spread": 3504.6
+    },
+    "heaviest": [
+      {
+        "rule": "Bv_bitblast_step",
+        "rule_loc": 294,
+        "proof_loc": 55045,
+        "ratio": 187.23
+      },
+      {
+        "rule": "Instantiate",
+        "rule_loc": 44,
+        "proof_loc": 46731,
+        "ratio": 1062.07
+      },
+      {
+        "rule": "Str_in_re_consume",
+        "rule_loc": 153,
+        "proof_loc": 43154,
+        "ratio": 282.05
+      },
+      {
+        "rule": "String_reduction",
+        "rule_loc": 196,
+        "proof_loc": 38034,
+        "ratio": 194.05
+      },
+      {
+        "rule": "Cong",
+        "rule_loc": 20,
+        "proof_loc": 28035,
+        "ratio": 1401.75
+      },
+      {
+        "rule": "Evaluate",
+        "rule_loc": 333,
+        "proof_loc": 25589,
+        "ratio": 76.84
+      },
+      {
+        "rule": "Aci_norm",
+        "rule_loc": 79,
+        "proof_loc": 22569,
+        "ratio": 285.68
+      },
+      {
+        "rule": "Seq_eval_op",
+        "rule_loc": 84,
+        "proof_loc": 9208,
+        "ratio": 109.62
+      }
+    ],
+    "short_and_hard": [
+      {
+        "rule": "Arrays_ext",
+        "rule_loc": 5,
+        "proof_loc": 7965,
+        "ratio": 1593.0
+      },
+      {
+        "rule": "Arrays_read_over_write_1",
+        "rule_loc": 3,
+        "proof_loc": 4437,
+        "ratio": 1479.0
+      },
+      {
+        "rule": "Cong",
+        "rule_loc": 20,
+        "proof_loc": 28035,
+        "ratio": 1401.75
+      },
+      {
+        "rule": "Instantiate",
+        "rule_loc": 44,
+        "proof_loc": 46731,
+        "ratio": 1062.07
+      },
+      {
+        "rule": "Sets_choose_singleton",
+        "rule_loc": 3,
+        "proof_loc": 2857,
+        "ratio": 952.33
+      },
+      {
+        "rule": "Arith_string_pred_entail",
+        "rule_loc": 8,
+        "proof_loc": 4627,
+        "ratio": 578.38
+      },
+      {
+        "rule": "Bv_sign_extend_eq_const_1",
+        "rule_loc": 14,
+        "proof_loc": 7879,
+        "ratio": 562.79
+      },
+      {
+        "rule": "Bv_extract_concat_1",
+        "rule_loc": 10,
+        "proof_loc": 5025,
+        "ratio": 502.5
+      }
+    ],
+    "large_and_easy": [
+      {
+        "rule": "Chain_resolution",
+        "rule_loc": 44,
+        "proof_loc": 20,
+        "ratio": 0.45
+      },
+      {
+        "rule": "Chain_m_resolution",
+        "rule_loc": 34,
+        "proof_loc": 20,
+        "ratio": 0.59
+      },
+      {
+        "rule": "Bv_and_concat_pullup3",
+        "rule_loc": 18,
+        "proof_loc": 19,
+        "ratio": 1.06
+      },
+      {
+        "rule": "Bv_or_concat_pullup3",
+        "rule_loc": 18,
+        "proof_loc": 19,
+        "ratio": 1.06
+      },
+      {
+        "rule": "Bv_xor_concat_pullup3",
+        "rule_loc": 18,
+        "proof_loc": 19,
+        "ratio": 1.06
+      },
+      {
+        "rule": "Bv_and_concat_pullup2",
+        "rule_loc": 16,
+        "proof_loc": 19,
+        "ratio": 1.19
+      },
+      {
+        "rule": "Bv_or_concat_pullup2",
+        "rule_loc": 16,
+        "proof_loc": 19,
+        "ratio": 1.19
+      },
+      {
+        "rule": "Bv_xor_concat_pullup2",
+        "rule_loc": 16,
+        "proof_loc": 19,
+        "ratio": 1.19
+      }
+    ],
+    "reconciles": {
+      "partitioned": 631572,
+      "rule_layer_lines": 634388,
+      "unattributed": 2816
     }
   }
 }

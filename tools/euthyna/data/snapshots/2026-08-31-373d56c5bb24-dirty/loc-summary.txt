@@ -12,8 +12,8 @@ CPC executive summary  (LOC = non-blank, non-comment lines)
        100  Cpc.SmtValueOrder
 
 (2) Proof checker  [Cpc.Logos + dependencies]
-    files:    3    lines:    8573
-      8212  Cpc.Logos
+    files:    3    lines:    8572
+      8211  Cpc.Logos
        253  Cpc.LogosTerm
        108  Cpc.SmtEval
 
