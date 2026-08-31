@@ -557,8 +557,12 @@ propositions nothing can prove by accident.
 
 ## How this repository is maintained
 
-**Eudaimonia is written by an AI agent under human supervision.** Claude does
-the work — the scripts, the templates, the Lean, the documentation and the
+This repository is part of the **Eunoia ecosystem** and follows its shared
+repository policy, kept by [anoieu](https://github.com/ajreynol/anoieu) in
+[`docs/policy.md`](https://github.com/ajreynol/anoieu/blob/main/docs/policy.md).
+
+**Eudaimonia is written by an AI agent under human supervision.** An assistant
+does the work — the scripts, the templates, the Lean, the documentation and the
 measurements in it — and a human directs, reviews and decides.
 
 That is worth stating for two reasons.

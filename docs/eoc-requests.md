@@ -539,9 +539,9 @@ remove check 1.
 permute the cases of the induction principle it produces.
 
 **Evidence.** Bumping the pin `3cf1c03f` → `406b5499` reordered the cases of
-`__smtx_type_default.induct`: the datatype case moved from position 1 to
-position 10, with the count unchanged at 21. Nothing else about the proof needed
-to change — relocating one bullet fixed it.
+`__smtx_type_default.induct`: the datatype case moved from first to tenth,
+with the count unchanged at 21. Nothing else about the proof needed to change —
+relocating one bullet fixed it.
 
 **Why it matters here.** `Proofs/TypeDefaults.lean` is one of the files
 Eudaimonia ships **proven**, ported from Logos and byte-identical between `Cpc`

@@ -79,11 +79,11 @@ a measurement, so it is written down where it can be argued with.
 
 **Seeded once**, on 2026-08-31:
 
-1. positions 1–164: the rules of Logos's own `core-rules.txt`, in that file's
+1. entries 1–164: the rules of Logos's own `core-rules.txt`, in that file's
    order. It is curated — it opens `scope`, `process_scope`, `ite_eq`, `split`,
    `resolution` — and is the best available statement of what CPC considers
    fundamental. Euthyna does not second-guess it.
-2. positions 165–591: every remaining rule by ascending cone size, then by
+2. entries 165–591: every remaining rule by ascending cone size, then by
    name. A rule that depends on less is more foundational, so the smallest cone
    claims the shared base and later rules report only their increment.
 
@@ -128,7 +128,7 @@ Two cautions, both of which follow from the partition being a partition:
   because its proof is 20 lines but because `Resolution`, four places ahead of
   it, already claimed what they share. Read the pair, not either number alone.
 - **The order's first entries absorb the shared base**, so early positions look
-  expensive by construction. `Scope` at position 1 claims 1,412 lines. That is
+  expensive by construction. `Scope`, first in the order, claims 1,412 lines. That is
   the mechanism working, not a finding about `Scope`.
 
 Colour carries nothing on the chart. Seven theory families would need seven

@@ -18,3 +18,9 @@
 *.olean
 *.ilean
 *.trace
+
+# Working space, per the ecosystem's repository policy: transient notes go in
+# scratch/, and a document deliberately kept out of git carries the .local.md
+# suffix and a line at the top saying why.
+scratch/
+*.local.md
