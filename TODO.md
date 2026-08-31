@@ -692,7 +692,21 @@ than making it more complete.
 The next real use of this framework is an AI agent driving a new checker from
 generation to proofs. What that needs, and does not yet have.
 
-- [ ] **A ratchet. This is the most important item on the list.** `sorry` is a
+- [x] **Portability, stated and tested** -- done, 2026-08-30. Linux is what the
+      six-configuration CI runs on; a generate-install-build-check smoke test
+      now runs on `macos-latest` beside it, so "works on macOS" is checked
+      rather than assumed. Windows is WSL only. Requirements are listed in both
+      READMEs instead of being discoverable only by hitting an error.
+
+      The audit behind it: no bash 4 features anywhere (Apple ships 3.2),
+      `sed -i.bak` rather than GNU `sed -i`, `nproc` with a `sysctl` fallback,
+      `wget`/`curl` either way, and `cmake tar python3 git` checked before use.
+      Two real gaps found and fixed -- `md5sum` is GNU-only, so the `logos-smt`
+      profile entry silently read `no` on macOS (now `md5sum`, `md5` or
+      `openssl`, verified to agree), and `build-rules.sh` invoked `lake`
+      without checking for it.
+
+- [ ] **A ratchet -- worth wanting, not yet worth specifying.** `sorry` is a
       warning rather than an error, and `hygiene` is deliberately not among the
       default CI groups -- both correct, because a fresh checker is nothing but
       `sorry` and a suite that is red by construction says nothing. The
@@ -700,12 +714,18 @@ generation to proofs. What that needs, and does not yet have.
       can add a `sorry`, weaken a statement, or strand a rule, and every CI
       group still passes.
 
-      What is missing is a recorded baseline -- a count per file, checked in --
-      that CI compares against and refuses to let grow. Then "green" means
-      *no worse than before* rather than *compiles*, which is the signal an
-      agent needs to iterate against and cannot game by deleting work.
-      `scripts/rule-status.sh` and `check-proof-hygiene.sh` already produce the
-      numbers; nothing records or enforces them.
+      A recorded baseline -- a `sorry` count per file, checked in, that CI
+      refuses to let grow -- is the obvious shape, and `rule-status.sh` and
+      `check-proof-hygiene.sh` already produce the numbers. What is not obvious
+      is what to count. A count that only ever falls punishes splitting one
+      `sorry` into three smaller ones, which is usually progress; it says
+      nothing about a statement weakened until it is trivial; and a rule whose
+      proof is replaced by a vacuous one scores better than an honest stub.
+
+      So this stays a goal rather than a plan. Cheap partial measures that do
+      not need the general answer: fail CI when a file that had **no** `sorry`
+      acquires one, and record which rules are discharged so a rule going back
+      to `sorry` is visible.
 
 - [x] **Carry a signature that is a tree of includes** -- done, 2026-08-30.
       A signature is normally written as a root `.eo` pulling in theories,

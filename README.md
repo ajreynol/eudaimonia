@@ -131,6 +131,31 @@ Only the calculus varies. Every checker this generates:
 If your calculus is a Eunoia signature over SMT-LIB, this is the right tool. If
 it is not, the honest answer is that it is not.
 
+## Requirements
+
+| | |
+| --- | --- |
+| **Lean** | via [elan](https://github.com/leanprover/elan), which installs the toolchain `lean-toolchain` pins. Nothing else needs Lean installed globally |
+| **A C++17 compiler and cmake ≥ 3.12** | the Eunoia compiler is built from source |
+| **GMP development headers** | `libgmp-dev` on Debian and Ubuntu, `gmp` on Homebrew |
+| **python3, git, tar** | and either `curl` or `wget` |
+
+`install/get-eo-compiler.sh` checks for these before it builds anything and
+names what is missing; `scripts/build.sh` checks for `lake`.
+
+### Platforms
+
+| | |
+| --- | --- |
+| **Linux** | what CI runs on every push — six configurations, each built and checked |
+| **macOS** | a generate-install-build-check smoke test runs on `macos-latest` alongside it |
+| **Windows** | not supported directly. WSL behaves as Linux |
+
+Both are covered by CI rather than assumed. The scripts avoid the usual
+divergences deliberately — no bash 4 features, so Apple's bash 3.2 is fine;
+`sed -i.bak` rather than GNU's `sed -i`; `nproc` with a `sysctl` fallback; and
+an md5 helper that takes `md5sum`, `md5` or `openssl` depending on which exists.
+
 ## Usage
 
 Edit `config.sh`, then generate:
@@ -281,57 +306,17 @@ begins by *changing something that works* rather than filling in blanks.
 `examples/hello` is the same thing as a specification directory, if you would
 rather start from `--spec`.
 
-### Development scaffolding
+### Where a run writes, and what else you can ask for
 
-Two options are about what the generated project *contains*, rather than about
-the calculus:
+`--out` decides where a checker is written; the default is `checkers/` here,
+which is not kept in git. A checker you mean to develop belongs in a repository
+of its own. `--mini` generates a reduced package that builds in seconds rather
+than minutes, and `--hygiene-ci` decides whether CI rejects `sorry` from day
+one.
 
-```bash
-scripts/new-checker.sh --mini              # also generate <Calculus>Mini
-scripts/new-checker.sh --hygiene-ci        # CI rejects `sorry` from day one
-```
-
-**`--mini`** generates a second package: the same signature compiled with a
-handful of rules and no parser, refreshed by
-`install/install-<calc>.sh --mini`. On the CPC example it builds in **8 seconds
-against 83**, from 2,130 lines against 20,350. A proof about the checker does
-not depend on how many rules the calculus has, so it can be developed there and
-moved. Which rules it keeps comes from `--mini-rules`, or from a `mini-rules`
-file in the specification directory — as `examples/cpc` has.
-
-**`--hygiene-ci`** decides whether `scripts/check-proof-hygiene.sh` runs in CI
-from the first commit. It greps for `sorry`, `admit` and `axiom`, builds
-nothing, and exists to stop an unproven rule landing silently — which matters
-because CI cannot afford to build every proof. Off by default: a checker
-scaffolded from a large signature starts with one `sorry` per rule and would be
-red from the start. Turn it on for a small calculus proved as it grows, or once
-the stubs are discharged.
-
-## Where a run writes
-
-By default, under `checkers/` in this repository, which is **not kept in git**.
-Everything a run writes is reproducible from `config.sh` and `templates/`, so
-there is nothing there worth committing, and trying the generator out or
-working on the templates leaves nothing behind.
-
-A checker you intend to develop is a different matter: it will accumulate
-hand-written Lean — in Logos the per-rule correctness proofs live inside the
-generated package — and that belongs in a repository of its own rather than in
-the generator's. Generate it there:
-
-```bash
-scripts/new-checker.sh --checker Apodeixis --out ~/apodeixis
-```
-
-A generated project builds without anything from this one, so it can also
-simply be moved. It links back here for the documentation that describes
-checkers in general, and carries its own for what is specific to its calculus.
-
-Regenerating over an existing project needs `--force`. It deletes the project
-directory and writes it again, so everything under it goes, hand-written Lean
-and build cache included: nothing is preserved across a regeneration. Logos
-keeps per-rule proofs across a reinstall and this does not, which is a gap to
-close once there are proofs to keep.
+[Anatomy of a generated checker](docs/generated-checker.md) has the full option
+table, what each one produces, and what regenerating over an existing checker
+does and refuses to do.
 
 ## Design principles
 
@@ -402,7 +387,7 @@ adopting Logos's answer is always available and never assumed. Where that
 balance should sit is a decision for whoever is building the checker, and
 changing it means changing the templates rather than working around them.
 
-## What a run generates
+## What a run produces
 
 A checker whose **development infrastructure is initialized**, not just a Lake
 package: the compiler that regenerates it, the scripts that build and check it,
@@ -419,90 +404,28 @@ Logos's.
   Main.lean lakefile.toml lean-toolchain README.md
 ```
 
-**[docs/generated-checker.md](docs/generated-checker.md)** is the full anatomy:
-every file, how to navigate a checker you did not generate, which module is
-compiled from the signature and which is yours to write, and a table mapping
-each `new-checker.sh` option to what it decided.
-
-**[docs/logos-experience-report.md](docs/logos-experience-report.md)** goes
-through every `sorry` a generated checker contains and what the same obligation
-cost Logos — a verified checker for a 591-rule calculus. Generated projects link
-back to it rather than carrying a copy, since it describes Logos rather than any
-one calculus.
-
-A generated checker owns its own copy of the compiler setup and builds without
-anything from this repository, so it can be moved anywhere or made a repository
-of its own. What it does keep is a link back to
-[`docs/generated-checker.md`](docs/generated-checker.md),
-[`docs/logos-experience-report.md`](docs/logos-experience-report.md) and
-[`docs/limitations.md`](docs/limitations.md) — the documentation that describes
-checkers of this shape rather than any one calculus, and that goes on changing
-here. Shipping a copy into the project would freeze it.
-
-### Trying it end to end
+End to end, against the CPC example — 9 signature-wide modules and 591 rule
+stubs:
 
 ```bash
-scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
-cd checkers/Logos
+scripts/new-checker.sh --checker Demo --calculus Cpc --spec examples/cpc
+cd checkers/Demo
 install/get-eo-compiler.sh
 install/install-cpc.sh
 scripts/build.sh
-test/regress/run.sh
+scripts/run-ci.sh
 ```
 
-That compiles the CPC signature into 9 signature-wide modules and 591 rule
-stubs, builds them, and runs the regression proofs:
+`run-ci.sh` passes: the package builds, every module compiles, the regression
+proofs get the verdicts they should, ethos agrees with all of them, and
+reinstalling from the signature reproduces the package byte-for-byte.
 
-```
-  ok hello.proof                              incomplete
-  ok malformed.proof                          error
-  ok no-refutation.proof                      incorrect
-```
-
-`scripts/run-ci.sh` passes: the package builds, every module compiles, the
-regression proofs get the verdicts they should, ethos agrees with all of them,
-and reinstalling from the signature reproduces the package byte-for-byte.
-
-Any signature reachable on the machine can be compiled instead, including one
-sitting in a tree of includes:
-
-```bash
-install/install-cpc.sh ~/cvc5/proofs/eo/cpc/Cpc.eo
-```
-
-That also **records** it — flattening the tree into `install/defs/Cpc.eo` as
-one self-contained file — so the checker carries the signature it was built
-from and can be regenerated without that tree.
-
-### What a fresh checker can and cannot say
-
-It parses the Eunoia proof format, runs the calculus, and reports one of three
-verdicts — and all three are reachable for the right reasons, because the side
-conditions in `Proofs/Assumptions.lean` are real rather than stubbed. A term is
-translatable when the semantics gives it a type, so `incomplete` means what it
-says:
-
-```
-  ok hello.proof         correct      two contradictory assumptions, refuted
-  ok no-refutation.proof incorrect    nothing derived
-  ok stuck-step.proof    incorrect    a step the checker gets stuck on, localized
-  ok unmodeled.proof     incomplete   a sort constructor the semantics has no counterpart for
-  ok malformed.proof     error        the parser rejects it
-```
-
-A rejection says *where*: `incorrect` replays the proof and names the command
-that got stuck — `the checker became stuck at step @p3 (proof command 2)` —
-and `incomplete` names what the semantics does not model.
-
-What it cannot say is that any of this is *proven*. `Proofs/Checker.lean` holds
-the soundness theorem and it is a `sorry`, as is every rule, so `correct` reports
-that the checks passed rather than that the assumptions are provably
-unsatisfiable.
-
-The two are separate axes. `ApiCorrect.lean` already states correctness about the
-text of a proof file and derives it from `Proofs/Checker.lean`, so discharging
-that one theorem closes the gap with no other file changing.
-`scripts/rule-status.sh` is where progress shows, not the verdict.
+The result reports one of three verdicts, and a rejection says *where* —
+`incorrect` names the command that got stuck, `incomplete` names what the
+semantics does not model. What it cannot say is that any of this is **proven**:
+`Proofs/Checker.lean` holds the soundness theorem and it is a `sorry`. Those are
+separate axes, and `scripts/rule-status.sh` is where progress shows, not the
+verdict.
 
 ## This repository
 

@@ -75,6 +75,17 @@ OLD_PIN="$(sed -n 's/^ETHOS_VERSION="\([0-9a-f]\{40\}\)"$/\1/p' "${PIN_FILE}")"
 tmp="$(mktemp -d)"
 trap 'rm -rf "${tmp}"' EXIT
 
+# md5 by whichever tool exists: md5sum is GNU, md5 is what macOS ships, and
+# openssl is the fallback. Without one the digest checks are skipped rather than
+# reporting a wrong answer.
+file_digest() {
+  if command -v md5sum >/dev/null 2>&1; then md5sum < "$1" | cut -d' ' -f1
+  elif command -v md5 >/dev/null 2>&1; then md5 -q < "$1"
+  elif command -v openssl >/dev/null 2>&1; then openssl md5 < "$1" | sed 's/.*= *//'
+  else return 1
+  fi
+}
+
 fetch() { # fetch <path-in-ethos> <destination>
   local path="$1" dest="$2"
   curl -sSfL "${RAW}/${COMMIT}/${path}" -o "${dest}" \
@@ -92,7 +103,8 @@ grep -q 'eo_to_smt' "${tmp}/Cpc.eos" \
 grep -q 'SmtValue' "${tmp}/smt.eos" \
   || { echo "error: smt.eos does not look like the SMT-LIB semantics" >&2; exit 1; }
 
-NEW_DIGEST="$(md5sum < "${tmp}/smt.eos" | cut -d' ' -f1)"
+NEW_DIGEST="$(file_digest "${tmp}/smt.eos")" || {
+  echo "error: no md5sum, md5 or openssl on PATH; cannot compute the digest." >&2; exit 1; }
 OLD_DIGEST="$(sed -n 's/^LOGOS_SMT_DIGEST="\([0-9a-f]*\)"$/\1/p' scripts/new-checker.sh)"
 
 changed=0

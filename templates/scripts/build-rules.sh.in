@@ -86,6 +86,12 @@ RULES_DIR="@CALCULUS@/Proofs/Rules"
   exit 1
 }
 
+command -v lake >/dev/null 2>&1 || {
+  echo "error: lake was not found on PATH. Install the Lean toolchain with elan:" >&2
+  echo "       https://leanprover-community.github.io/get_started.html" >&2
+  exit 1
+}
+
 SORRY_RE='(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)'
 
 declare -a targets=()

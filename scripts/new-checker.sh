@@ -336,6 +336,17 @@ render_exe() {
 
 # A file the user supplies is copied verbatim; one they do not is the rendered
 # stub, so the project has the file either way and says in it what it is for.
+# md5 by whichever tool exists: md5sum is GNU, md5 is what macOS ships, and
+# openssl is the fallback. Without one the digest checks are skipped rather than
+# reporting a wrong answer.
+file_digest() {
+  if command -v md5sum >/dev/null 2>&1; then md5sum < "$1" | cut -d' ' -f1
+  elif command -v md5 >/dev/null 2>&1; then md5 -q < "$1"
+  elif command -v openssl >/dev/null 2>&1; then openssl md5 < "$1" | sed 's/.*= *//'
+  else return 1
+  fi
+}
+
 install_or_stub() {
   local given="$1" template="$2" out="$3"
   if [ -n "${given}" ]; then
@@ -669,8 +680,8 @@ fi
 # Whether the SMT-LIB semantics is Logos's is a property of the file, so it is
 # measured rather than asked. Anything else -- absent, or modified -- is `no`.
 PROFILE_LOGOS_SMT="no"
-if [ -f "${DEST}/install/defs/smt.eos" ] && command -v md5sum >/dev/null 2>&1; then
-  [ "$(md5sum < "${DEST}/install/defs/smt.eos" | cut -d' ' -f1)" != "${LOGOS_SMT_DIGEST}" ] \
+if [ -f "${DEST}/install/defs/smt.eos" ]; then
+  [ "$(file_digest "${DEST}/install/defs/smt.eos" 2>/dev/null || true)" != "${LOGOS_SMT_DIGEST}" ] \
     || PROFILE_LOGOS_SMT="yes"
 fi
 

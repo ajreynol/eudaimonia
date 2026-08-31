@@ -287,6 +287,36 @@ checker, and the installer renames them and rewrites the imports. If you see
 `Logos` in a checker of yours that is not called Logos, that rename did not
 happen.
 
+## What a fresh checker can and cannot say
+
+It parses the Eunoia proof format, runs the calculus, and reports one of three
+verdicts — and all three are reachable for the right reasons, because the side
+conditions in `Proofs/Assumptions.lean` are real rather than stubbed. A term is
+translatable when the semantics gives it a type, so `incomplete` means what it
+says:
+
+```
+  ok hello.proof         correct      two contradictory assumptions, refuted
+  ok no-refutation.proof incorrect    nothing derived
+  ok stuck-step.proof    incorrect    a step the checker gets stuck on, localized
+  ok unmodeled.proof     incomplete   a sort constructor the semantics has no counterpart for
+  ok malformed.proof     error        the parser rejects it
+```
+
+A rejection says *where*: `incorrect` replays the proof and names the command
+that got stuck — `the checker became stuck at step @p3 (proof command 2)` — and
+`incomplete` names what the semantics does not model.
+
+What it cannot say is that any of this is *proven*. `Proofs/Checker.lean` holds
+the soundness theorem and it is a `sorry`, as is every rule, so `correct` reports
+that the checks passed rather than that the assumptions are provably
+unsatisfiable.
+
+The two are separate axes. `ApiCorrect.lean` already states correctness about the
+text of a proof file and derives it from `Proofs/Checker.lean`, so discharging
+that one theorem closes the gap with no other file changing.
+`scripts/rule-status.sh` is where progress shows, not the verdict.
+
 ## Which option produced what
 
 | option | what it decides |
@@ -315,6 +345,60 @@ the generator:
   which commit of the Eunoia compiler gets built. Constants in that script, not
   generator options. `--tip` overrides for one run. Note that the commit and
   `install/defs/smt.eos` are pinned *together*; see `install/README.md`.
+
+### Two options worth more than a table row
+
+**`--mini`** generates a second package: the same signature compiled with a
+handful of rules and no parser, refreshed by `install/install-<calc>.sh --mini`.
+On the CPC example it builds in **8 seconds against 83**, from 2,130 lines
+against 20,350. A proof about the checker does not depend on how many rules the
+calculus has, so it can be developed there and moved across. Which rules it
+keeps comes from `--mini-rules`, or from a `mini-rules` file in the
+specification directory, as `examples/cpc` has.
+
+**`--hygiene-ci`** decides whether `scripts/check-proof-hygiene.sh` runs in CI
+from the first commit. It greps for `sorry`, `admit` and `axiom`, builds
+nothing, and exists to stop an unproven rule landing silently — which matters
+because CI cannot afford to build every proof. Off by default: a checker
+scaffolded from a large signature starts with one `sorry` per rule and would be
+red from the start. Turn it on for a small calculus proved as it grows, or once
+the stubs are discharged.
+
+## Where a checker lives
+
+`--out` decides. The default is `checkers/` inside the Eudaimonia repository,
+which is **not kept in git**: everything a run writes there is reproducible from
+`config.sh` and `templates/`, so trying the generator out leaves nothing behind.
+
+A checker you intend to develop belongs somewhere else. It will accumulate
+hand-written Lean — the per-rule proofs live inside the generated package — and
+that wants a repository of its own:
+
+```bash
+scripts/new-checker.sh --checker Apodeixis --out ~/apodeixis
+```
+
+It builds without anything from the generator, so it can equally be generated in
+place and moved afterwards.
+
+### Regenerating over an existing checker
+
+Regeneration writes the *scaffolding* again, and that is all it is meant to
+replace. It cannot put back what someone has written, so it refuses rather than
+risking it:
+
+| | |
+| --- | --- |
+| no flag | refuses if the directory exists at all |
+| `--force` | regenerates, but **still refuses** if the directory holds rule proofs under `<Calculus>/Proofs/Rules/` or a `.git` — and says which |
+| `--clobber` | deletes the directory regardless. Not recoverable |
+
+To refresh the *calculus* of a checker that has been worked in — which keeps
+every proof — use that checker's own installer rather than the generator:
+
+```bash
+cd <checker> && install/install-<calculus>.sh
+```
 
 ## What is not there
 

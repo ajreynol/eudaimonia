@@ -165,6 +165,14 @@ Everything here is **F** — copied in complete, working, and not yours to write
 
 ## Getting started
 
+You need **Lean** (via [elan](https://github.com/leanprover/elan), which
+installs the toolchain `lean-toolchain` pins), a **C++17 compiler and cmake**,
+the **GMP development headers** (`libgmp-dev` on Debian and Ubuntu, `gmp` on
+Homebrew), plus **python3, git, tar** and either **curl** or **wget**. The first
+script below checks for them and names what is missing.
+
+Linux and macOS are both supported; on Windows, use WSL.
+
 ```bash
 install/get-eo-compiler.sh       # once: build the Eunoia compiler
 install/install-@CALCLOWER@.sh   # signature -> Lean

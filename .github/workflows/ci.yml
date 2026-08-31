@@ -29,3 +29,33 @@ jobs:
       # would take minutes and exercises the compiler rather than the generator.
       - name: Generate and check every configuration
         run: scripts/run-ci.sh
+
+  # Linux is what the matrix above covers. This is the smoke test that says the
+  # toolchain works on macOS too: different libc, different Homebrew prefix, BSD
+  # userland rather than GNU (no `nproc`, no `md5sum`, `sed -i` needing an
+  # argument). One configuration, generated, installed, built and CI'd -- enough
+  # to catch a portability regression without paying for the whole matrix on a
+  # slower runner.
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: brew install gmp cmake
+
+      - name: Install Lean
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Generate, install and check one configuration
+        run: |
+          scripts/new-checker.sh --checker Mac --calculus Hello \
+            --spec examples/hello --out checkers/.mac
+          cd checkers/.mac/Mac
+          ./install/get-eo-compiler.sh
+          ./install/install-hello.sh
+          ./scripts/run-ci.sh
+
