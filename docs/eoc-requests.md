@@ -77,11 +77,16 @@ Then, in order:
 6. **Item 4 — generated `cmdTranslationOk`.** Worth doing when a second
    consumer actually hits the hand-maintained table; Eudaimonia seeds the
    generic version and has not yet.
-7. **Item 7 — state the conclusion over the assumption list.** The last of the
-   `and` dependency, and the only item that would empty the signature contract
-   rather than shorten it. Last because it is speculative until someone scopes
-   what it does to `Common.lean`, not because it is unimportant: it is what
-   would let a calculus declare no operators at all.
+7. **Item 7 — conjoin in `SmtTerm`, not in the user's `Term`.** The last of the
+   `and` dependency, and the only item that would *empty* the signature contract
+   rather than shorten it: a calculus would declare no operators at all. It sits
+   here rather than higher only because `Common.lean`'s share of the 21 sites
+   wants scoping first — the `argListAssumes` site alone is small and removes
+   contract check 2 by itself.
+8. **Item 8 — stable or named cases in generated induction principles.** Small,
+   and it is the first measured case of a compiler bump silently breaking a file
+   that ships proven. It is a precondition for item 5 being worth doing: a seeded
+   checker layer only stays proven if what it is written against holds still.
 
 ---
 
@@ -451,32 +456,110 @@ paying off, so it sequences first.
 
 ---
 
-## 7. State the conclusion over the assumption list
+## 7. Conjoin in `SmtTerm`, not in the user's `Term`
 
-**The ask:** drop `argListAssumes` from the soundness statement, so that no part
-of the checker layer names an operator.
+**The ask:** build the checker's conjunctions out of `SmtTerm.and` instead of
+`Term.UOp UserOp.and`. That empties the signature contract.
 
-**Why now.** Item 1c removed `and` from everything a run touches. What is left is
-one definition and the folds that mirror it:
+**The observation this rests on.** `SmtTerm.and` and `SmtTerm.Boolean` are
+constructors of the **fixed SMT-LIB formalization** (`SmtModelDefs.lean`, from
+`smt.eos`). They are present in every generated package whatever the signature
+declares — unlike `UserOp.and`, which exists only because a signature declared
+it. The conjunction has to happen somewhere; it does not have to happen in the
+calculus's own algebra.
 
-| site | what names `and` |
-| ---- | ---------------- |
-| `Proofs/Assumptions.lean` | `argListAssumes`, the conclusion's conjunction |
-| `Proofs/CheckerState.lean` | `stateAssumes` / `statePushes` / `stateProvens`, 11 sites |
-| `Proofs/Common.lean` | 7 sites: `__eo_to_smt` of `and`, its Bool typing, its interpretation |
-| `Proofs/CheckerCore.lean` | 2 sites |
+**Where `and` still is**, after item 1c:
 
-**Shape of the fix.** `eo_satisfiability (argListAssumes F) false` says "the
-conjunction of `F` has no model". State it directly over the list — no model
-makes every entry of `F` true — and `argListAssumes` is unnecessary. The stack
-folds are the same move one level down: they exist to compare a `Term` against
-the state, and a list-level predicate would not need the operator either.
+| site | count | what names `and` |
+| ---- | ----: | ---------------- |
+| `Proofs/Assumptions.lean` | 1 | `argListAssumes`, the conclusion's conjunction |
+| `Proofs/CheckerState.lean` | 11 | `stateAssumes` / `statePushes` / `stateProvens` and their lemmas |
+| `Proofs/Common.lean` | 7 | `__eo_to_smt` of `and`, its Bool typing, its interpretation |
+| `Proofs/CheckerCore.lean` | 2 | two `eo_interprets` steps |
 
-**What it would unlock.** Both `and` entries come out of the signature contract,
-and `install-<calc>.sh` stops checking them. A calculus would then need no
-declared operator at all — only the Bool literals, which are Eunoia builtins. A
-signature could be a single rule over uninterpreted propositions. That is the
-point at which "bring your own calculus" has no asterisk on it.
+All 21 are the same shape: `Term.Apply (Term.Apply (Term.UOp UserOp.and) X) Y`.
+
+**Shape of the fix.** `eo_satisfiability` is already *defined* as satisfiability
+of the translation (`Cpc/Spec.lean`):
+
+```lean
+def eo_satisfiability (t : Term) (b : Bool) : Prop :=
+  (smt_satisfiability (__eo_to_smt t) b)
+```
+
+So the conclusion `eo_satisfiability (argListAssumes F) false` unfolds to
+`smt_satisfiability (__eo_to_smt (argListAssumes F)) false`. Replace
+
+```lean
+def argListAssumes : CArgList -> Term
+  | CArgList.nil => Term.Boolean true
+  | CArgList.cons A as =>
+      Term.Apply (Term.Apply (Term.UOp UserOp.and) A) (argListAssumes as)
+```
+
+with the same fold one layer down, and conclude about it directly:
+
+```lean
+def argListAssumesSmt : CArgList -> SmtTerm
+  | CArgList.nil => SmtTerm.Boolean true
+  | CArgList.cons A as => SmtTerm.and (__eo_to_smt A) (argListAssumesSmt as)
+
+theorem correct___eo_is_refutation (F : CArgList) (pf : CCmdList) : ...
+  smt_satisfiability (argListAssumesSmt F) false
+```
+
+The two statements agree exactly when
+`__eo_to_smt (and A B) = SmtTerm.and (__eo_to_smt A) (__eo_to_smt B)` — which is
+*precisely* contract check 2. So this is the same theorem under the contract, and
+it no longer needs the contract in order to mean the right thing. The stack folds
+are the same move: `stateAssumes : CState -> SmtTerm`, and `Common.lean`'s seven
+lemmas become facts about the fixed semantics rather than about the calculus.
+
+**What it unlocks.** Both `and` entries leave the contract, and
+`install-<calc>.sh` stops checking them — not because they went unchecked, but
+because the seam is gone. A calculus would then need **no declared operator at
+all**: only the Bool literals, which are Eunoia builtins. A signature could be
+one rule over uninterpreted propositions. That is the point at which "bring your
+own calculus" has no asterisk on it.
+
+**The objection, and the answer.** Stating the conclusion in `SmtTerm` makes it a
+claim about the translation rather than about the user's own language. But
+`eo_satisfiability` is *already* that claim by definition, and every rule proof
+already interprets terms only through `__eo_to_smt`. Nothing is weakened; the
+statement stops routing through an operator that only some signatures have.
+
+**Cost.** Not free — 21 sites, and `Common.lean`'s lemmas are load-bearing in the
+invariant proofs. Worth scoping before committing. The `argListAssumes` site
+alone is small and removes contract check 2 on its own; the stack folds are what
+remove check 1.
+
+## 8. Keep generated induction principles stable, or name their cases
+
+**The ask:** when the shape of a generated definition changes, do not silently
+permute the cases of the induction principle it produces.
+
+**Evidence.** Bumping the pin `3cf1c03f` → `406b5499` reordered the cases of
+`__smtx_type_default.induct`: the datatype case moved from position 1 to
+position 10, with the count unchanged at 21. Nothing else about the proof needed
+to change — relocating one bullet fixed it.
+
+**Why it matters here.** `Proofs/TypeDefaults.lean` is one of the files
+Eudaimonia ships **proven**, ported from Logos and byte-identical between `Cpc`
+and `CpcMini`. It discharges the principle with `refine ... ?_ ?_ ... ?_` and 21
+positional bullets, because the cases have no stable names to bind. A permutation
+therefore lands every bullet on the wrong goal, and the errors it produces
+(`introN failed`, eight `unsolved goals`) point at the tactics rather than at the
+cause.
+
+**Why it is on this list rather than being ours to absorb.** Item 5 is a request
+to seed the checker layer from templates. A template can only stay proven across
+a compiler bump if the generated interfaces it is written against are stable.
+This is the first measured instance of that not holding, and it landed in exactly
+the layer item 5 is about.
+
+**Either fix works:** keep the case order derived from the constructor order of
+the type rather than from emission order, or emit the principle with named cases
+so consumers can write `case datatype => ...` and be immune to the ordering.
 
 **Cost.** Not small: the conclusion is what every rule proof is ultimately for,
 and `Common.lean`'s seven lemmas are load-bearing. Worth scoping before

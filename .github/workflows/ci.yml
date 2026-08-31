@@ -18,9 +18,13 @@ jobs:
 
       - name: Install Lean
         run: |
+          set -euo pipefail
           curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
           ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          # `lake --version` would need a toolchain to resolve, and there is no
+          # default one; the shim existing is what this step is responsible for.
+          test -x "$HOME/.elan/bin/lake" || { echo "elan left no lake shim" >&2; exit 1; }
 
       # Generates a checker for each option configuration, installs its
       # calculus, and runs that project's own CI. Around two minutes: the
@@ -45,10 +49,22 @@ jobs:
       - name: Install build dependencies
         run: brew install gmp cmake
 
+      # elan ships release tarballs, not an install script: `elan-init.sh` is a
+      # 404. Piping that into `sh` left `sh` to report the pipeline's status, so
+      # the step passed having installed nothing and the failure only surfaced
+      # later as `lake: command not found`. Download the tarball for the
+      # runner's architecture, as the Linux job does, and check the result.
       - name: Install Lean
         run: |
-          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-init.sh | sh -s -- -y --default-toolchain none
+          set -euo pipefail
+          case "$(uname -m)" in
+            arm64|aarch64) target=aarch64-apple-darwin ;;
+            *)             target=x86_64-apple-darwin ;;
+          esac
+          curl -sSfL "https://github.com/leanprover/elan/releases/latest/download/elan-${target}.tar.gz" | tar xz
+          ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          test -x "$HOME/.elan/bin/lake" || { echo "elan left no lake shim" >&2; exit 1; }
 
       - name: Generate, install and check one configuration
         run: |
