@@ -1,0 +1,25 @@
+# Provenance of the vendored Logos measurement scripts.
+#
+# Every file listed here is a byte-for-byte copy of a file in the Logos
+# repository at the commit named below. Nothing in this directory is edited:
+# a vendored script that needed a change would stop being evidence about
+# Logos and start being evidence about Euthyna's edit of it. Euthyna's own
+# analysis lives one directory up, and reads these scripts' output.
+#
+# `bin/euthyna verify` re-checks the digests below; `bin/euthyna sync`
+# re-copies from a Logos checkout and rewrites this file.
+
+origin  https://github.com/ajreynol/logos.git
+commit  d4a03a5961fb159711257e7fc636e3ca9fcc28ee
+date    2026-08-30T20:16:46-05:00
+prefix  scripts/
+
+sha256  49f8b03f9051520cf11b92308e7424a6e90590797d0548804f93e9d657e885d9  classify-rule-status.py
+sha256  bd3347396e64b5672580359e49a7f76ee3cac8100afb55e32445b106d17d2eb8  cpc-loc-summary.py
+sha256  08a6bb09e34dc10b156ff94a89f4a44014c330777c966976e24d0035615ff72c  cpc-rule-loc.py
+sha256  f9a8f40717d8fdac14d4d5f55ad1d389fd92332124e03f1f3f391d01d79c415b  check-checker-soundness.sh
+sha256  cd0899e9ad15817a9278d1bb1d05fe8cb98cda3e31d5463b937527931d8f5e6e  check-proof-hygiene.sh
+sha256  d49f7b90387ce61b88d057bb0bc3650713cdc3b725a7f8f8498a428d6d39d7e2  check-proof-modularity.sh
+sha256  eeda2eb167aedec222a1e157196568c106d9de50750863611a72039e68c06899  check-rule-style.sh
+sha256  c86003c4d9348d5845bedb9d59d3ef4b395f04955fe1bfe6c2e1d0e6053cad1d  classify-core-rule-status.sh
+sha256  b87d1f748a827029c4ad5eb6c3ddc2658965ed0b40a845681974d798683c812e  core-rules.txt

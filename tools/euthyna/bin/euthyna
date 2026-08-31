@@ -1,0 +1,279 @@
+#!/usr/bin/env bash
+#
+# Euthyna's measurement harness.
+#
+# The vendored scripts under analysis/upstream/ are Logos's own, unedited, and
+# each of them locates the tree it measures as the parent of the directory it
+# sits in. So they cannot simply be run from here: they have to be run from a
+# `scripts/` directory one level under a Logos root.
+#
+# Rather than write into somebody's Logos checkout, a run copies that checkout
+# (minus .git and .lake -- about 50 MB, well under a second) into a staging
+# directory, drops the vendored scripts into <stage>/scripts/, runs them there,
+# and collects what they print. The checkout is only ever read.
+#
+# See docs/method.md for why the staging copy is the design and not a
+# workaround, and docs/measures.md for what each measure reports.
+
+set -euo pipefail
+
+readonly bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly root="$(cd "${bin_dir}/.." && pwd)"
+readonly upstream="${root}/analysis/upstream"
+
+# Settings, then the environment, then the command line.
+LOGOS_ROOT="${HOME}/logos"
+SNAPSHOT_DIR="data/snapshots"
+RUN_BUILD_MEASURES="no"
+# shellcheck source=/dev/null
+[ -f "${root}/euthyna.conf" ] && . "${root}/euthyna.conf"
+
+tag=""
+stage_keep=""
+
+die()  { printf 'euthyna: %s\n' "$*" >&2; exit 1; }
+note() { printf '%s\n' "$*" >&2; }
+
+usage() {
+  cat <<'USAGE'
+usage: euthyna <command> [options]
+
+  measure     Run every static measure against a Logos checkout and write a
+              snapshot under data/snapshots/.
+  measures    List the measure catalogue: what runs, and what it reports.
+  show [ID]   Print the headline numbers of a snapshot (default: the newest).
+  verify      Check the vendored scripts against analysis/upstream/MANIFEST.
+  sync        Re-copy the vendored scripts from a Logos checkout and rewrite
+              the manifest. Prints what changed.
+
+options:
+  --logos PATH   The Logos checkout to measure (default: from euthyna.conf).
+  --tag NAME     Extra label for the snapshot directory name.
+  --build        Also run measures that need a built Logos.
+  --keep-stage   Leave the staging copy behind, and say where it is.
+USAGE
+}
+
+# ---------------------------------------------------------------------------
+# The measure catalogue.
+#
+# One line per measure:  id | needs | command | output file
+#
+# `needs` is `source` for a measure that reads source text only, or `build`
+# for one that needs a Logos that has been through `lake build`. The command
+# runs with the staging directory as its working directory.
+# ---------------------------------------------------------------------------
+measures() {
+  cat <<'CATALOGUE'
+rule-status|source|./scripts/classify-rule-status.py Cpc|rule-status.tsv
+core-rule-status|source|./scripts/classify-core-rule-status.sh|core-rule-status.tsv
+rule-loc|source|./scripts/cpc-rule-loc.py --csv|rule-loc.csv
+loc-summary|source|./scripts/cpc-loc-summary.py --files --deps|loc-summary.txt
+proof-hygiene|source|./scripts/check-proof-hygiene.sh|proof-hygiene.txt
+proof-modularity|source|./scripts/check-proof-modularity.sh|proof-modularity.txt
+rule-style|source|./scripts/check-rule-style.sh|rule-style.txt
+checker-soundness|build|./scripts/check-checker-soundness.sh Cpc|checker-soundness.txt
+CATALOGUE
+}
+
+measure_field() { printf '%s' "$1" | cut -d'|' -f"$2"; }
+
+# ---------------------------------------------------------------------------
+# Staging.
+# ---------------------------------------------------------------------------
+stage_logos() {
+  local src="$1" dst="$2"
+  mkdir -p "${dst}"
+  ( cd "${src}" && tar --exclude=./.git --exclude=./.lake -cf - . ) |
+    ( cd "${dst}" && tar -xf - )
+  rm -rf "${dst}/scripts"
+  mkdir -p "${dst}/scripts"
+  # Copies, not symlinks: two of the vendored scripts resolve their own path
+  # to find the tree, and a symlink would resolve back into the checkout.
+  cp -p "${upstream}"/*.py "${upstream}"/*.sh "${upstream}"/core-rules.txt "${dst}/scripts/"
+  chmod +x "${dst}"/scripts/*.py "${dst}"/scripts/*.sh
+}
+
+# ---------------------------------------------------------------------------
+# Commands.
+# ---------------------------------------------------------------------------
+cmd_measures() {
+  printf '%-18s %-7s %s\n' MEASURE NEEDS COMMAND
+  while IFS= read -r line; do
+    printf '%-18s %-7s %s\n' \
+      "$(measure_field "${line}" 1)" \
+      "$(measure_field "${line}" 2)" \
+      "$(measure_field "${line}" 3)"
+  done < <(measures)
+}
+
+cmd_verify() {
+  [ -f "${upstream}/MANIFEST" ] || die "no manifest at ${upstream}/MANIFEST"
+  local fail=0 digest name actual
+  while read -r kw digest name; do
+    [ "${kw}" = "sha256" ] || continue
+    if [ ! -f "${upstream}/${name}" ]; then
+      printf '  MISSING  %s\n' "${name}"; fail=1; continue
+    fi
+    actual="$(sha256sum "${upstream}/${name}" | cut -d' ' -f1)"
+    if [ "${actual}" = "${digest}" ]; then
+      printf '  ok       %s\n' "${name}"
+    else
+      printf '  CHANGED  %s\n' "${name}"; fail=1
+    fi
+  done < "${upstream}/MANIFEST"
+  if [ "${fail}" -ne 0 ]; then
+    note "vendored scripts disagree with the manifest; 'euthyna sync' to re-copy"
+    return 1
+  fi
+  printf 'Vendored scripts match the manifest (%s).\n' \
+    "$(awk '$1=="commit"{print substr($2,1,12)}' "${upstream}/MANIFEST")"
+}
+
+cmd_sync() {
+  [ -d "${LOGOS_ROOT}/scripts" ] || die "no scripts/ under ${LOGOS_ROOT}"
+  local commit date changed=0 name
+  commit="$(git -C "${LOGOS_ROOT}" rev-parse HEAD)"
+  date="$(git -C "${LOGOS_ROOT}" log -1 --format=%cI HEAD)"
+
+  while read -r kw _ name; do
+    [ "${kw}" = "sha256" ] || continue
+    [ -f "${LOGOS_ROOT}/scripts/${name}" ] || { printf '  GONE     %s\n' "${name}"; continue; }
+    if cmp -s "${LOGOS_ROOT}/scripts/${name}" "${upstream}/${name}"; then
+      printf '  same     %s\n' "${name}"
+    else
+      printf '  updated  %s\n' "${name}"; changed=1
+    fi
+    cp -p "${LOGOS_ROOT}/scripts/${name}" "${upstream}/${name}"
+  done < "${upstream}/MANIFEST"
+
+  local head tmp
+  tmp="$(mktemp)"
+  head="$(sed -n '1,/^prefix/p' "${upstream}/MANIFEST")"
+  printf '%s\n' "${head}" |
+    sed -e "s|^commit .*|commit  ${commit}|" -e "s|^date .*|date    ${date}|" > "${tmp}"
+  printf '\n' >> "${tmp}"
+  ( cd "${upstream}" && sha256sum *.py *.sh core-rules.txt ) | sed 's/^/sha256  /' >> "${tmp}"
+  mv "${tmp}" "${upstream}/MANIFEST"
+
+  printf 'Manifest now at %s.\n' "${commit:0:12}"
+  [ "${changed}" -eq 0 ] && printf 'No script content changed.\n'
+  return 0
+}
+
+cmd_measure() {
+  [ -d "${LOGOS_ROOT}" ] || die "no Logos checkout at ${LOGOS_ROOT} (--logos to point elsewhere)"
+  [ -d "${LOGOS_ROOT}/Cpc" ] || die "${LOGOS_ROOT} does not look like Logos (no Cpc/)"
+
+  local commit short dirty="" day snap stage
+  commit="$(git -C "${LOGOS_ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
+  short="${commit:0:12}"
+  [ -n "$(git -C "${LOGOS_ROOT}" status --porcelain 2>/dev/null)" ] && dirty="-dirty"
+  day="$(date -u +%Y-%m-%d)"
+  snap="${root}/${SNAPSHOT_DIR}/${day}-${short}${dirty}${tag:+-${tag}}"
+
+  stage="$(mktemp -d "${TMPDIR:-/tmp}/euthyna-stage.XXXXXX")"
+  if [ -n "${stage_keep}" ]; then
+    note "staging copy: ${stage}"
+  else
+    # shellcheck disable=SC2064
+    trap "rm -rf '${stage}'" EXIT
+  fi
+
+  note "staging ${LOGOS_ROOT} -> ${stage}"
+  stage_logos "${LOGOS_ROOT}" "${stage}"
+  mkdir -p "${snap}"
+
+  local id needs command out status started ended
+  started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  : > "${snap}/measures.tsv"
+  printf 'measure\tneeds\tstatus\toutput\n' >> "${snap}/measures.tsv"
+
+  while IFS= read -r line; do
+    id="$(measure_field "${line}" 1)"
+    needs="$(measure_field "${line}" 2)"
+    command="$(measure_field "${line}" 3)"
+    out="$(measure_field "${line}" 4)"
+
+    if [ "${needs}" = "build" ] && [ "${RUN_BUILD_MEASURES}" != "yes" ]; then
+      note "  skip  ${id} (needs a built Logos; --build to run it)"
+      printf '%s\t%s\tskipped\t\n' "${id}" "${needs}" >> "${snap}/measures.tsv"
+      continue
+    fi
+
+    note "  run   ${id}"
+    status=0
+    ( cd "${stage}" && eval "${command}" ) > "${snap}/${out}" 2> "${snap}/${out%.??*}.err" || status=$?
+    [ -s "${snap}/${out%.??*}.err" ] || rm -f "${snap}/${out%.??*}.err"
+    printf '%s\t%s\t%s\t%s\n' "${id}" "${needs}" "${status}" "${out}" >> "${snap}/measures.tsv"
+  done < <(measures)
+  ended="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  cat > "${snap}/meta.json" <<META
+{
+  "logos_root": "${LOGOS_ROOT}",
+  "logos_commit": "${commit}",
+  "logos_dirty": $( [ -n "${dirty}" ] && echo true || echo false ),
+  "logos_commit_date": "$(git -C "${LOGOS_ROOT}" log -1 --format=%cI HEAD 2>/dev/null || echo unknown)",
+  "upstream_manifest_commit": "$(awk '$1=="commit"{print $2}' "${upstream}/MANIFEST")",
+  "started": "${started}",
+  "ended": "${ended}",
+  "build_measures": ${RUN_BUILD_MEASURES/#yes/true}
+}
+META
+  # `${RUN_BUILD_MEASURES/#yes/true}` leaves "no" alone; make it valid JSON.
+  sed -i 's/"build_measures": no/"build_measures": false/' "${snap}/meta.json"
+
+  "${root}/analysis/derive.py" "${snap}" > "${snap}/summary.json"
+  note ""
+  cmd_show "${snap}"
+  note ""
+  note "snapshot: ${snap#"${root}/"}"
+}
+
+newest_snapshot() {
+  local d
+  d="$(ls -1d "${root}/${SNAPSHOT_DIR}"/*/ 2>/dev/null | sort | tail -1)"
+  [ -n "${d}" ] || die "no snapshots yet; run 'euthyna measure'"
+  printf '%s' "${d%/}"
+}
+
+cmd_show() {
+  local snap="${1:-}"
+  if [ -z "${snap}" ]; then
+    snap="$(newest_snapshot)"
+  elif [ ! -d "${snap}" ]; then
+    snap="${root}/${SNAPSHOT_DIR}/${snap}"
+  fi
+  [ -f "${snap}/summary.json" ] || die "no summary in ${snap}"
+  "${root}/analysis/derive.py" --report "${snap}"
+}
+
+# ---------------------------------------------------------------------------
+[ $# -gt 0 ] || { usage; exit 2; }
+cmd="$1"; shift
+
+positional=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --logos)      LOGOS_ROOT="$2"; shift 2 ;;
+    --logos=*)    LOGOS_ROOT="${1#*=}"; shift ;;
+    --tag)        tag="$2"; shift 2 ;;
+    --tag=*)      tag="${1#*=}"; shift ;;
+    --build)      RUN_BUILD_MEASURES="yes"; shift ;;
+    --keep-stage) stage_keep="yes"; shift ;;
+    -h|--help)    usage; exit 0 ;;
+    -*)           die "unknown option: $1" ;;
+    *)            positional+=("$1"); shift ;;
+  esac
+done
+
+case "${cmd}" in
+  measure)  cmd_measure ;;
+  measures) cmd_measures ;;
+  show)     cmd_show "${positional[0]:-}" ;;
+  verify)   cmd_verify ;;
+  sync)     cmd_sync ;;
+  -h|--help|help) usage ;;
+  *)        die "unknown command: ${cmd}" ;;
+esac

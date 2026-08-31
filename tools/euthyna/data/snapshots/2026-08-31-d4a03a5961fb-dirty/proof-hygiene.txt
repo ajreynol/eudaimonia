@@ -1,0 +1,1 @@
+Proof hygiene check passed (872 Lean source files checked).
