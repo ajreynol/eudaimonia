@@ -172,19 +172,52 @@ scripts/new-checker.sh --checker Apodeixis --calculus Lra \
 ```
 
 A specification is three files, and `--spec` names them at once by convention
-(`<Calculus>.eo`, `<Calculus>.eos`, `smt.eos`). `examples/cpc` is a worked one —
-a snapshot of what Logos compiles — so the generator can be pointed at something
-real:
+(`<Calculus>.eo`, `<Calculus>.eos`, `smt.eos`). A signature may be a tree of
+`(include ...)`s laid out however its author chose; the whole closure is copied
+in, structure intact. `examples/cpc` is a worked specification — a snapshot of
+what Logos compiles — so the generator can be pointed at something real:
 
 ```bash
-scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
+scripts/new-checker.sh --checker Demo --calculus Cpc --spec examples/cpc
 ```
 
 `scripts/new-checker.sh --help` lists the rest. Then build what it wrote:
 
 ```bash
-cd checkers/Apodeixis && lake build
+cd checkers/Demo && lake build
 ```
+
+### Starting a new calculus
+
+```bash
+scripts/new-checker.sh --checker Demo --calculus Logic --dummy-rule --mini
+cd checkers/Demo
+install/get-eo-compiler.sh
+install/install-logic.sh
+scripts/build.sh
+test/regress/run.sh
+```
+
+`--dummy-rule` writes a **working** starter instead of a commented stub: a
+signature with one rule (`contra` — from a formula and its negation, derive
+`false`), its semantics, and five regression proofs covering every verdict. The
+result builds in about 12 seconds and passes its own tests, so a new calculus
+begins by *changing something that works* rather than filling in blanks.
+
+`examples/hello` is the same thing as a specification directory, if you would
+rather start from `--spec`.
+
+### Where a run writes, and what else you can ask for
+
+`--out` decides where a checker is written; the default is `checkers/` here,
+which is not kept in git. A checker you mean to develop belongs in a repository
+of its own. `--mini` generates a reduced package that builds in seconds rather
+than minutes, and `--hygiene-ci` decides whether CI rejects `sorry` from day
+one.
+
+[Anatomy of a generated checker](docs/generated-checker.md) has the full option
+table, what each one produces, and what regenerating over an existing checker
+does and refuses to do.
 
 ## The Eunoia compiler
 
@@ -285,38 +318,6 @@ cannot distinguish `correct` from `incomplete`, so accepting a proof the checker
 calls `incomplete` is agreement, not disagreement.
 
 `install/get-eo-compiler.sh --no-ethos` skips building it.
-
-### Starting a new calculus
-
-```bash
-scripts/new-checker.sh --checker Demo --calculus Logic --dummy-rule --mini
-cd checkers/Demo
-install/get-eo-compiler.sh
-install/install-logic.sh
-scripts/build.sh
-test/regress/run.sh
-```
-
-`--dummy-rule` writes a **working** starter instead of a commented stub: a
-signature with one rule (`contra` — from a formula and its negation, derive
-`false`), its semantics, and five regression proofs covering every verdict. The
-result builds in about 12 seconds and passes its own tests, so a new calculus
-begins by *changing something that works* rather than filling in blanks.
-
-`examples/hello` is the same thing as a specification directory, if you would
-rather start from `--spec`.
-
-### Where a run writes, and what else you can ask for
-
-`--out` decides where a checker is written; the default is `checkers/` here,
-which is not kept in git. A checker you mean to develop belongs in a repository
-of its own. `--mini` generates a reduced package that builds in seconds rather
-than minutes, and `--hygiene-ci` decides whether CI rejects `sorry` from day
-one.
-
-[Anatomy of a generated checker](docs/generated-checker.md) has the full option
-table, what each one produces, and what regenerating over an existing checker
-does and refuses to do.
 
 ## Design principles
 
