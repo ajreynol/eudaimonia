@@ -348,6 +348,74 @@ install_or_stub() {
   fi
 }
 
+# A signature is normally a *tree*: a root .eo that pulls in theories, programs
+# and rule files with (include ...), laid out however its author chose. That is
+# the shape a signature is written in, and the framework keeps it -- the files
+# are copied into install/defs/ with their relative layout intact, so the
+# includes still resolve and the project stays self-contained.
+#
+# Nothing is flattened and nothing is cached. install/defs/<Calculus>.eo becomes
+# a one-line root naming the signature's own root, so the installer has the
+# fixed entry point it expects without the tree being rewritten.
+copy_signature_tree() {
+  local sig="$1" dest_dir="$2" root_name="$3"
+  python3 - "${sig}" "${dest_dir}" "${root_name}" <<'TREE'
+import os, re, shutil, sys
+
+sig, dest_dir, root_name = sys.argv[1], sys.argv[2], sys.argv[3]
+INCLUDE = re.compile(r'^\s*\((?:include|reference)\s+"([^"]+)"')
+
+# The include closure, following relative paths from each file's own directory.
+seen, order, stack = set(), [], [os.path.abspath(sig)]
+missing = []
+while stack:
+    path = stack.pop()
+    if path in seen:
+        continue
+    seen.add(path)
+    order.append(path)
+    try:
+        with open(path, encoding='utf-8') as fh:
+            text = fh.read()
+    except OSError:
+        continue
+    for line in text.splitlines():
+        m = INCLUDE.match(line)
+        if not m:
+            continue
+        target = os.path.normpath(os.path.join(os.path.dirname(path), m.group(1)))
+        if os.path.isfile(target):
+            stack.append(target)
+        else:
+            missing.append((path, m.group(1)))
+
+if missing:
+    for owner, name in missing:
+        sys.stderr.write("error: %s includes %s, which does not exist\n" % (owner, name))
+    sys.exit(1)
+
+# Lay the tree out under a common base so the relative includes still resolve.
+base = os.path.dirname(os.path.commonpath(order)) if len(order) > 1 else os.path.dirname(order[0])
+if len(order) > 1:
+    base = os.path.commonpath([os.path.dirname(p) for p in order])
+
+for path in order:
+    rel = os.path.relpath(path, base)
+    out = os.path.join(dest_dir, rel)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    shutil.copyfile(path, out)
+
+# The fixed entry point the installer expects, naming the signature's own root.
+root_rel = os.path.relpath(os.path.abspath(sig), base)
+with open(os.path.join(dest_dir, root_name), 'w', encoding='utf-8') as fh:
+    fh.write('; The signature of this calculus. Its own root is %s;\n'
+             '; this file exists so the installer has a fixed entry point.\n'
+             '(include "%s")\n' % (root_rel, root_rel))
+print("%d" % len(order))
+TREE
+}
+
+
 echo "==> Generating ${CHECKER}, a checker for ${CALCULUS}"
 echo "    directory   ${DEST}"
 echo "    executable  ${EXE}"
@@ -553,7 +621,13 @@ if [ "${DUMMY_RULE}" = "yes" ] && [ -z "${SIGNATURE}" ] && [ -z "${SEMANTICS}" ]
   done
   echo "    $(rel "${DEST}/test/regress")  (starter proofs, one per verdict)"
 else
-  install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/install/defs/${CALCULUS}.eo"
+  if [ -n "${SIGNATURE}" ] && grep -qE '^[[:space:]]*\((include|reference)[[:space:]]' "${SIGNATURE}" 2>/dev/null; then
+    mkdir -p "${DEST}/install/defs"
+    n_files="$(copy_signature_tree "${SIGNATURE}" "${DEST}/install/defs" "${CALCULUS}.eo")" || exit 1
+    echo "    $(rel "${DEST}/install/defs")/  <- ${SIGNATURE} and its includes (${n_files} files)"
+  else
+    install_or_stub "${SIGNATURE}"     signature.eo.in  "${DEST}/install/defs/${CALCULUS}.eo"
+  fi
   install_or_stub "${SEMANTICS}"     semantics.eos.in "${DEST}/install/defs/${CALCULUS}.eos"
 fi
 # The SMT-LIB semantics is the one file with no stub: leaving it out means the

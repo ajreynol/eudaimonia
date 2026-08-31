@@ -5,7 +5,7 @@ guessed: `scripts/run-ci.sh` generates a checker for each option configuration
 and runs that project's own CI, so what is here is what that suite cannot make
 pass.
 
-Smaller known rough edges live in [TODO.md](../TODO.md#7-rough-edges).
+Smaller known rough edges live in [TODO.md](../TODO.md#7b-rough-edges).
 
 ## Nothing is proven yet
 

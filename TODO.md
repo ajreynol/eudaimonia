@@ -687,7 +687,60 @@ than making it more complete.
 - [ ] **Performance.** Logos is explicit that it has not been optimized and is
       significantly slower than unverified checkers. Nothing here changes that.
 
-## 7. Rough edges
+## 7. Readiness for agent-driven development
+
+The next real use of this framework is an AI agent driving a new checker from
+generation to proofs. What that needs, and does not yet have.
+
+- [ ] **A ratchet. This is the most important item on the list.** `sorry` is a
+      warning rather than an error, and `hygiene` is deliberately not among the
+      default CI groups -- both correct, because a fresh checker is nothing but
+      `sorry` and a suite that is red by construction says nothing. The
+      consequence is that **nothing stops work from going backwards**: an agent
+      can add a `sorry`, weaken a statement, or strand a rule, and every CI
+      group still passes.
+
+      What is missing is a recorded baseline -- a count per file, checked in --
+      that CI compares against and refuses to let grow. Then "green" means
+      *no worse than before* rather than *compiles*, which is the signal an
+      agent needs to iterate against and cannot game by deleting work.
+      `scripts/rule-status.sh` and `check-proof-hygiene.sh` already produce the
+      numbers; nothing records or enforces them.
+
+- [x] **Carry a signature that is a tree of includes** -- done, 2026-08-30.
+      A signature is normally written as a root `.eo` pulling in theories,
+      programs and rule files, laid out however its author chose, and that is
+      the shape the framework now keeps. `--signature` copies the include
+      closure into `install/defs/` with its relative layout intact, and writes
+      `install/defs/<Calculus>.eo` as a one-line root naming the signature's own
+      root, so the installer has its fixed entry point without the tree being
+      rewritten. Nothing is flattened and nothing is cached.
+
+      Previously it copied the root file alone, so its relative `(include ...)`
+      paths no longer resolved and the first install died inside ethos with
+      `Couldn't open file`, naming a path that had never existed. Verified
+      against a real multi-file signature: the includes resolve from inside the
+      generated project.
+
+      Note that `examples/cpc/Cpc.eo` is *flattened*, and that is specific to
+      Logos rather than the style this framework expects.
+
+- [ ] **Surface compiler failures legibly.** When eoc fails, its C++ fatal
+      error reaches the terminal interleaved with the installer's own progress
+      lines -- the error prints *before* the step banner that explains what was
+      being attempted, because one stream is buffered and the other is not. A
+      person can work it out; an agent reading the tail of a log will
+      mis-attribute it. Capture the compiler's output and report it under the
+      step that ran.
+
+- [ ] **Say what `logos-smt: no` means when there is no snapshot.** Generating
+      from a bare signature ships no `install/defs/smt.eos`, so the install
+      falls back to the compiler's own semantics -- which *is* the stock one --
+      and the profile still reports `logos-smt no`. It under-claims rather than
+      over-claims, so nothing is unsound, but it tells an agent the shipped
+      proofs cannot be trusted when they can.
+
+## 7b. Rough edges
 
 Small, known, and none of them blocking. Kept here rather than in the README so
 that "known limitations" there stays about substance.

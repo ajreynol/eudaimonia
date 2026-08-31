@@ -44,9 +44,12 @@ refer to paths in the repositories they came from rather than to this one.
 
 `Cpc.eo` is Logos's *cached* signature rather than the upstream
 `proofs/eo/cpc/Cpc.eo` in cvc5: it is that signature with every `(include ...)`
-replaced by the text of the file it names and the comments dropped, which makes
-it a single self-contained file. That is what makes it usable here, since the
-upstream one only resolves inside a complete copy of the `proofs/eo` tree.
+replaced by the text of the file it names and the comments dropped.
+
+**That flattening is specific to Logos, not a style this framework expects.** A
+signature is normally a tree -- a root `.eo` pulling in theories, programs and
+rules -- and `--signature` copies the whole include closure into `install/defs/`
+with its layout intact. This example is flat only because Logos's copy is.
 
 `Cpc.eos` and `smt.eos` are taken from the **pinned Ethos commit**, verbatim, so
 either can be checked against upstream by digest. They are not free to choose:

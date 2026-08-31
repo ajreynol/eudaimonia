@@ -1,6 +1,7 @@
 # Eudaimonia
 
-A template for building verified proof checkers for SMT, in the shape of
+The **Eudaimonia build framework**: a framework for building verified proof
+checkers for SMT, in the shape of
 [Logos](https://github.com/cvc5/logos).
 
 ## The name
