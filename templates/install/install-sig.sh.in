@@ -522,7 +522,7 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   d_logos=no
   if [ -n "${SMT_SEMANTICS}" ]; then
     d_smt="$(file_digest "${SMT_SEMANTICS}" 2>/dev/null || true)"
-    [ "${d_smt}" != "b3e8d1005cd5d4157647b13c24310ac6" ] || d_logos=yes
+    [ "${d_smt}" != "691e8cf9ba5e254b1ab600ab3e88d392" ] || d_logos=yes
   fi
 
   echo "==> Checking the calculus profile"
@@ -598,6 +598,12 @@ fi
 # The list is deliberately short, and each entry is here because something
 # breaks without it -- not because Logos happens to be written that way. See
 # docs/calculus.md.
+#
+# It is short for a reason worth knowing: the checker does not read a proof
+# through your operators. Assumptions reach it as a `CArgList` and commands as
+# a `CCmdList`, both structural, so a run cannot depend on how the signature
+# spells anything. What is left below is `and`, and it is needed only to *say*
+# what a run proves.
 echo "==> Checking the signature contract"
 contract_errors=()
 
@@ -607,9 +613,12 @@ SPEC_MODULE="${LEAN_DIR}/Spec.lean"
 
 # 1. An operator named `and`.
 #
-#    The soundness statement is about the conjunction of a proof's assumptions.
-#    The checker walks the input problem as `(and F rest)` terminated by `true`
-#    and folds its proof stack the same way, naming this operator directly.
+#    Not for running a proof -- nothing on the path from file text to verdict
+#    names it. It is needed to state what a successful run establishes: the
+#    conclusion is that the *conjunction* of the assumptions is unsatisfiable,
+#    and `argListAssumes` (@CALCULUS@/Proofs/Assumptions.lean) is what folds the
+#    input list into that conjunction. The checker layer folds its proof stack
+#    the same way.
 if [ -f "${TERM_MODULE}" ] && \
    ! grep -qE "^[[:space:]]*\\|[[:space:]]+and[[:space:]]*:[[:space:]]*UserOp\\b" "${TERM_MODULE}"; then
   contract_errors+=("no operator \`and\`, which the soundness statement is about")
@@ -630,9 +639,9 @@ fi
 #
 #    It is tempting to require the attribute outright. It is not a core
 #    requirement: with a plain binary `and` the checker is unchanged -- the
-#    assumption chain, the refutation test and the SMT translation are all
-#    identical, and the only difference is that the parser stops accepting
-#    n-ary `(and a b c)`, which is surface syntax.
+#    input list, the refutation test and the SMT translation are all identical,
+#    and the only difference is that the parser stops accepting n-ary
+#    `(and a b c)`, which is surface syntax.
 #
 #    Where it does bite is `:list` premises. A rule gathering its premises with
 #    `and` builds the list through `__eo_nil`, and the arm of `__eo_nil` that

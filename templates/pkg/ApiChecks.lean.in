@@ -9,7 +9,7 @@ module
 -- This is the layer that lets the executable be written for speed without the
 -- theorem quietly becoming about something else. `check_refutation` folds over
 -- the parser\'s list in constant stack, where the theorem is stated about a
--- recursion over the corresponding `and`-chain; `invoke_assume_list_eq_fold`
+-- recursion over the corresponding `CArgList`; `invoke_assume_list_eq_fold`
 -- below is what makes those the same run.
 --
 -- These are proven. They are about the plumbing -- folds, guards and `decide`
@@ -32,56 +32,56 @@ public section
 namespace Eo
 
 /--
-Consuming a chain built by `assumption_chain_step` is folding the guarded push
+Consuming a list built by `assumption_list_step` is folding the guarded push
 over the list it was built from.
 
-Induction on the list, generalised over the state and the seed of the chain,
-which is what makes the step go through: one `assumption_chain_step` on the
-right of the chain is one `invoke_input_assume` on the state.
+Induction on the list, generalised over the state and the seed, which is what
+makes the step go through: one `assumption_list_step` on the tail is one
+`invoke_input_assume` on the state.
 -/
 private theorem invoke_assume_list_foldl (assums : List Term) :
-    ∀ (s : CState) (F : Term),
-      __eo_invoke_assume_list s (assums.foldl assumption_chain_step F)
+    ∀ (s : CState) (F : CArgList),
+      __eo_invoke_assume_list s (assums.foldl assumption_list_step F)
         = assums.foldl invoke_input_assume (__eo_invoke_assume_list s F) := by
   induction assums with
   | nil => intro s F; rfl
   | cons A rest ih =>
     intro s F
-    show __eo_invoke_assume_list s (rest.foldl assumption_chain_step (assumption_chain_step F A))
+    show __eo_invoke_assume_list s (rest.foldl assumption_list_step (assumption_list_step F A))
       = rest.foldl invoke_input_assume (invoke_input_assume (__eo_invoke_assume_list s F) A)
     rw [ih]
     rfl
 
 /--
 Folding the guarded push over the parser\'s list builds the same state as
-`__eo_invoke_assume_list` on the corresponding `and`-chain.
+`__eo_invoke_assume_list` on the corresponding `CArgList`.
 
 This is what licenses the fold in `check_refutation`: the executable walks a
-list in constant stack, the theorem talks about a recursion over a chain, and
-this says the two are the same run.
+`List Term` in constant stack, the theorem talks about a recursion over a
+`CArgList`, and this says the two are the same run.
 -/
 theorem invoke_assume_list_eq_fold (assums : List Term) :
     assums.foldl invoke_input_assume checker_init_state
-      = __eo_invoke_assume_list CState.nil (assumption_term assums) := by
+      = __eo_invoke_assume_list CState.nil (assumption_arglist assums) := by
   show assums.foldl invoke_input_assume CState.nil
-    = __eo_invoke_assume_list CState.nil (assums.foldl assumption_chain_step (Term.Boolean true))
+    = __eo_invoke_assume_list CState.nil (assums.foldl assumption_list_step CArgList.nil)
   rw [invoke_assume_list_foldl]
   rfl
 
 /-- What the executable computes is what the checker\'s own refutation test does. -/
 theorem check_refutation_eq_checker (assums : List Term) (cmds : CCmdList) :
     check_refutation assums cmds
-      = __eo_checker_is_refutation (assumption_term assums) cmds := by
+      = __eo_checker_is_refutation (assumption_arglist assums) cmds := by
   show __eo_state_is_refutation
         (__eo_invoke_cmd_list (assums.foldl invoke_input_assume checker_init_state) cmds)
     = __eo_state_is_refutation
-        (__eo_invoke_cmd_list (__eo_invoke_assume_list CState.nil (assumption_term assums)) cmds)
+        (__eo_invoke_cmd_list (__eo_invoke_assume_list CState.nil (assumption_arglist assums)) cmds)
   rw [invoke_assume_list_eq_fold]
 
 /-- `check_refutation` returning `true` is `eo_is_refutation` of the same terms. -/
 theorem refutation_of_check (assums : List Term) (cmds : CCmdList) :
     check_refutation assums cmds = true ->
-    eo_is_refutation (assumption_term assums) cmds := by
+    eo_is_refutation (assumption_arglist assums) cmds := by
   intro h
   refine eo_is_refutation.intro _ _ ?_
   rw [← check_refutation_eq_checker]
@@ -101,21 +101,21 @@ theorem cmdListTranslationOk_of_check (cmds : CCmdList) :
   exact of_decide_eq_true h
 
 /--
-Translatability is carried along the chain as it is folded.
+Translatability is carried along the list as it is folded.
 
 Generalised over the seed, which is what makes the step go through: one
-`assumption_chain_step` adds one `and` link, and `TranslatableAssumptionList` of
-that link is exactly the conjunct for the new assumption together with the rest.
+`assumption_list_step` adds one entry, and `TranslatableAssumptionList` of that
+is exactly the conjunct for the new assumption together with the rest.
 -/
 private theorem translatable_foldl (assums : List Term) :
-    ∀ F : Term, TranslatableAssumptionList F ->
+    ∀ F : CArgList, TranslatableAssumptionList F ->
       (∀ A ∈ assums, eoHasSmtTranslation A) ->
-      TranslatableAssumptionList (assums.foldl assumption_chain_step F) := by
+      TranslatableAssumptionList (assums.foldl assumption_list_step F) := by
   induction assums with
   | nil => intro F hF _; exact hF
   | cons A rest ih =>
     intro F hF hall
-    refine ih (assumption_chain_step F A) ?_ ?_
+    refine ih (assumption_list_step F A) ?_ ?_
     · exact ⟨hall A (List.mem_cons_self ..), hF⟩
     · intro B hB; exact hall B (List.mem_cons_of_mem A hB)
 
@@ -123,13 +123,13 @@ private theorem translatable_foldl (assums : List Term) :
 The first side condition, from its check.
 
 The executable checks each assumption in the parser's list; the theorem is
-stated about the chain those are folded into. This carries one to the other.
+stated about the `CArgList` those are folded into. This carries one to the other.
 -/
 theorem translatableAssumptionList_of_check (assums : List Term) :
     check_translatableAssumptions assums = true ->
-    TranslatableAssumptionList (assumption_term assums) := by
+    TranslatableAssumptionList (assumption_arglist assums) := by
   intro h
-  refine translatable_foldl assums (Term.Boolean true) trivial ?_
+  refine translatable_foldl assums CArgList.nil trivial ?_
   intro A hA
   exact of_decide_eq_true (List.all_eq_true.mp h A hA)
 

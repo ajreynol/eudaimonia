@@ -101,7 +101,7 @@ has a `signature/` directory and no way to turn it into Lean.
       function from file text to verdict; `ApiChecks.lean` proves each check is
       the component of `correct___eo_is_refutation` it stands for — including
       that the constant-stack fold over the parser\'s list is the same run as
-      the recursion over the `and`-chain — and `ApiCorrect.lean` states
+      the recursion over the `CArgList` — and `ApiCorrect.lean` states
       soundness about the text of a file, deriving it from the one theorem the
       user fills in. All of it proven except that theorem.
 
@@ -201,7 +201,7 @@ informal argument about it. All of it is now generated, working, and in the
 - [x] **Proofs that each check is the component it stands for.** `ApiChecks.lean`,
       eight theorems, **no `sorry`** — including that the constant-stack fold
       over the parser's list is the same run as the recursion over the
-      `and`-chain, which is what licenses the efficient implementation.
+      `CArgList`, which is what licenses the efficient implementation.
 - [x] **The theorem restated about file text.** `ApiCorrect.lean`:
       `correct___check_proof`, derived from `Proofs/Checker.lean`.
 - [x] **Three verdicts, not two.** `correct` / `incorrect` / `incomplete`, all
@@ -306,6 +306,10 @@ lemmas in `CheckerState.lean` that nothing in the checker used. Verified: the
 core files name `UserOp.and` and nothing else, and `Proofs/Checker.lean` names
 no `UserOp` at all.
 
+The *reach* of that one operator has since narrowed as well: it is no longer on
+the path a proof takes through the checker, only in the statement of what a run
+proves. See item 1c of [docs/eoc-requests.md](docs/eoc-requests.md).
+
 **The 108 differing lines in `Invariants/Stability.lean` are necessity, not
 duplication.** Cpc carries the real `StableWhenTrueInAnyVarModel` machinery;
 CpcMini defines it `True`. The table above should not be read as saying that
@@ -393,7 +397,7 @@ deliberately rather than drifted into.
       This implements TODO 8 of `~/logos/docs/modularity.md`, and refines it.
       The report lists `:right-assoc-nil true` as a flat requirement; measuring
       it showed the restriction is narrower. Compiling CPC with `and` declared
-      as a plain binary operator leaves `__eo_invoke_assume_list`, the
+      as a plain binary operator leaves the input assumption list, the
       refutation test and the SMT translation **byte-identical** — the core does
       not use the attribute at all. What changes is that the parser stops
       accepting n-ary `(and a b c)`, which is surface syntax, and that

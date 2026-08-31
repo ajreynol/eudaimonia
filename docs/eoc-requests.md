@@ -77,6 +77,11 @@ Then, in order:
 6. **Item 4 — generated `cmdTranslationOk`.** Worth doing when a second
    consumer actually hits the hand-maintained table; Eudaimonia seeds the
    generic version and has not yet.
+7. **Item 7 — state the conclusion over the assumption list.** The last of the
+   `and` dependency, and the only item that would empty the signature contract
+   rather than shorten it. Last because it is speculative until someone scopes
+   what it does to `Common.lean`, not because it is unimportant: it is what
+   would let a calculus declare no operators at all.
 
 ---
 
@@ -178,6 +183,43 @@ This is the first item on this list to land, and it is the proof that the list
 is worth keeping: the request was written from measurements, and the fix
 matched them.
 
+## 1c. The input assumption format — **done** (Logos #459, 2026-08-31)
+
+`__eo_invoke_assume_list` took a proof's assumptions as an `and`-chain
+terminated by `true`, with a catch-all sending anything else to `Stuck`. It now
+takes a `CArgList`:
+
+```lean
+def __eo_invoke_assume_list (S : CState) : CArgList -> CState
+  | CArgList.nil => S
+  | (CArgList.cons F as) => (__eo_push_input_assume_check ... F (__eo_invoke_assume_list S as))
+```
+
+`eo_is_refutation` and `__eo_checker_is_refutation` are retyped with it. What it
+buys a template, in order of how much it matters here:
+
+- **Running a proof no longer touches the signature.** Assumptions in as a
+  `CArgList`, commands in as a `CCmdList`, both structural. The contract's reach
+  shrinks from *performing* a run to *stating* what one establishes.
+- **`ValidAssumptionList` is gone** — the predicate, its two derivation
+  theorems, and the hypothesis they were threaded through. 64 lines off
+  `CheckerState.lean` per package, in exactly the layer item 5 wants seeded.
+- **`TranslatableAssumptionList` collapses** to an `abbrev` for
+  `cArgListTranslationOk`: input assumptions and a rule's arguments are the same
+  shape, so one predicate serves both.
+- **The malformed-input case goes with it.** There is no longer a `Stuck` arm
+  for an input that is not an `and`-chain, because there is no longer a shape to
+  get wrong.
+
+**What it does not do.** `and` is still assumed. `argListAssumes`
+(`Proofs/Assumptions.lean`) folds the list into the conjunction the conclusion is
+about, and `stateAssumes` / `statePushes` / `stateProvens` still fold the proof
+stack with it. Both signature-contract checks stand unchanged, and
+`modularity.md` still lists `and` under hard-coded symbols. Item 7 is what would
+finish the job.
+
+Adopted here by bumping the pin to `406b5499`, which is what Logos main carries.
+
 ## 2. Put `--calc-name` and `--smt-semantics` on `main`
 
 **The ask:** these two options are what make a template possible rather than a
@@ -216,7 +258,7 @@ mismatch. That works but is the wrong place: eoc has both facts in hand while it
 is emitting.
 
 Worth noting what this is *not*: the attribute is not a core requirement.
-With plain binary `and`, `__eo_invoke_assume_list`, the refutation test and the
+With plain binary `and`, the input assumption list, the refutation test and the
 SMT translation are all unchanged — the checker core never uses the nil. Only
 `:list`-premise rules do. So the diagnostic is conditional, not a blanket
 requirement that `and` carry a nil.
@@ -408,6 +450,37 @@ paying off, so it sequences first.
 ---
 
 ---
+
+## 7. State the conclusion over the assumption list
+
+**The ask:** drop `argListAssumes` from the soundness statement, so that no part
+of the checker layer names an operator.
+
+**Why now.** Item 1c removed `and` from everything a run touches. What is left is
+one definition and the folds that mirror it:
+
+| site | what names `and` |
+| ---- | ---------------- |
+| `Proofs/Assumptions.lean` | `argListAssumes`, the conclusion's conjunction |
+| `Proofs/CheckerState.lean` | `stateAssumes` / `statePushes` / `stateProvens`, 11 sites |
+| `Proofs/Common.lean` | 7 sites: `__eo_to_smt` of `and`, its Bool typing, its interpretation |
+| `Proofs/CheckerCore.lean` | 2 sites |
+
+**Shape of the fix.** `eo_satisfiability (argListAssumes F) false` says "the
+conjunction of `F` has no model". State it directly over the list — no model
+makes every entry of `F` true — and `argListAssumes` is unnecessary. The stack
+folds are the same move one level down: they exist to compare a `Term` against
+the state, and a list-level predicate would not need the operator either.
+
+**What it would unlock.** Both `and` entries come out of the signature contract,
+and `install-<calc>.sh` stops checking them. A calculus would then need no
+declared operator at all — only the Bool literals, which are Eunoia builtins. A
+signature could be a single rule over uninterpreted propositions. That is the
+point at which "bring your own calculus" has no asterisk on it.
+
+**Cost.** Not small: the conclusion is what every rule proof is ultimately for,
+and `Common.lean`'s seven lemmas are load-bearing. Worth scoping before
+committing.
 
 ## Cross-reference
 

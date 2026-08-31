@@ -102,7 +102,7 @@ ETHOS_BRANCH="ethosEoc3"
 # the semantics format changes, so a snapshot taken at one commit will not
 # generally parse against another. scripts/bump-eoc.sh in the Eudaimonia
 # repository advances both at once.
-ETHOS_VERSION="3cf1c03fdfd01720b4ec7614f475a75b31c3b483"
+ETHOS_VERSION="406b5499f3c83f2a114113107be251f8e58b2d85"
 # ---------------------------------------------------------------------------
 
 # The driver options the pin has to provide. See the note above.

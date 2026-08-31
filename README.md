@@ -47,16 +47,20 @@ ways.
 
 ### The signature contract
 
-The correctness development is stated in terms of one operator of the calculus,
-named as a constructor of the `UserOp` enum the signature compiles to.
+**A proof is never read through your operators.** Assumptions reach the checker
+as a list and commands as a command list, both structural, so nothing about how
+a signature spells its symbols can change how a run behaves. The contract is
+about *stating* what a run establishes, not about performing it, and it comes
+down to one operator — named as a constructor of the `UserOp` enum the signature
+compiles to.
 
 **Always required:**
 
 | requirement | why |
 | ----------- | --- |
-| a binary operator **`and`** | The soundness statement is about the *conjunction* of a proof's assumptions. The checker walks the input problem as `(and F rest)` and folds its proof stack the same way. |
+| a binary operator **`and`** | The conclusion is that the *conjunction* of a proof's assumptions is unsatisfiable. `argListAssumes` folds the input list into that conjunction, and the checker layer folds its proof stack the same way. Nothing on the path from file text to verdict names it. |
 | **`and` sent to `SmtTerm.and`** by the semantics | A signature that declared `and` and translated it elsewhere would still compile and still check proofs, and the conclusion would be about the wrong formula. Nothing downstream re-checks this seam. |
-| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is "has `false` been proven" — and `true` terminates the assumption chain. Both are Eunoia builtins, so no signature has to declare them. |
+| the Bool literals **`true`** / **`false`** | `false` is the refutation target — the checker's test is "has `false` been proven" — and `true` is what an empty assumption list stands for. Both are Eunoia builtins, so no signature has to declare them. |
 
 **Required only if rules gather `:list` premises with `and`:**
 
@@ -64,10 +68,10 @@ named as a constructor of the `UserOp` enum the signature compiles to.
 | ----------- | --- |
 | `and` declared **`:right-assoc-nil true`** | Such a rule builds its premise list through `__eo_nil`, and the arm returning `true` for `and` exists only because of the attribute. Without it those rules go `Stuck`. |
 
-This second one is *not* a core requirement. With a plain binary `and` the
-assumption chain, the refutation test and the SMT translation are byte-identical;
-what changes is that the parser stops accepting n-ary `(and a b c)`, which is
-surface syntax. A calculus with no `:list`-premise rules needs no nil, and
+This second one is *not* a core requirement. With a plain binary `and` the input
+list, the refutation test and the SMT translation are byte-identical; what
+changes is that the parser stops accepting n-ary `(and a b c)`, which is surface
+syntax. A calculus with no `:list`-premise rules needs no nil, and
 `examples/hello` is one.
 
 `install/install-<calc>.sh` checks all of this against the compiler's output

@@ -66,7 +66,7 @@ abbrev cmdExtraOk (_M : SmtModel) (_c : CCmd) : Prop := True
 abbrev CmdListExtraOk (_M : SmtModel) (_cs : CCmdList) : Prop := True
 
 /-- What the input assumptions must satisfy for the extra invariant to hold initially. -/
-abbrev extraAssumptionListOk (_M : SmtModel) (_F : Term) : Prop := True
+abbrev extraAssumptionListOk (_M : SmtModel) (_F : CArgList) : Prop := True
 
 /--
 Running a command preserves the extra invariant.

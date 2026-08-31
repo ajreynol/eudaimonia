@@ -21,10 +21,15 @@ module
 --
 --   | component of the theorem       | computed here by                |
 --   | ------------------------------ | ------------------------------- |
---   | the term `F`                   | `assumption_term assums`        |
+--   | the list `F`                   | `assumption_arglist assums`     |
 --   | `eo_is_refutation F pf`        | `check_refutation assums cmds`  |
 --   | `TranslatableAssumptionList F` | `check_translatableAssumptions` |
 --   | `CmdListTranslationOk pf`      | `check_cmdListTranslationOk`    |
+--
+-- Nothing on this path names an operator of the calculus. The checker takes its
+-- assumptions as a `CArgList`, so the input format is the same whatever the
+-- signature declares; `assumption_term` is the formula that list stands for,
+-- and is where `and` finally appears.
 --
 -- The two side conditions are not re-implemented here: they are the predicates
 -- of `Proofs/Assumptions.lean`, decided by the instances that file derives, so
@@ -45,38 +50,49 @@ import all @CALCULUS@.Proofs.Assumptions
 
 namespace Eo
 
-/-! ## The assumptions the parser produced, as one formula -/
+/-! ## The assumptions the parser produced, as the checker\'s input list -/
 
-/-- One link of the assumption chain: `A` conjoined onto what is already read. -/
-def assumption_chain_step (rest A : Term) : Term :=
-  Term.Apply (Term.Apply (Term.UOp UserOp.and) A) rest
+/-- One link of the assumption list: `A` in front of what is already read. -/
+def assumption_list_step (rest : CArgList) (A : Term) : CArgList :=
+  CArgList.cons A rest
 
 /--
-The conjunction of the parser\'s assumptions: the term `F` of
-`correct___eo_is_refutation`, and so what the executable\'s correctness is
-ultimately about.
+The parser\'s assumptions as the checker takes them: the `F` of
+`correct___eo_is_refutation`.
 
-The order is not the obvious one. `__eo_invoke_assume_list` consumes an
-`and`-chain by pushing its head *last*, so the head ends up on top of the proof
-stack, while the parser numbers premises against a stack whose first assumption
-is at the bottom. The chain matching that numbering therefore lists the
-assumptions in reverse file order: for `A1 ... An` this builds
+The order is not the obvious one. `__eo_invoke_assume_list` consumes the list by
+pushing its head *last*, so the head ends up on top of the proof stack, while the
+parser numbers premises against a stack whose first assumption is at the bottom.
+The list matching that numbering therefore holds the assumptions in reverse file
+order: for `A1 ... An` this builds
 
-    (and An (and A(n-1) ... (and A1 true) ... ))
+    [An, A(n-1), ..., A1]
 
 Building it the other way round could not silently accept a bad proof -- premise
 indices would resolve to the wrong entries and the checker would reject -- but
 it would make the theorem talk about a different `F`.
 -/
+def assumption_arglist (assums : List Term) : CArgList :=
+  assums.foldl assumption_list_step CArgList.nil
+
+/--
+The conjunction those assumptions stand for, and so what the executable\'s
+correctness is ultimately about: for `A1 ... An`,
+
+    (and An (and A(n-1) ... (and A1 true) ... ))
+
+Nothing at run time builds it. `correct___eo_is_refutation` runs on the list and
+concludes about this, through `argListAssumes` (`Proofs/Assumptions.lean`).
+-/
 def assumption_term (assums : List Term) : Term :=
-  assums.foldl assumption_chain_step (Term.Boolean true)
+  argListAssumes (assumption_arglist assums)
 
 /-- The state a run starts in: nothing assumed, nothing proven. -/
 def checker_init_state : CState := CState.nil
 
 /--
 Push one input assumption under the guard `__eo_invoke_assume_list` applies to
-each element of the chain: Boolean-typed and closed, or the state goes `Stuck`.
+each element of the list: Boolean-typed and closed, or the state goes `Stuck`.
 
 The guard is not cosmetic. Boolean type is what the checker\'s type invariant
 requires of an `assume` entry, and closedness is what makes the assumption list
@@ -89,9 +105,9 @@ def invoke_input_assume (s : CState) (A : Term) : CState :=
 
 /--
 The checker run: from the parsed assumptions, `cmds` reaches a closed state that
-has proven `false`. This is `eo_is_refutation (assumption_term assums) cmds`.
+has proven `false`. This is `eo_is_refutation (assumption_arglist assums) cmds`.
 
-A fold rather than a recursion over the chain, so the stack stays constant.
+A fold rather than a recursion over the list, so the stack stays constant.
 `ApiChecks.lean` is where the two are proven to agree.
 -/
 def check_refutation (assums : List Term) (cmds : CCmdList) : Bool :=

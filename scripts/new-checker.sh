@@ -262,7 +262,7 @@ rel() {
 # The digest of the SMT-LIB semantics Logos is verified against, so a generated
 # checker can tell whether the one it was given is that file unmodified. If it
 # is, results Logos proves about SMT-LIB itself are candidates to reuse.
-LOGOS_SMT_DIGEST="b3e8d1005cd5d4157647b13c24310ac6"
+LOGOS_SMT_DIGEST="691e8cf9ba5e254b1ab600ab3e88d392"
 
 # Where a generated checker points for the documentation that is not its own.
 # Anything that describes checkers in general -- the anatomy, the design

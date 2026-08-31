@@ -12,10 +12,14 @@ module
 -- written down once, so the two cannot drift apart. `Api.lean` reaches them
 -- only through `decide`.
 --
--- **These are general, not stubs.** Nothing here mentions a rule or an
--- operator of the calculus: a term is translatable when the semantics gives it
--- a type, and a command is when its arguments are. That is why the same file
--- works for any signature.
+-- **These are general, not stubs.** No rule of the calculus is named here: a
+-- term is translatable when the semantics gives it a type, and a command is
+-- when its arguments are. That is why the same file works for any signature.
+--
+-- One definition is the exception, and it is the *only* place in the whole
+-- checker layer that names an operator: `argListAssumes`, which says what
+-- formula a proof's assumptions stand for. Everything on the path from a proof
+-- file to a verdict is operator-free.
 --
 -- Logos has two versions of this. `CpcMini`'s is generic, as here; `Cpc`'s is a
 -- 257-line specialization that names 32 individual rules, because some rules
@@ -37,6 +41,28 @@ import all @CALCULUS@.SmtModel
 
 open Eo
 open Smtm
+
+/--
+The conjunction of an input assumption list, as one term.
+
+The checker takes a proof's assumptions as a `CArgList` and pushes them one at a
+time, so nothing it runs builds this term. It exists because soundness is a
+statement about the *formula* those assumptions stand for, and this is that
+formula: `correct___eo_is_refutation` concludes about it.
+
+The head of the list is the outermost conjunct, because `__eo_invoke_assume_list`
+pushes it last.
+
+**The one operator the checker layer names.** This is what the signature contract
+asks `and` for -- both that it exists and that the semantics sends it to
+`SmtTerm.and`, since otherwise the conclusion would be about the wrong formula.
+Nothing else between a proof file and a verdict mentions it. See
+`docs/calculus.md`.
+-/
+def argListAssumes : CArgList -> Term
+  | CArgList.nil => Term.Boolean true
+  | CArgList.cons A as =>
+      Term.Apply (Term.Apply (Term.UOp UserOp.and) A) (argListAssumes as)
 
 /-- Translating `t` yields a term the SMT-LIB semantics gives a type. -/
 def eoHasSmtTranslation (t : Term) : Prop :=
@@ -74,18 +100,15 @@ instance : (c : CCmd) -> Decidable (cmdTranslationOk c)
   | CCmd.step_pop _ _ _ => .isTrue trivial
 
 /--
-Every assumption in the `and`-chain `F` translates: the first hypothesis of
+Every entry of an input assumption list translates: the first hypothesis of
 `correct___eo_is_refutation`.
 
-The chain is the one `Api.assumption_term` builds and
-`__eo_invoke_assume_list` consumes -- `and` applications terminated by `true` --
-so this walks the same shape.
+A proof's assumptions reach the checker as a `CArgList` -- the same list type a
+rule's arguments come in -- so this is `cArgListTranslationOk` under the name the
+soundness statement uses for it, rather than a second copy of it walking a
+second shape.
 -/
-def TranslatableAssumptionList : Term -> Prop
-  | Term.Boolean true => True
-  | Term.Apply (Term.Apply (Term.UOp UserOp.and) A) rest =>
-      eoHasSmtTranslation A ∧ TranslatableAssumptionList rest
-  | _ => False
+abbrev TranslatableAssumptionList : CArgList -> Prop := cArgListTranslationOk
 
 /-- Every command of `pf` satisfies `cmdTranslationOk`: the second hypothesis. -/
 def CmdListTranslationOk : CCmdList -> Prop

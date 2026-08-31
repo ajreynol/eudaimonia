@@ -110,7 +110,9 @@ done
 # 4. The checker layer depends on exactly one signature symbol.
 #
 # `and` is irreducible: the checker folds the proof state into an and-chain and
-# soundness is stated about it.  `not`, `eq` and `imp` were removed and live in
+# soundness is stated about it.  It is no longer on the path a proof takes --
+# assumptions arrive as a `CArgList` -- but `argListAssumes` and the state folds
+# still name it.  `not`, `eq` and `imp` were removed and live in
 # Proofs/CommonBoolOps.lean, which the checker does not import.  A new operator
 # appearing here is a new requirement on every consumer's signature.
 echo "Checking the checker layer's operator dependency..."

@@ -47,9 +47,11 @@ theorem correct___check_proof (input : String) (assums : List Term) (cmds : CCmd
     (hParse : parseProof input = Except.ok (assums, cmds))
     (hCorrect : check_proof input = Except.ok Verdict.correct) :
     eo_satisfiability (assumption_term assums) false := by
-  have hRefutation : eo_is_refutation (assumption_term assums) cmds :=
+  have hRefutation : eo_is_refutation (assumption_arglist assums) cmds :=
     refutation_of_check assums cmds (check_refutation_of_correct hParse hCorrect)
-  exact correct___eo_is_refutation (assumption_term assums) cmds
+  -- `assumption_term assums` is `argListAssumes (assumption_arglist assums)` by
+  -- definition, so the theorem's conclusion is this one with no step between.
+  exact correct___eo_is_refutation (assumption_arglist assums) cmds
     (translatableAssumptionList_of_check assums
       (check_translatableAssumptions_of_correct hParse hCorrect))
     (cmdListTranslationOk_of_check cmds

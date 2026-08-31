@@ -11,6 +11,11 @@ module
 -- pushes assumptions and proven facts, and about the invariants that machine
 -- maintains.
 --
+-- The machine takes its assumptions as a `CArgList`, so the statement below is
+-- about a list rather than about a formula of your calculus. `argListAssumes`
+-- (`Proofs/Assumptions.lean`) is what turns that list into the formula the
+-- conclusion is about, and is the only operator-dependent piece.
+--
 -- So it should arrive complete, like `Api.lean` and `ApiChecks.lean` do. Two
 -- things stand in the way, and neither is about this file:
 --
@@ -56,20 +61,20 @@ namespace Eo
 /--
 Soundness: a proof this checker accepts is a refutation of its assumptions.
 
-If `pf` runs from the assumption chain `F` and reaches `false`, and `F` and `pf`
-stay inside the fragment the SMT-LIB semantics models, then `F` is
-unsatisfiable.
+If `pf` runs from the assumption list `F` and reaches `false`, and `F` and `pf`
+stay inside the fragment the SMT-LIB semantics models, then the conjunction of
+`F` is unsatisfiable.
 
 The two side conditions are not decoration. The rule proofs only ever interpret
 a term through `__eo_to_smt`, so a proof mentioning something with no SMT-LIB
 counterpart is outside what they establish. They are `Proofs/Assumptions.lean`,
 which is also where the instances that decide them at run time come from.
 -/
-theorem correct___eo_is_refutation (F : Term) (pf : CCmdList) :
+theorem correct___eo_is_refutation (F : CArgList) (pf : CCmdList) :
     TranslatableAssumptionList F ->
     CmdListTranslationOk pf ->
     eo_is_refutation F pf ->
-    eo_satisfiability F false := by
+    eo_satisfiability (argListAssumes F) false := by
   sorry
 
 end Eo

@@ -60,13 +60,21 @@ The checker layer depends on the signature in four places. All four are checked
 by `install/install-@CALCLOWER@.sh` against the compiler's output, before
 anything is installed.
 
+None of the four is on the path a proof takes through the checker. Assumptions
+arrive as a `CArgList` and commands as a `CCmdList`, both structural, so *running*
+a proof cannot depend on what the signature declares. The dependence is in
+*stating* the result, and it is one definition:
+`argListAssumes` in `@CALCULUS@/Proofs/Assumptions.lean`, which says what formula
+a list of assumptions stands for. It is the only place in the checker layer that
+names an operator.
+
 **Always required:**
 
 | requirement | why |
 | ----------- | --- |
-| a binary operator **`and`** | the soundness statement is about the conjunction of a proof's assumptions, and the checker folds its proof stack with it |
+| a binary operator **`and`** | the conclusion is that the conjunction of a proof's assumptions is unsatisfiable; `argListAssumes` folds the input list into it, and the checker folds its proof stack the same way |
 | **`and` sent to `SmtTerm.and`** | a signature that declared `and` and translated it elsewhere would still compile and still check proofs, with the conclusion about the wrong formula. Nothing downstream re-checks this |
-| **`true`** / **`false`** | `false` is the refutation target, `true` terminates the assumption chain. Eunoia builtins, so nothing declares them |
+| **`true`** / **`false`** | `false` is the refutation target, `true` is what an empty assumption list stands for. Eunoia builtins, so nothing declares them |
 
 **Required only if rules gather `:list` premises with `and`:**
 
@@ -74,9 +82,9 @@ anything is installed.
 | ----------- | --- |
 | `and` declared **`:right-assoc-nil true`** | such a rule builds its premise list through `__eo_nil`, and the arm returning `true` for `and` exists only because of the attribute |
 
-The second is not a core requirement: with a plain binary `and` the assumption
-chain, the refutation test and the SMT translation are unchanged, and only the
-surface syntax for n-ary `(and a b c)` is lost.
+The second is not a core requirement: with a plain binary `and` the input list,
+the refutation test and the SMT translation are unchanged, and only the surface
+syntax for n-ary `(and a b c)` is lost.
 
 For example, in `install/defs/@CALCULUS@.eo`:
 
