@@ -246,19 +246,56 @@ LEAN_OUTPUTS=(
 
 # Point a file's imports at the names this package actually uses.
 #
-# Two rewrites, and the order matters because both patterns contain `Logos`.
-# The calculus-prefixed ones are the core modules and are rewritten first; what
-# is left is the parser library, which the compiler also calls Logos and which
-# here is named for the format it reads.
+# Four rewrites, and the order matters because the patterns share a prefix.
+# The calculus-prefixed ones are the core modules and are rewritten first --
+# longest first, so `<pkg>.@EOC_CORE@Term` is gone before the shorter pattern
+# could reach into it. What is left is the parser library, which the compiler
+# also calls Logos and which here is named for the format it reads.
+#
+# No `\b`: it is a GNU extension that BSD sed does not implement, so on macOS
+# these expressions matched nothing, every file kept the compiler's own module
+# names, and the install *succeeded* having produced a package that cannot
+# build. Ordering is what disambiguates, and the emitted name set is closed --
+# `<pkg>.@EOC_CORE@`, `<pkg>.@EOC_CORE@Term`, `@EOC_CORE@.Parser`,
+# `@EOC_CORE@.Sexp` and nothing longer. `check_renamed` below is what keeps
+# that assumption honest rather than assumed.
 rename_core() {
   local file="$1"
   sed -i.bak \
-    -e "s/\\b${PACKAGE}\\.${EOC_CORE}Term\\b/${PACKAGE}.@CHECKER@Term/g" \
-    -e "s/\\b${PACKAGE}\\.${EOC_CORE}\\b/${PACKAGE}.@CHECKER@/g" \
-    -e "s/\\b${EOC_CORE}\\.Parser\\b/@FORMAT@.Parser/g" \
-    -e "s/\\b${EOC_CORE}\\.Sexp\\b/@FORMAT@.Sexp/g" \
+    -e "s/${PACKAGE}\\.${EOC_CORE}Term/${PACKAGE}.@CHECKER@Term/g" \
+    -e "s/${PACKAGE}\\.${EOC_CORE}/${PACKAGE}.@CHECKER@/g" \
+    -e "s/${EOC_CORE}\\.Parser/@FORMAT@.Parser/g" \
+    -e "s/${EOC_CORE}\\.Sexp/@FORMAT@.Sexp/g" \
     "${file}"
   rm -f "${file}.bak"
+}
+
+# Every name rename_core is responsible for is gone from the installed tree.
+#
+# This exists because the failure it catches is silent: a rewrite that matches
+# nothing leaves a tree that installs cleanly and then fails at `lake build`
+# with `bad import`, pointing at Lean rather than at the install. Checked
+# against the tree rather than trusted from the sed's exit status, since a sed
+# that matches nothing succeeds.
+# Each half is skipped when the rename is a no-op by construction -- `--checker
+# Logos` and `--format-name Logos` are both legal, and then the compiler's name
+# is also the right one.
+check_renamed() {
+  local dir="$1" pats=() re leftovers
+  [ "@CHECKER@" = "${EOC_CORE}" ] || pats+=("${PACKAGE}\\.${EOC_CORE}")
+  [ "@FORMAT@" = "${EOC_CORE}" ] || pats+=("(^|[^A-Za-z0-9_.])${EOC_CORE}\\.(Parser|Sexp)")
+  [ "${#pats[@]}" -gt 0 ] || return 0
+  re="$(IFS='|'; echo "${pats[*]}")"
+  leftovers="$(grep -rlE "${re}" "${dir}" 2>/dev/null || true)"
+  [ -z "${leftovers}" ] && return 0
+  echo >&2
+  echo "error: the module rename did not take. These still name the compiler's" >&2
+  echo "       own modules, so the package will not build:" >&2
+  printf '  %s\n' ${leftovers} >&2
+  echo >&2
+  echo "This is a portability fault in install/install-@CALCLOWER@.sh, not" >&2
+  echo "something wrong with your signature. Please report it." >&2
+  exit 1
 }
 
 GENERATED_HEADER='-- **GENERATED** by install/install-@CALCLOWER@.sh, which compiles the Eunoia
@@ -722,6 +759,8 @@ if [ -d "${LEAN_DIR}/Proofs/Rules" ]; then
   [ "${CHECK}" = "1" ] || \
     echo "    ${PACKAGE}/Proofs/Rules/*.lean (${written} written, ${preserved} preserved)"
 fi
+
+check_renamed "${DEST_DIR}"
 
 if [ "${CHECK}" = "1" ]; then
   updates=0

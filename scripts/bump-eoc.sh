@@ -127,7 +127,10 @@ if [ "${DRY}" = 1 ]; then
 fi
 
 if [ "${OLD_PIN}" != "${COMMIT}" ]; then
-  sed -i "s/^ETHOS_VERSION=\"${OLD_PIN}\"$/ETHOS_VERSION=\"${COMMIT}\"/" "${PIN_FILE}"
+  # -i.bak, not bare -i: BSD sed reads -i's argument as the backup suffix, so
+  # the GNU spelling silently eats the expression on macOS.
+  sed -i.bak "s/^ETHOS_VERSION=\"${OLD_PIN}\"$/ETHOS_VERSION=\"${COMMIT}\"/" "${PIN_FILE}"
+  rm -f "${PIN_FILE}.bak"
   grep -q "ETHOS_VERSION=\"${COMMIT}\"" "${PIN_FILE}" \
     || { echo "error: the pin in ${PIN_FILE} did not take" >&2; exit 1; }
   report "${PIN_FILE}" 1
@@ -146,7 +149,8 @@ fi
 
 if [ "${OLD_DIGEST}" != "${NEW_DIGEST}" ]; then
   for f in "${DIGEST_FILES[@]}"; do
-    sed -i "s/${OLD_DIGEST}/${NEW_DIGEST}/g" "${f}"
+    sed -i.bak "s/${OLD_DIGEST}/${NEW_DIGEST}/g" "${f}"
+    rm -f "${f}.bak"
     grep -q "${NEW_DIGEST}" "${f}" || { echo "error: the digest in ${f} did not take" >&2; exit 1; }
   done
   report "the logos-smt digest" 1
