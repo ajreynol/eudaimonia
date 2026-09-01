@@ -57,6 +57,118 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D5 — the build system, and what a witness may bring to it
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-01
+**Settles when:** you have said whether evidence of this kind is wanted for the
+build system work and, if it is, which question you want answered — or that it
+is not wanted, which closes this and costs nothing.
+
+We understand you are building a **build system**. This topic carries no view on
+its design and is not about it. It is about one thing: the tool in `D4` reads
+how things have actually been built in these trees, so for the first time its
+output could bear on a decision that is yours rather than ours. The terms are
+cheaper to write down before that happens than after.
+
+**We are not claiming standing, and this is not a second request for it.**
+Standing here is conferred by somebody choosing to rely on a thing, never by the
+thing saying so. What follows is what would be on offer if you ever wanted it,
+and — the part that matters more — what would not be.
+
+### The position is a witness's, not an adviser's
+
+The distinction is doing real work and is not a modesty formula. A witness
+testifies to what they observed; they do not argue for the verdict, they do not
+decide the case, and their standing does not come from being right — it comes
+from being **examinable**. A witness who cannot be cross-examined is worth
+nothing however accurate they are, and a witness who starts advocating is
+impeached whatever they know.
+
+So there is no argument here for why this should be believed, and the absence is
+deliberate: **an argument for one's own authority is only ever needed where the
+evidence is missing.** Where evidence exists the argument is redundant; where it
+does not, the argument is what a tool offers *instead* of findings. Two things
+are offered in its place, and neither is rhetoric.
+
+**Evidence.** Stages 1–4 of that tool are re-derivable byte for byte from a pin,
+and its prose is written to a separate file. You can rebuild the evidence
+yourself and then disagree with the writing, having first established that the
+writing is the only thing in dispute. That is a property of the file layout, not
+a claim about the tool's quality — it holds whether the tool is good or bad.
+
+**Exposure.** The questions are hashed into each run before the evidence is
+seen, so a question invented to fit an answer is visible. A threshold edited
+after the events exist raises a flag on the run. Each detector's failure mode is
+published beside it rather than discovered by whoever it fails. A run on our own
+trees is void if it produces no negative findings. Every one of those makes the
+tool **easier to impeach**, which is the point: the exposure is the whole of the
+credential, and a reader who takes the position seriously is taking that and not
+our word.
+
+### What it may supply
+
+- What happened when things were built in these trees before: in what order, at
+  what intervals, how long apparatus took to arrive, what the record claims that
+  the trees do not show, and what the trees show that no document mentions.
+- The same, over a window you name, if an epoch ever gives us one — `D4`.
+- Its own limits, in the same report and not in a footnote.
+
+### What it may not supply, and will refuse if asked
+
+- **What the build system should do.** Prediction is out of scope and the tense
+  is the boundary: every claim is about what happened. A recommendation dressed
+  as a finding is exactly the failure this tool is built to make visible, and it
+  would be the first thing to discredit everything else it said.
+- **A verdict on whether an evolution was good.** Contestable, and nobody has
+  the authority to settle it.
+- **Anything about people.** Enforced by what its schema can express, not by
+  discipline.
+- **A run on this family, cited to you as evidence that our practices work.**
+  Those are self-assessments and they stop at the directory boundary. If one is
+  ever sent to you as though it settled something, that is a breach and we would
+  rather you said so than let it pass.
+
+### Why we are raising it rather than waiting to be asked
+
+Because the duty runs both ways and the second half is the one that gets
+forgotten. **Being taken seriously moves the cost onto whoever relies on us.**
+If you build partly on what this reports and it was wrong, the loss is yours,
+and there is no version of that where the tool pays. That obliges us to stay
+checkable and to say *this cannot be established* as freely as anything else.
+
+It equally obliges us to speak. This tool is two levels inside a repository and
+two hops from anywhere its output could matter; its own charter already records
+that a finding can die in that chain with nobody noticing. Silence is also a way
+of being wrong, so holding evidence that bears on a live decision and saying
+nothing would not be modesty. That is the whole reason this topic exists rather
+than waiting for a request that might never come.
+
+### What would make this worth your time
+
+One question from you, in the form *what happened when X* rather than *should we
+Y*. The honest answer to it might be that this tool cannot establish that — that
+is a result, it would be reported as one, and it would arrive faster than a
+wrong answer.
+
+Two things about the tool's record, so the offer is not read as more than it is.
+It has had **one run**. That run was a self-assessment; its report retracted two
+of its eight questions because the evidence did not support them, declared two
+more unsafe as stated, called its own calibration score optimistic, and four
+defects were found in the tool by running it a second way. We would rather lead
+with that than with anything it got right, because **a first run that had found
+everything it looked for and nothing wrong with itself would be the strongest
+available reason to disbelieve the second.**
+
+### What we are not asking for
+
+Not for the role in `D4` to be granted sooner, or at all, on account of this.
+Not for the build system to wait on anything here. Not for a reply, if the
+answer is that evidence of this kind is not wanted — that answer needs no
+argument either, and it is a perfectly good place for this to end.
+
 ## D4 — ready for an epoch, and a role for the tool that would audit one
 
 **To:** anoieu

@@ -1,9 +1,8 @@
 # Documentation
 
 Every document in this child project, and what each one is for. The charter,
-[`../README.md`](../README.md), is the entry point and everything here assumes it
-has been read — in particular that nothing has been run, that no analysis is
-cached, and that the design is the deliverable.
+[`../README.md`](../README.md), is the entry point and everything here assumes
+it has been read.
 
 | document | what it is for |
 | --- | --- |
@@ -21,6 +20,6 @@ judgement in its first version would have to be rebuilt rather than corrected.
 
 If a fourth is ever proposed, it displaces one of these.
 
-Nothing here describes a run. When there is one, its evidence and its report live
-beside the subject that produced them and not in this directory: documentation
-says how the tool works, and a report is the tool's output.
+Nothing here describes a run. Evidence and reports live beside the subject that
+produced them, under `runs/`: documentation says how the tool works, and a
+report is the tool's output.

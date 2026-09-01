@@ -60,6 +60,11 @@ the subject well something they did not already know — and that they say so.
 That is the only test of this kind of tool that is worth anything, it cannot be
 self-administered, and it is not close.
 
+**The standing.** Nothing here argues for its own authority, in any document.
+What a reader is offered is evidence they can rebuild and a witness they can
+impeach; if that is not enough, nothing said on top of it would help. Below, in
+full: a responsibility and not a rank, and being relied on makes it one.
+
 **What is out of scope.**
 
 - **Judging people.** The unit of analysis is the artifact. Author names do not
@@ -112,9 +117,151 @@ the same shape asked of a trajectory rather than an artifact.
   evidence that these practices work, not in a vision document, not in a README.
 
 **What it has actually done, so that the ask is not read as more than it is:**
-one run, on a self-assessment, whose report retracted two of its eight questions
-because the evidence did not support them, and which found four defects in the
-tool that produced it. That is the whole record.
+one run, on a self-assessment, and the next section gives it at full size
+because the record is the whole of the argument.
+
+## Why any of this should be taken seriously: a duty, and not an argument
+
+Added 2026-09-01 by the maintainer, in an explicit instruction, and put to the
+ecosystem's chief executive role as topic `D5` in the parent's correspondence
+rather than asserted here. The occasion is that the role is building a **build
+system** and this is the tool that reads how things have been built in these
+trees, so the question arrives in the form that makes it real: *why should this
+count for anything?*
+
+**It dissolves on contact with results.** An argument for one's own authority is
+only ever needed where the evidence is missing: where evidence exists it is
+redundant, and where it does not it is what a tool offers *instead* of findings.
+So there is no case for standing here, deliberately — two things stand in its
+place and neither is rhetoric.
+
+1. **Evidence.** Stages 1–4 are re-derivable byte for byte from a pin and stage
+   5 is a different file, so a reader who distrusts the conclusion rebuilds the
+   evidence and disagrees with the writing having established that the writing
+   is the only thing in dispute. That is a property of the file layout, not a
+   claim about quality: it holds whether this tool is good or bad.
+2. **The standing of an expert witness, never an advocate.** That is the whole
+   of the position, and the rest of this section is what it costs.
+
+### What the witness distinction actually commits this to
+
+A witness testifies to what they observed. They do not argue for the verdict,
+they do not decide the case, and their standing comes not from being right but
+from being **examinable**: one who cannot be cross-examined is worth nothing
+however accurate they are, and one who starts advocating is impeached whatever
+they know.
+
+Read that against machinery already built, none of it for this argument and all
+of it what the argument rests on:
+
+- **The boundary between stages 4 and 5** keeps what was observed apart from
+  what is concluded — the two halves a witness may never blend.
+- **`questions_digest`** fixes what was asked before the evidence was seen and
+  **`thresholds_changed_after_events`** flags a parameter tuned after it — a
+  question written to fit an answer and a judgement moved into a constant both
+  leave a mark.
+- **A written failure mode per detector** is a standing admission of where this
+  witness is unreliable, published before anybody has to find out.
+- **A self-assessment with no negative findings is void**, so *we looked and it
+  was fine* is structurally unavailable rather than merely discouraged.
+- **Names never leave stage 1**, by schema: no testimony here becomes evidence
+  about a person.
+
+**Every one of those makes this tool easier to impeach, and that is not a side
+effect — the exposure is the credential.** There is nothing else on offer, and a
+reader who takes the position seriously is taking the exposure seriously.
+
+### The testimony so far, at its honest size
+
+One run, whose strongest section is `Q6`, where the report turns on itself: the
+four matches its delta produced "appear to be name collisions"; `Q2` and `Q3`
+are declared **unsafe** as delta classes and survive only reduced; a detector
+fired whose output the questions decline to use; a calibration score of 5 of 6
+is called optimistic and "not this tool's performance", because the calibrator
+had read the trees the same day. Two of eight questions retracted, four defects
+found in the tool that produced the report.
+
+That is small, and it is the only kind of record that could support a position
+like this one: **a first run finding everything it looked for and nothing wrong
+with itself would be the best available reason to disbelieve the second.**
+
+**And it stays on the right side of the rule above.** Cited here is what that
+run found out about *this method* — a matcher's collisions, a threshold's blind
+spot, a calibration's optimism — which is this project's to keep. What it
+concluded about the ecosystem appears nowhere here, including as a summary.
+
+### Why this is a responsibility and not a rank
+
+**Because being taken seriously moves the cost.** If a build system is designed
+partly on what this reports and this was wrong, the loss lands on whoever relied
+on it and there is no version where the tool pays. A position that transfers
+cost to the person relying on it is a duty in exact proportion to its
+usefulness. Three obligations follow, none optional:
+
+- **Be checkable.** Never say more than a reader can re-derive from a pin. A
+  finding somebody must take on trust is not this tool's to offer at any
+  confidence.
+- **State the limit out loud.** *This tool cannot establish that* is a result,
+  given as freely as any other. Answering a smaller question because the
+  machinery happens to reach it is the failure the guardrail below names.
+- **Speak.** Silence is also a way of being wrong. This directory is two hops
+  from anywhere its output could matter and has already recorded that a finding
+  can die in that chain unnoticed. Holding evidence that bears on a live
+  decision and saying nothing is not modesty: the duty that forbids
+  overclaiming is the one that requires volunteering.
+
+### The tense boundary, applied to the occasion
+
+A build system is a decision about what to do next, and **prediction is out of
+scope**: every claim here is about what happened. So what this brings to such a
+decision is not advice. **What it may say** is what happened when things were
+built in these trees before — in what order, at what intervals, how long
+apparatus took to arrive, what got written before it could be practised, what
+the record claims that the trees do not show and the reverse. **What it may not
+say** is what the build system should therefore do: that is the verdict, it
+belongs to whoever is accountable for the system, and a witness who reaches for
+it stops being one. **Which is what makes the position safe to grant** — a role
+that could only be abused by a tool willing to argue costs nothing to give to
+one that refuses to.
+
+### What of this is transferable, which is the only part worth propagating
+
+Anything a tool of this kind concludes about the family that built it is a
+self-assessment and stops at the boundary. **The arrangement is not a
+conclusion.** It is a design: cheap, not invented here, carrying no verdict on
+anybody — copyable by a project that thinks this one's output is worthless:
+
+1. **Separate what was observed from what was concluded, at the file level and
+   not the paragraph level.** Then a disagreement is about the writing, and
+   everybody can see that it is.
+2. **Fix the questions before the evidence is seen and hash them into the run**,
+   so a question written to fit an answer stops being invisible.
+3. **Publish each instrument's failure mode beside it.** An instrument trusted
+   uniformly is trusted exactly where it is wrong.
+4. **Make the flattering result structurally unavailable** — void without
+   negative findings — rather than trusting anybody to resist it.
+5. **Attach the falsifier to the position, not to a section at the end.**
+
+**The claim, with its falsifier, since a claim about safeguards without one
+would breach rule 5 in the act of stating it:** that a tool built this way can
+be relied on by somebody who does not trust it, which is the only kind of
+reliance worth having. What falsifies it is a report believed because of who
+wrote it rather than because its evidence was rebuilt, and the way to check is
+to ask a reader whether they ever reran stages 1–4. **If nobody ever does,
+every safeguard above was decoration** and this section was its dearest part.
+
+### What would forfeit the position
+
+Stated now, because standing that cannot be lost was never standing:
+
+- a run about this family cited outward as evidence that these practices work —
+  in a vision document, a README, or one sentence to anoieu;
+- a report whose confidence outruns what stages 1–4 emitted, anywhere, once;
+- an answer to *what should we do*, however lightly phrased;
+- an argument offered in place of evidence — **including this section**, if it
+  is ever doing work the runs cannot back. It exists because the maintainer
+  asked for the position to be written down; it is not evidence of anything;
+  and on the day it is cited as though it were, delete it.
 
 ## The guardrail on the role: ambitious in functionality, unambitious in implementation
 
@@ -236,8 +383,12 @@ that live in no repository's log — a repository being created, a name being
 taken, a role moving, a child project retired. The design carries both and
 [docs/design.md](docs/design.md) says where they diverge.
 
-**Nothing has been run.** No corpus is staged, no detector is written, no events
-are cached, and no report exists. What is here is the design.
+**Only the second subject has been run.** One run on the ecosystem —
+`runs/eunoia-ecosystem/`, dated 2026-09-01, a self-assessment, eleven of twelve
+detectors implemented — and what it established about its own method is above.
+**cvc5 has not been staged and has not been read**: the constraint below binds
+before a first run and there has not been one. *(This paragraph read "nothing
+has been run" until the day that stopped being true.)*
 
 ## The constraint it inherits
 
