@@ -1,0 +1,5 @@
+# Generated checkers, written here by the parent's generator with `--out`.
+# Everything in it is reproducible from a rendering in signature/, a parent
+# commit and a command line -- all three of which a ledger entry records -- so
+# what is kept in git is the record and not what it produced.
+work/
