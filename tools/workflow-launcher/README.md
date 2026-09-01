@@ -15,17 +15,20 @@ maintained as the thing this project is *for*, not as a decoration on it.
 
 ## The charter
 
-**The question.** The ecosystem has one captured workflow for starting a tool —
-anoieu's `init_eo`, which writes a README from the name register and complies
-with nothing else, deliberately. Everything after that is a person prompting an
-agent with whatever they happen to type. Is that gap real, and is a *structured
-interview* the thing that fills it?
+**The question.** Is rigor portable? The bet this ecosystem is running is that
+infrastructure making it cheap to say *fill this repository with a vision and
+the tooling that lets an agent maintain it with the rigor I use elsewhere* is
+the lever that matters. That bet has a demonstrated half and an undemonstrated
+half — rigor does transfer, and what it has so far produced is repositories that
+are accountable rather than repositories that ship. This project is where the
+distinction is written down, and the launch is how it gets tested.
 
 **The goals, in order.**
 
-1. Keep an honest account of how well the ecosystem is leveraging AI workflows
-   at all — what is captured, what is retyped every time, and what is not in the
-   record. [docs/ai-workflows.md](docs/ai-workflows.md).
+1. Keep the register of **what we are finding out and what of it is teachable**
+   — the practices here that are not obvious and might be worth somebody else
+   copying, and, in the same list, what is wrong with them.
+   [docs/ai-workflows.md](docs/ai-workflows.md).
 2. Keep [interview.md](interview.md): the questions a new tool has to answer
    before anybody writes a line of it, in a form an agent can read.
 3. Keep the machinery that turns an answered interview into a prompt and hands
@@ -101,7 +104,7 @@ Three things, and the first two are the point.
 
 | | |
 | --- | --- |
-| [docs/ai-workflows.md](docs/ai-workflows.md) | **The research summary.** How well the ecosystem is actually leveraging AI workflows, measured where it can be measured. anoieu's development-vision document is the ecosystem's authority on this subject and remains it; this asks a narrower question it does not ask — not whether the work is good, but whether any of it is *captured as something somebody else can run*. |
+| [docs/ai-workflows.md](docs/ai-workflows.md) | **The findings register.** What this ecosystem is doing that looks novel, what of it generalises past this ecosystem, and — on the same list rather than in a section at the end — what is wrong with it. Every claim carries what would falsify it, because the failure mode of a document like this written by an agent is a list of flattering observations. anoieu's development-vision page grades the tools and remains the authority on whether the work is good; this asks the different question of what has been found out. |
 | [interview.md](interview.md) | **The form.** What this is, and what a person has to settle before a repository exists: the name and where it is registered, the vision, the initial tools, the toolchain, which ecosystem machinery to adopt and which to leave, how the work will be run, and what the agent must not do. Eleven questions, five of them required. |
 | [bin/launch](bin/launch) and [prompts/](prompts) | **The machinery.** Assemble the answers into a prompt, show it, and — separately, explicitly — hand it to an agent in a directory somebody already made. An informal install: the same stage as compiling a signature, with none of the guarantees. |
 
