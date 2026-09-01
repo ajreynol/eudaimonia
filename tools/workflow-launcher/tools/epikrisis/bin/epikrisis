@@ -793,6 +793,104 @@ def cmd_check(a):
     return 0
 
 
+# Deliberately crude, and declared rather than inferred. A cleverer classifier
+# would be a judgement wearing a program's face; this one is wrong in ways a
+# reader can predict from the list itself.
+PROSE_EXT = {".md", ".txt", ".rst", ".org"}
+TOOL_EXT = {".py", ".sh", ".lean", ".cpp", ".cc", ".h", ".hpp", ".c", ".rs",
+            ".eo", ".eos", ".yml", ".yaml", ".toml", ".cmake", ".mk", ".bzl",
+            ".smt2", ".proof", ".expected"}
+TOOL_NAMES = {"CMakeLists.txt", "Makefile", "lakefile.lean", "lakefile.toml",
+              "lean-toolchain", "Dockerfile"}
+
+
+def bucket(path):
+    base = os.path.basename(path)
+    if base in TOOL_NAMES:
+        return "tool"
+    ext = os.path.splitext(path)[1].lower()
+    if ext in PROSE_EXT:
+        return "prose"
+    if ext in TOOL_EXT:
+        return "tool"
+    # An extensionless file under bin/ or scripts/ is an executable. The first
+    # run of this measure classified a 700-line program as `other` because it
+    # had no suffix -- in the very repository whose ratio was being measured.
+    if not ext and (path.startswith("bin/") or path.startswith("scripts/")
+                    or "/bin/" in path or "/scripts/" in path):
+        return "tool"
+    return "other"
+
+
+def cmd_ratio(a):
+    """Lines of tool against lines about tools, per repository, per month.
+
+    This measure exists because somebody else's register names it as the
+    falsifier of its own central worry and says nobody measures it. It is
+    reported per repository and never as one number: for a repository whose
+    product *is* a document, prose is the tool, and an aggregate would hide
+    exactly the case that matters.
+    """
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    sub = load_subject(a.subject)
+    prose_product = set(sub.get("prose_is_product", []))
+    exclude = corpus.get("exclude", [])
+    out = {"_note": cmd_ratio.__doc__.strip().splitlines()[0],
+           "classifier": {"prose": sorted(PROSE_EXT), "tool": sorted(TOOL_EXT),
+                          "tool_names": sorted(TOOL_NAMES),
+                          "everything else": "other, reported and not counted "
+                                             "into either side"},
+           "prose_is_product": sorted(prose_product), "sources": {}}
+    for s in corpus["sources"]:
+        repo = os.path.join(a.frm, s["id"])
+        months = defaultdict(lambda: defaultdict(int))
+        raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
+                  "--format=\x01%ad", "--numstat")
+        for block in raw.split("\x01"):
+            if not block.strip():
+                continue
+            head, *rest = block.strip("\n").split("\n")
+            month = head[:7]
+            for line in rest:
+                p = line.split("\t")
+                if len(p) != 3 or p[0] == "-":
+                    continue
+                add, _, path = p
+                if any(path.startswith(x) for x in exclude):
+                    continue
+                months[month][bucket(path)] += int(add)
+        tot = defaultdict(int)
+        rows = {}
+        for m in sorted(months):
+            b = months[m]
+            for k, v in b.items():
+                tot[k] += v
+            rows[m] = {"prose": b["prose"], "tool": b["tool"],
+                       "other": b["other"],
+                       "prose_per_tool": (round(b["prose"] / b["tool"], 2)
+                                          if b["tool"] else None)}
+        out["sources"][s["id"]] = {
+            "months": rows,
+            "total": {"prose": tot["prose"], "tool": tot["tool"],
+                      "other": tot["other"],
+                      "prose_per_tool": (round(tot["prose"] / tot["tool"], 2)
+                                         if tot["tool"] else None)},
+            "prose_is_product": s["id"] in prose_product,
+        }
+    write(rd, "ratio.json", out)
+    print(f"  {'source':12} {'month':8} {'prose':>8} {'tool':>8} {'other':>7} {'prose/tool':>11}")
+    for sid, d in out["sources"].items():
+        for m, r in d["months"].items():
+            pt = "-" if r["prose_per_tool"] is None else f"{r['prose_per_tool']:.2f}"
+            print(f"  {sid:12} {m:8} {r['prose']:8} {r['tool']:8} {r['other']:7} {pt:>11}")
+        t = d["total"]
+        pt = "-" if t["prose_per_tool"] is None else f"{t['prose_per_tool']:.2f}"
+        flag = "  [prose is this tree's product]" if d["prose_is_product"] else ""
+        print(f"  {sid:12} {'TOTAL':8} {t['prose']:8} {t['tool']:8} {t['other']:7} {pt:>11}{flag}")
+    return 0
+
+
 def cmd_subjects(a):
     d = os.path.join(HERE, "subjects")
     for f in sorted(os.listdir(d)):
@@ -820,7 +918,8 @@ def main():
                             ("detectors", cmd_detectors, False),
                             ("pin", cmd_pin, True), ("events", cmd_events, True),
                             ("record", cmd_record, True), ("delta", cmd_delta, True),
-                            ("prompt", cmd_prompt, True), ("check", cmd_check, True)):
+                            ("prompt", cmd_prompt, True), ("check", cmd_check, True),
+                            ("ratio", cmd_ratio, True)):
         q = sub.add_parser(name)
         q.set_defaults(fn=fn)
         if needs:
@@ -832,7 +931,7 @@ def main():
                            help="a run stamp, when the newest is not the one "
                                 "you mean")
     a = p.parse_args()
-    if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record"):
+    if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record", "ratio"):
         raise SystemExit("epikrisis: --from <dir> is required: this reads "
                          "mirrors somebody already has, and never fetches")
     sys.exit(a.fn(a) or 0)

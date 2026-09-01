@@ -268,6 +268,46 @@ class of check usually dies.
 
 ---
 
+### N10 — The same middle category, invented three times, with three names
+
+The governing split is *a program decides it* against *nobody can*. Underneath
+it, three trees independently arrived at a third class and none cites the
+others: the compiler tree grades its passes *provable / checkable per run /
+needs a semantics*; the solver-side analyzer ends a five-rung ladder at *only
+observable on an input*; this repository grades generated files *GENERATED /
+PROVEN / FINISHED / OPEN* and profile answers *derived / declared*. All three
+mean the same thing — a claim that is neither proved nor unsettleable, and is
+re-established on every run.
+
+Convergence from three directions, for three different subjects, is the evidence
+that the category is real rather than a convenience. The transferable part is
+that the two-valued split most projects use — checked or not — has no room for
+the class that most of a real system actually falls into.
+
+*Falsified by:* a fourth tree drawing the line two-valued and not needing the
+middle, or any of the three collapsing theirs back into two.
+
+### N11 — A check ships with the thing that makes it fail
+
+Four trees, four independent discoveries, one shape: a profile check that
+"could only ever answer `yes`" and was retracted; a trusted-base measure that
+"returns the same answer for every seed measures nothing", demoted and made to
+warn; a modularity harness given a canary — *a declaration that must be
+rejected* — so it cannot degrade into a no-op; and a partition held by
+arithmetic rather than discipline, exiting non-zero when its columns stop
+summing.
+
+**The failure mode of a check is not being wrong, it is being vacuous, and
+vacuity is silent.** A green tick from a check that cannot fail is worse than no
+check, because it reads as coverage. The practice that follows is cheap and
+mechanical: every check ships with a canary, an injected error, a reconciliation
+sum, or a discrimination test — in the same commit.
+
+*Falsified by:* a vacuous check surviving in a tree that adopted this, or the
+canaries turning out to cost more than the defects they catch. **Wrong with it
+today:** only two of the four do it deliberately; the other two found their
+vacuous check by accident and did not generalise from it.
+
 ## What is wrong
 
 ### W1 — The system diagnoses precisely and does not treat
@@ -347,6 +387,25 @@ real. What it has mostly been levering so far is more lever.
 *Falsified by:* the ratio moving. It is measurable — lines of tool against lines
 about tools, per repository, per month — and nobody measures it.
 
+*Measured, 2026-09-01, and the falsifier does not work as written.* Lines added
+per repository per month, prose against tool: the proof development 0.00, the
+policy tree 1.27 (where prose *is* the product), this repository 0.51, the
+solver-side analyzer 1.03, the newest tree 1.41. Three reasons the numbers
+cannot settle the entry. **The third bucket is not small** — 11,519 lines here
+are neither prose nor code, and the ratio moves by sixty per cent depending on
+where they go. **Generated lines count as authored**: excluding the generated
+development, the ecosystem's stock is 32,687 prose against 43,306 code, or
+**0.75**; including it, **0.04** — the same question, a factor of nineteen
+apart, and the entry does not say which it means. And **two implementations of
+the same crude classifier disagreed by sixty per cent** on the tool count,
+which was caught only by writing it twice.
+
+So the entry stands and its falsifier does not: *work about the work* needs a
+ruling on authored-versus-generated and on data before any number bears on it.
+The one unambiguous figure is that the day this measurement was made, this
+repository committed 5,555 lines of prose against roughly 1,258–2,061 of tool —
+the range being the ambiguity above.
+
 ### W5 — Correctness of the loop's verdicts is not measured
 
 39 findings open and 43 closed, against three projects, is real output and the
@@ -360,6 +419,60 @@ gap, not checked.
 So the loop measures its throughput and its prompt size, and does not measure
 its error rate — which is the only number that says whether the process
 improvements are improvements.
+
+### W6 — The boundary is stated everywhere and disagrees with itself fourteen times
+
+The line between what a program may decide and what it may not is the ecosystem's
+foundational commitment. It is drawn in dozens of places across five
+repositories, and where two statements of it are laid side by side they disagree
+fourteen times. Four of those matter.
+
+**Three different reasons are given for the same prohibition** — *nobody has the
+authority*, *nobody has the standing*, *answering it requires judgement* — and
+they come apart, because a repository cannot decide its own standing while
+another tree can. Each licenses a different remedy: reword it, ask somebody
+else, or never ask. That is why things land on the unchecked list and stay:
+nobody can tell which move would clear them.
+
+**"Never checkable" and "checkable later" are both stated categorically**, on
+the same subject, in two documents that cite each other.
+
+**There is no slot for *deliberately unchecked*,** though the checker's own list
+has fifteen entries and several of them are exactly that.
+
+**And one is ours:** the front page says a red build means something is genuinely
+broken and never that work is left, while the limitations page records bridge
+lemmas that are *false as stated* shipping with a green build. This tree already
+has the vocabulary — `FINISHED`, *a stub rather than a `sorry`* — and does not
+apply it there.
+
+[`boundary.md`](boundary.md) is the reconciliation, and it exists because this
+entry could not be written without one.
+
+*Falsified by:* somebody re-deriving the count and finding the statements
+compatible under a reading nobody has written down — which would make the
+boundary document redundant and is the outcome to hope for.
+
+### W7 — The best criterion in the ecosystem is used in one tree only
+
+The policy/vision split asks *can a program decide it*. The sharper question,
+asked in exactly one tree, is *what is it decidable **from*** — types, a table
+at startup, one function's syntax, the whole call graph, or only an input — with
+a home and an owner per rung, and the rule that **a check we maintain that could
+have been an assertion in the subject's own tree is a design failure, not a
+feature.**
+
+That ladder decides something the two-valued split cannot: **how far upstream a
+check belongs.** An invariant enforced from outside somebody's tree is one we
+maintain forever and they never see; the same invariant asserted where their
+table is built is enforced on every developer's machine for nothing. Nothing
+outside that one tree uses this, and the same reasoning applies directly to
+policy conformance, to signature contracts, and to every check this family runs
+against a tree it does not own.
+
+*Falsified by:* a second tree adopting it and finding the rungs do not fit a
+subject that is not C++, or by a case where keeping a check outside the subject
+is cheaper over its life.
 
 ---
 

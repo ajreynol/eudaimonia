@@ -49,5 +49,9 @@
       "parent"
     ],
     "note": "the ecosystem keeps one footing per tool in this file; its git history is the status-transition record, and reading it is the only reason this run can tell joining apart from repository creation"
-  }
+  },
+  "prose_is_product": [
+    "anoieu"
+  ],
+  "_prose_is_product_note": "anoieu ships the shared repository policy and the checker that enforces it; other repositories' CI depends on documents in that tree, so for it a prose line is a tool line and its ratio is not comparable with the others. This is a declared judgement, not a derived fact."
 }
