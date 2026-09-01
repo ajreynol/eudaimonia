@@ -236,6 +236,7 @@ rather than an error, which is the kind that survives review.
 | monorepos and subdirectory histories | path prefixes stop meaning subsystems | subjects may name a path scope; scoping is recorded, not inferred |
 | a project that develops in branches | the quiet detector fires on active work | stated as a known false positive; no fix |
 | force-pushed history | a pin stops resolving | pins are recorded by sha and a run that cannot resolve one fails rather than substituting |
+| **the trees move under a run** | every stage after `pin` re-reads whatever HEAD has become, while the manifest still names the old sha — so the report describes a corpus that was never measured | every stage reads **at the pinned commit**, and refuses to run if the repository no longer contains it. This was not true of the first version: three runs were derived from moved trees before anybody checked, which is why the row exists |
 
 The last row is the general rule this design takes from the family it sits in: a
 run that cannot reproduce its evidence **fails**, and does not fall back to

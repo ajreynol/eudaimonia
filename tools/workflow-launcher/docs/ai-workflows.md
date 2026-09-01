@@ -389,22 +389,29 @@ about tools, per repository, per month — and nobody measures it.
 
 *Measured, 2026-09-01, and the falsifier does not work as written.* Lines added
 per repository per month, prose against tool: the proof development 0.00, the
-policy tree 1.27 (where prose *is* the product), this repository 0.51, the
-solver-side analyzer 1.03, the newest tree 1.41. Three reasons the numbers
-cannot settle the entry. **The third bucket is not small** — 11,519 lines here
+policy tree 1.27 (where prose *is* the product), this repository 0.50, the
+solver-side analyzer 1.04, the newest tree 1.41. Three reasons the numbers
+cannot settle the entry. **The third bucket is not small** — 10,811 lines here
 are neither prose nor code, and the ratio moves by sixty per cent depending on
-where they go. **Generated lines count as authored**: excluding the generated
-development, the ecosystem's stock is 32,687 prose against 43,306 code, or
-**0.75**; including it, **0.04** — the same question, a factor of nineteen
-apart, and the entry does not say which it means. And **two implementations of
-the same crude classifier disagreed by sixty per cent** on the tool count,
-which was caught only by writing it twice.
+where they go. **Generated lines count as authored**: at the same pin, the
+ecosystem's stock excluding the generated development is 34,488 prose against
+48,606 code, or **0.71**; including it, **0.04** — the same question, a factor
+of eighteen apart, and the entry does not say which it means. And **two
+implementations of the same crude classifier disagreed by sixty per cent** on
+the tool count, caught only by writing it twice.
 
 So the entry stands and its falsifier does not: *work about the work* needs a
 ruling on authored-versus-generated and on data before any number bears on it.
-The one unambiguous figure is that the day this measurement was made, this
-repository committed 5,555 lines of prose against roughly 1,258–2,061 of tool —
-the range being the ambiguity above.
+The one unambiguous figure is that on the day this was measured, this repository
+committed 5,555 lines of prose against roughly 1,258–2,061 of tool — the range
+being the ambiguity above.
+
+*All figures above are taken at the pinned commits.* An earlier version of this
+entry quoted numbers a few per cent different, taken while the measuring tool
+recorded its pins and did not enforce them, so it re-read whatever the trees had
+moved to. That defect is fixed and the entry is corrected; it is noted rather
+than silently edited because it is an instance of the thing this register is
+for.
 
 ### W5 — Correctness of the loop's verdicts is not measured
 

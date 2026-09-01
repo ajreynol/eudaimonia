@@ -125,16 +125,42 @@ def git_ok(repo, *args):
     return (p.returncode == 0, p.stdout)
 
 
+def verify_pin(repo, src):
+    """A recorded pin that nothing enforces is a manifest that lies.
+
+    Every stage after `pin` reads the corpus at the commit the manifest names,
+    never at whatever HEAD happens to be. This was not true of the first version
+    and the trees moved underneath three runs before anybody noticed -- the
+    numbers were re-derived from a different corpus than the one reported.
+    """
+    ok, _ = git_ok(repo, "cat-file", "-e", src["commit"] + "^{commit}")
+    if not ok:
+        raise SystemExit(
+            f"epikrisis: {src['id']} does not contain its pinned commit "
+            f"{src['commit'][:12]}. The evidence cannot be reproduced, so this "
+            f"run fails rather than measuring something else. Re-`pin` if that "
+            f"is what you meant.")
+
+
 def anon(email):
     """Stage 1 sees an address; nothing downstream does. Only counts travel."""
     return hashlib.sha256(email.strip().lower().encode()).hexdigest()[:12]
 
 
 def prefix_of(path, depth):
-    parts = path.split("/")
-    if len(parts) == 1:
+    """The directory a file sits in, truncated to `depth` components.
+
+    It truncates the *directory*, not the path. Truncating the path made a file
+    directly under a top-level directory its own prefix -- `tools/policy.md`
+    read as a subsystem that was born and died. At depth 1 that was invisible,
+    because the first component of any such path is the directory anyway; the
+    defect only appeared the first time this ran at depth 2, which is the whole
+    argument for running a tool at more than one setting before trusting it.
+    """
+    d = os.path.dirname(path)
+    if not d:
         return "(root)"
-    return "/".join(parts[:depth])
+    return "/".join(d.split("/")[:depth])
 
 
 def subject_path(name):
@@ -228,7 +254,7 @@ def cmd_pin(a):
 
 # ---------------------------------------------------------------- stage 2
 
-def read_log(repo, exclude, depth):
+def read_log(repo, rev, exclude, depth):
     """One pass for churn, one for statuses. Returns per-commit records.
 
     Author addresses are read here and reduced to an opaque id immediately;
@@ -237,7 +263,7 @@ def read_log(repo, exclude, depth):
     out = []
     sep = "\x01"
     raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
-              f"--format={sep}%H%x02%ad%x02%ae", "--numstat")
+              f"--format={sep}%H%x02%ad%x02%ae", "--numstat", rev)
     for block in raw.split(sep):
         if not block.strip():
             continue
@@ -259,13 +285,13 @@ def read_log(repo, exclude, depth):
     return out
 
 
-def read_status(repo, exclude):
+def read_status(repo, rev, exclude):
     """A/D/R statuses, with rename detection on. Renames are what make a
     reorganisation distinguishable from a subsystem dying."""
     out = []
     sep = "\x01"
     raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
-              f"--format={sep}%H%x02%ad", "--name-status", "-M50%")
+              f"--format={sep}%H%x02%ad", "--name-status", "-M50%", rev)
     for block in raw.split(sep):
         if not block.strip():
             continue
@@ -285,13 +311,13 @@ def read_status(repo, exclude):
     return out
 
 
-def detect(src_id, repo, th, ecosystem_first=None):
+def detect(src_id, repo, rev, th, ecosystem_first=None):
     depth = th["prefix_depth"]
     exclude = th.get("_exclude", [])
-    log = read_log(repo, exclude, depth)
-    status = read_status(repo, exclude)
+    log = read_log(repo, rev, exclude, depth)
+    status = read_status(repo, rev, exclude)
     alive = set()
-    for p in git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines():
+    for p in git(repo, "ls-tree", "-r", "--name-only", rev).splitlines():
         if not any(p.startswith(x) for x in exclude):
             alive.add(prefix_of(p, depth))
 
@@ -452,8 +478,10 @@ def detect_inventory(corpus, frm, inv):
     repo = os.path.join(frm, inv["source"])
     path = inv["path"]
     track = inv.get("track", ["status"])
+    src = next((x for x in corpus["sources"] if x["id"] == inv["source"]), None)
+    verify_pin(repo, src) if src else None
     revs = git(repo, "log", "--reverse", "--format=%H %ad", "--date=short",
-               "--", path).splitlines()
+               (src["commit"] if src else "HEAD"), "--", path).splitlines()
     first_commit = {s["id"]: s["first_commit"] for s in corpus["sources"]}
     ev, k, unreadable = [], 0, 0
     prev = None
@@ -530,7 +558,8 @@ def detect_relations(corpus, frm, th):
             if other == s["id"]:
                 continue
             found = git(repo, "log", "--reverse", "--format=%H %ad",
-                        "--date=short", "-S", other, "--", ".").splitlines()
+                        "--date=short", "-S", other, s["commit"],
+                        "--", ".").splitlines()
             if found:
                 sha, when = found[0].split()
                 k += 1
@@ -553,7 +582,8 @@ def cmd_events(a):
     ev = []
     for s in corpus["sources"]:
         repo = os.path.join(a.frm, s["id"])
-        ev += detect(s["id"], repo, th,
+        verify_pin(repo, s)
+        ev += detect(s["id"], repo, s["commit"], th,
                      ecosystem_first=first if corpus["kind"] == "ecosystem" else None)
     inv_stats = None
     if corpus["kind"] == "ecosystem":
@@ -599,14 +629,14 @@ def cmd_record(a):
 
     for s in corpus["sources"]:
         repo = os.path.join(a.frm, s["id"])
-        files = git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines()
+        verify_pin(repo, s)
+        files = git(repo, "ls-tree", "-r", "--name-only", s["commit"]).splitlines()
         for path in files:
             if not path.endswith(".md"):
                 continue
             base = os.path.basename(path)
-            try:
-                text = open(os.path.join(repo, path), encoding="utf-8").read()
-            except (OSError, UnicodeDecodeError):
+            ok, text = git_ok(repo, "show", f"{s['commit']}:{path}")
+            if not ok:
                 continue
             lines = text.splitlines()
             for i, ln in enumerate(lines):
@@ -731,10 +761,13 @@ def cmd_prompt(a):
     print(q)
 
 
-def cmd_check(a):
-    # Runs are selected by newest stamp, so a later evidence-only run would
-    # otherwise silently become the thing `check` reports on.
-    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
+def check_problems(rd):
+    """Every condition stage 6 enforces, as a list of problems.
+
+    Split out of `cmd_check` so that `selftest` can call it against a run it has
+    deliberately broken. A check nobody has ever seen fail is the failure mode
+    this ecosystem keeps rediscovering, and the answer is a canary.
+    """
     corpus = load(rd, "corpus.json")
     events = {e["id"]: e for e in load(rd, "events.jsonl")}
     claims = {c["id"] for c in load(rd, "claims.jsonl")}
@@ -783,13 +816,22 @@ def cmd_check(a):
                 and flag.replace("_", " ") not in report.lower():
             bad.append(f"manifest flag {flag!r} is not reproduced in the report "
                        f"header")
+    return bad, {"assessments": len(assessments), "cited": len(cited),
+                 "events": len(events)}
+
+
+def cmd_check(a):
+    # Runs are selected by newest stamp, so a later evidence-only run would
+    # otherwise silently become the thing `check` reports on.
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
+    bad, n = check_problems(rd)
     if bad:
         print("check: FAIL")
         for b in bad:
             print("  - " + b)
         return 1
-    print(f"check: ok — {len(assessments)} assessments, {len(cited)} ids cited, "
-          f"{len(events)} candidates all accounted for")
+    print(f"check: ok — {n['assessments']} assessments, {n['cited']} ids cited, "
+          f"{n['events']} candidates all accounted for")
     return 0
 
 
@@ -845,8 +887,9 @@ def cmd_ratio(a):
     for s in corpus["sources"]:
         repo = os.path.join(a.frm, s["id"])
         months = defaultdict(lambda: defaultdict(int))
+        verify_pin(repo, s)
         raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
-                  "--format=\x01%ad", "--numstat")
+                  "--format=\x01%ad", "--numstat", s["commit"])
         for block in raw.split("\x01"):
             if not block.strip():
                 continue
@@ -891,6 +934,114 @@ def cmd_ratio(a):
     return 0
 
 
+CANARY = {
+    "corpus.json": {
+        "subject": "canary", "kind": "tool", "self": True, "pinned": "2026-01-01",
+        "tool_version": "canary", "sources": [], "exclude": [], "thresholds": {},
+        "questions_digest": "canary", "thresholds_changed_after_events": False,
+    },
+    "events.jsonl": [
+        {"id": "x-birth-0001", "detector": "birth", "source": "x",
+         "at": {"commit": "a", "date": "2026-01-01"}, "paths": ["p"],
+         "measure": {}, "evidence": ["a"], "selected": None, "reason": None},
+        {"id": "x-birth-0002", "detector": "birth", "source": "x",
+         "at": {"commit": "b", "date": "2026-01-02"}, "paths": ["q"],
+         "measure": {}, "evidence": ["b"], "selected": None, "reason": None},
+    ],
+    "claims.jsonl": [
+        {"id": "C0001", "source": "x", "at": {"path": "R.md", "line": 1},
+         "kind": "checkbox", "asserted": None, "text": "t"},
+    ],
+    "assessments.jsonl": [
+        {"id": "A1", "direction": "well", "claim": "c", "rests_on": ["x-birth-0001"],
+         "falsified_by": "a later run showing otherwise at p", "confidence": "low",
+         "scope": "s"},
+        {"id": "A2", "direction": "badly", "claim": "c", "rests_on": ["C0001"],
+         "falsified_by": "the claim at R.md:1 reading differently", "confidence": "low",
+         "scope": "s"},
+    ],
+    "selection.jsonl": [
+        {"event": "x-birth-0002", "kept": False, "reason": "noise", "by": "canary",
+         "run": "canary"},
+    ],
+    "report.md": ("# canary\n\nThis is a self-assessment.\n\n"
+                  "Something happened (x-birth-0001), and the record says so (C0001).\n"),
+}
+
+# Each mutation must make `check` fail. A mutation that stops failing means the
+# condition it targets has been weakened or removed.
+MUTATIONS = [
+    ("cites an id that is in no evidence file",
+     lambda d: d.__setitem__("report.md", d["report.md"] + "\nAlso x-birth-9999.\n")),
+    ("an assessment resting on an id that does not exist",
+     lambda d: d["assessments.jsonl"][0].__setitem__("rests_on", ["x-birth-9999"])),
+    ("an assessment with an empty falsifier",
+     lambda d: d["assessments.jsonl"][0].__setitem__("falsified_by", "  ")),
+    ("no assessment in the `badly` direction",
+     lambda d: d.__setitem__("assessments.jsonl", d["assessments.jsonl"][:1])),
+    ("a candidate event neither cited nor dropped with a reason",
+     lambda d: d.__setitem__("selection.jsonl", [])),
+    ("a manifest flag missing from the report header",
+     lambda d: d.__setitem__("report.md", d["report.md"].replace("self-assessment", "run"))),
+]
+
+
+def cmd_selftest(a):
+    """Prove that `check` can fail, one condition at a time.
+
+    Nothing else in this repository is entitled to say *a check that cannot fail
+    is not a check* while its own check has only ever passed.
+    """
+    import copy
+    import shutil
+    import tempfile
+
+    def lay(d, into):
+        os.makedirs(into, exist_ok=True)
+        for name, body in d.items():
+            with open(os.path.join(into, name), "w") as f:
+                if name.endswith(".jsonl"):
+                    for r in body:
+                        f.write(json.dumps(r, sort_keys=True) + "\n")
+                elif name.endswith(".json"):
+                    json.dump(body, f)
+                else:
+                    f.write(body)
+
+    tmp = tempfile.mkdtemp(prefix="epikrisis-selftest-")
+    failures = []
+    try:
+        clean = os.path.join(tmp, "clean")
+        lay(copy.deepcopy(CANARY), clean)
+        bad, _ = check_problems(clean)
+        if bad:
+            failures.append(f"the clean canary does not pass: {bad}")
+            print("  FAIL  clean canary rejected")
+        else:
+            print("  ok    clean canary passes")
+
+        for i, (name, mutate) in enumerate(MUTATIONS):
+            d = copy.deepcopy(CANARY)
+            mutate(d)
+            here = os.path.join(tmp, f"m{i}")
+            lay(d, here)
+            bad, _ = check_problems(here)
+            if bad:
+                print(f"  ok    caught: {name}")
+            else:
+                failures.append(f"NOT caught: {name}")
+                print(f"  FAIL  NOT caught: {name}")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    if failures:
+        print(f"selftest: FAIL — {len(failures)} condition(s) do not fire")
+        return 1
+    print(f"selftest: ok — the clean canary passes and all "
+          f"{len(MUTATIONS)} conditions fire")
+    return 0
+
+
 def cmd_subjects(a):
     d = os.path.join(HERE, "subjects")
     for f in sorted(os.listdir(d)):
@@ -916,6 +1067,7 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     for name, fn, needs in (("subjects", cmd_subjects, False),
                             ("detectors", cmd_detectors, False),
+                            ("selftest", cmd_selftest, False),
                             ("pin", cmd_pin, True), ("events", cmd_events, True),
                             ("record", cmd_record, True), ("delta", cmd_delta, True),
                             ("prompt", cmd_prompt, True), ("check", cmd_check, True),

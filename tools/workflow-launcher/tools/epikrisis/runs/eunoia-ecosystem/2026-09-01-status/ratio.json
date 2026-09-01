@@ -75,18 +75,18 @@
           "tool": 7388
         },
         "2026-09": {
-          "other": 84,
-          "prose": 840,
-          "prose_per_tool": 2.28,
-          "tool": 368
+          "other": 63,
+          "prose": 696,
+          "prose_per_tool": 4.05,
+          "tool": 172
         }
       },
       "prose_is_product": false,
       "total": {
-        "other": 535,
-        "prose": 7984,
-        "prose_per_tool": 1.03,
-        "tool": 7756
+        "other": 514,
+        "prose": 7840,
+        "prose_per_tool": 1.04,
+        "tool": 7560
       }
     },
     "eudaimonia": {
@@ -98,18 +98,18 @@
           "tool": 22234
         },
         "2026-09": {
-          "other": 1384,
-          "prose": 5555,
-          "prose_per_tool": 4.42,
-          "tool": 1258
+          "other": 676,
+          "prose": 5262,
+          "prose_per_tool": 4.64,
+          "tool": 1135
         }
       },
       "prose_is_product": false,
       "total": {
-        "other": 11519,
-        "prose": 12068,
-        "prose_per_tool": 0.51,
-        "tool": 23492
+        "other": 10811,
+        "prose": 11775,
+        "prose_per_tool": 0.5,
+        "tool": 23369
       }
     },
     "koine": {

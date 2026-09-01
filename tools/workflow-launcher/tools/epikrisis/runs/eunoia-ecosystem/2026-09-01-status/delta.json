@@ -83,11 +83,24 @@
     "C0082",
     "C0083",
     "C0084",
+    "C0085",
     "C0086",
     "C0087",
     "C0088",
+    "C0089",
+    "C0090",
     "C0091",
-    "C0092"
+    "C0092",
+    "C0093",
+    "C0094",
+    "C0095",
+    "C0096",
+    "C0097",
+    "C0099",
+    "C0100",
+    "C0101",
+    "C0104",
+    "C0105"
   ],
   "derived_only": [
     "logos-apparatus-0025",
@@ -255,19 +268,19 @@
       "strength": "strong"
     },
     {
-      "claim": "C0085",
+      "claim": "C0098",
       "event": "koine-birth-0004",
       "lag_days": 0,
       "strength": "strong"
     },
     {
-      "claim": "C0089",
+      "claim": "C0102",
       "event": "koine-birth-0004",
       "lag_days": 0,
       "strength": "strong"
     },
     {
-      "claim": "C0090",
+      "claim": "C0103",
       "event": "koine-birth-0004",
       "lag_days": 0,
       "strength": "strong"
