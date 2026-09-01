@@ -1,0 +1,352 @@
+#!/usr/bin/env bash
+#
+# The launcher: turn an answered interview into a prompt, and -- separately and
+# explicitly -- hand that prompt to an agent in a directory somebody already
+# made.
+#
+# This is the same stage as install-<calc>.sh two directories up, and it is the
+# stage where the analogy to that build system stops holding. There, a pinned
+# compiler turns a signature into Lean and the result is a function of its
+# input: reinstalling reproduces the package byte-for-byte, and CI proves it.
+# Here the thing in the middle is a model, its version is not ours to pin, and
+# a second run produces something else. So this script does not claim to
+# generate anything. It assembles a prompt, shows it to you, and runs it when
+# you say so.
+#
+# What it writes: answers/<name>.md, on `new`, and nothing else. What it will
+# never write: anything outside the target directory, a commit, a remote, a
+# repository. See prompts/setup.md, where those refusals are also stated to the
+# agent, and docs/analogy.md for why the boundary is placed there.
+
+set -euo pipefail
+
+readonly bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly root="$(cd "${bin_dir}/.." && pwd)"
+readonly prompts="${root}/prompts"
+
+# Settings, then the environment, then the command line.
+AGENT="claude"
+MODE="interactive"
+ANSWER_DIR="answers"
+TARGET=""
+REQUIRE_EMPTY="yes"
+# shellcheck source=/dev/null
+if [ -f "${root}/launcher.conf" ]; then . "${root}/launcher.conf"; fi
+
+FORCE=0
+SHOW_ONLY=0
+
+die()  { printf 'launch: %s\n' "$*" >&2; exit 2; }
+note() { printf '%s\n' "$*" >&2; }
+
+usage() {
+  cat <<'USAGE'
+usage: launch <command> [options] [NAME]
+
+  new NAME     Copy interview.md to answers/NAME.md, ready to be answered.
+  check [NAME] Report which questions are answered and which are not. A
+               required question left empty is what `run` refuses on.
+  prompt [NAME]
+               Print the assembled setup prompt and exit, running nothing.
+               This is the default way to work: read what would be sent.
+  run [NAME]   Hand that prompt to an agent, in --target. The only command
+               that spends anything, and the only one that can change a tree.
+  review [NAME]
+               Hand the review prompt to an agent: read what was built against
+               what was asked, and change nothing.
+  stages       The catalogue: each prompt, what it is for, and what it writes.
+
+options:
+  --target DIR  Where the launch writes. Must exist, must be a directory, must
+                not be inside this repository. Never created here.
+  --agent CMD   The agent command to run (default: from launcher.conf).
+  --print       Run the agent non-interactively and print the result.
+  --show-prompt Print the prompt and exit, whatever the command.
+  --force       Accept a target that already has files in it.
+
+NAME is the launch's name: `answers/NAME.md`, or a path to an answer file.
+With no NAME, the newest file in answers/ is used.
+USAGE
+}
+
+# ---------------------------------------------------------------------------
+# The stage catalogue.
+#
+# One line per stage:  id | prompt | what it does | writes
+#
+# The counterpart of the template list in scripts/new-checker.sh, and shorter
+# for a reason worth noticing: that one has a line per generated file because it
+# knows every file it will write. This one cannot know, so a stage is named by
+# what it is asked for rather than by what it produces.
+# ---------------------------------------------------------------------------
+stages() {
+  cat <<'CATALOGUE'
+setup|prompts/setup.md|write the repository from the answered interview|files in the target, staged, never committed
+review|prompts/review.md|read what was built against what was asked|nothing; a report on stdout
+CATALOGUE
+}
+
+# ---------------------------------------------------------------------------
+# Reading an answered interview.
+#
+# An answer is what sits between `<!-- An required -->` and `<!-- /An -->`. The
+# markers are the contract with the form: a person edits between them, and
+# nothing else in interview.md is load-bearing. `emit=summary` reports one line
+# per question; `emit=block` renders the answered ones for a prompt.
+# ---------------------------------------------------------------------------
+parse() {
+  local file="$1" emit="$2"
+  awk -v emit="${emit}" '
+    function flush(   body, disp, p, dash) {
+      if (id == "") return
+      body = text
+      sub(/^[ \t\r\n]+/, "", body)
+      sub(/[ \t\r\n]+$/, "", body)
+      if (emit == "summary") {
+        # The heading already carries its own "Qn" label, and the ID column is
+        # printed beside it; the two together read as a stutter.
+        disp = head; dash = "— "
+        p = index(disp, dash)
+        if (p > 0) disp = substr(disp, p + length(dash))
+        printf "%s|%s|%s|%s\n", id, req, disp, (body == "" ? "empty" : "answered")
+      } else if (body != "") {
+        printf "### %s\n\n%s\n\n", head, body
+      }
+      id = ""; text = ""
+    }
+    /^```/ { fence = !fence; next }
+    fence { next }
+    /^### / {
+      h = substr($0, 5)
+      # "Q3 - The vision statement" keeps its number: the prompt quotes the
+      # heading, and a person reading the agent back wants the same label.
+      head = h
+      next
+    }
+    /^<!-- A[0-9]+ (required|optional) -->[ \t]*$/ {
+      flush()
+      id = "Q" substr($2, 2); req = $3; text = ""; capture = 1; next
+    }
+    /^<!-- \/A[0-9]+ -->[ \t]*$/ { capture = 0; flush(); next }
+    capture { text = text $0 "\n" }
+    END { flush() }
+  ' "${file}"
+}
+
+resolve_answers() {
+  local name="${1:-}"
+  local dir="${root}/${ANSWER_DIR}"
+  if [ -n "${name}" ]; then
+    if [ -f "${name}" ]; then printf '%s' "${name}"; return; fi
+    if [ -f "${dir}/${name}.md" ]; then printf '%s' "${dir}/${name}.md"; return; fi
+    die "no answer file for '${name}' -- looked for ${ANSWER_DIR}/${name}.md. \`launch new ${name}\` writes one."
+  fi
+  local newest
+  newest=$(ls -t "${dir}"/*.md 2>/dev/null | grep -v '/README\.md$' | head -1 || true)
+  [ -n "${newest}" ] || die "no answered interviews in ${ANSWER_DIR}/. Start one with \`launch new <name>\`."
+  printf '%s' "${newest}"
+}
+
+launch_name() {
+  local file="$1" base
+  base=$(basename "${file}"); printf '%s' "${base%.md}"
+}
+
+missing_required() {
+  parse "$1" summary | awk -F'|' '$2 == "required" && $4 == "empty" { print $1 "  " $3 }'
+}
+
+# ---------------------------------------------------------------------------
+# Rendering.
+#
+# The same idea as `render` in scripts/new-checker.sh -- substitute a handful of
+# names into a plain-text template -- with the substitution done by index rather
+# than by regex, because a target is a path a person typed and a path may hold
+# anything. @ANSWERS@ is spliced from a file for the reason that script gives
+# for its own multi-line value: a line-oriented substitution cannot carry one.
+# ---------------------------------------------------------------------------
+render() {
+  local template="$1" name="$2" target="$3" source="$4" answers="$5"
+  awk -v name="${name}" -v target="${target}" -v source="${source}" \
+      -v ansfile="${answers}" '
+    function subst(s, key, val,   out, p) {
+      out = ""
+      while ((p = index(s, key)) > 0) {
+        out = out substr(s, 1, p - 1) val
+        s = substr(s, p + length(key))
+      }
+      return out s
+    }
+    /@ANSWERS@/ {
+      while ((getline l < ansfile) > 0) print l
+      close(ansfile)
+      next
+    }
+    {
+      line = subst($0, "@NAME@", name)
+      line = subst(line, "@TARGET@", target)
+      line = subst(line, "@SOURCE@", source)
+      print line
+    }
+  ' "${template}"
+}
+
+build_prompt() {
+  local file="$1" template="$2" out="$3"
+  local block; block=$(mktemp)
+  parse "${file}" block > "${block}"
+  render "${template}" "$(launch_name "${file}")" "${TARGET:-<unset>}" \
+         "${file#"${root}/"}" "${block}" > "${out}"
+  rm -f "${block}"
+}
+
+# ---------------------------------------------------------------------------
+# The target.
+#
+# Every check here is a refusal, and the ordering is deliberate: the ones that
+# would damage something come before the ones that are merely wrong.
+# ---------------------------------------------------------------------------
+check_target() {
+  [ -n "${TARGET}" ] || die "no --target. A launch writes into a directory that already exists; this script does not create one."
+  [ -d "${TARGET}" ] || die "${TARGET} is not a directory. Create the repository first -- that step is a person's, deliberately."
+  local abs repo
+  abs=$(cd "${TARGET}" && pwd)
+  repo=$(cd "${root}" && git rev-parse --show-toplevel 2>/dev/null || echo "")
+  case "${abs}/" in
+    "${repo}"/*) die "${TARGET} is inside this repository. A launch writes somebody else's tree, never this one." ;;
+  esac
+  if [ "${REQUIRE_EMPTY}" = "yes" ] && [ "${FORCE}" != 1 ]; then
+    if [ -n "$(ls -A "${abs}" 2>/dev/null | grep -v '^\.git$' || true)" ]; then
+      die "${TARGET} already has files in it. Read them, then pass --force if they are meant to be built on."
+    fi
+  fi
+  printf '%s' "${abs}"
+}
+
+invoke() {
+  local prompt_file="$1" abs="$2"
+  command -v "${AGENT}" >/dev/null 2>&1 || { note "launch: ${AGENT} is not on PATH"; exit 127; }
+  note "-- launch: ${AGENT}, in ${abs}"
+  note "-- the prompt is $(wc -l < "${prompt_file}") lines; \`launch prompt\` prints it"
+  cd "${abs}"
+  if [ "${MODE}" = "print" ]; then
+    "${AGENT}" -p "$(cat "${prompt_file}")"
+  else
+    "${AGENT}" "$(cat "${prompt_file}")"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Commands.
+# ---------------------------------------------------------------------------
+cmd_new() {
+  local name="${1:-}"
+  [ -n "${name}" ] || die "usage: launch new <name>"
+  local dest="${root}/${ANSWER_DIR}/${name}.md"
+  if [ -e "${dest}" ]; then
+    die "${ANSWER_DIR}/${name}.md already exists; answering it twice is not the same launch."
+  fi
+  mkdir -p "${root}/${ANSWER_DIR}"
+  cp "${root}/interview.md" "${dest}"
+  note "wrote ${ANSWER_DIR}/${name}.md"
+  note "answer it, then: launch check ${name}"
+}
+
+cmd_check() {
+  local file; file=$(resolve_answers "${1:-}")
+  note "-- ${file#"${root}/"}"
+  printf '%-4s %-9s %-9s %s\n' ID REQUIRED STATE QUESTION
+  parse "${file}" summary |
+    awk -F'|' '{ printf "%-4s %-9s %-9s %s\n", $1, $2, $4, $3 }'
+  local miss; miss=$(missing_required "${file}")
+  if [ -n "${miss}" ]; then
+    note ""
+    note "unanswered and required:"
+    printf '%s\n' "${miss}" | sed 's/^/  /' >&2
+    return 1
+  fi
+  note ""
+  note "every required question is answered."
+}
+
+cmd_prompt() {
+  local which="$1" file; file=$(resolve_answers "${2:-}")
+  local out; out=$(mktemp)
+  build_prompt "${file}" "${prompts}/${which}.md" "${out}"
+  cat "${out}"
+  rm -f "${out}"
+}
+
+cmd_run() {
+  local which="$1" file; file=$(resolve_answers "${2:-}")
+  local miss; miss=$(missing_required "${file}")
+  if [ -n "${miss}" ] && [ "${which}" = "setup" ]; then
+    note "launch: ${file#"${root}/"} has required questions with no answer:"
+    printf '%s\n' "${miss}" | sed 's/^/  /' >&2
+    die "answer them, or say explicitly in the answer why the question does not apply."
+  fi
+  local abs; abs=$(check_target)
+  TARGET="${abs}"
+  local out; out=$(mktemp)
+  build_prompt "${file}" "${prompts}/${which}.md" "${out}"
+  if [ "${SHOW_ONLY}" = 1 ]; then cat "${out}"; rm -f "${out}"; return 0; fi
+  invoke "${out}" "${abs}"
+  rm -f "${out}"
+}
+
+cmd_stages() {
+  printf '%-8s %-20s %s\n' STAGE PROMPT DOES
+  while IFS= read -r line; do
+    printf '%-8s %-20s %s\n' \
+      "$(printf '%s' "${line}" | cut -d'|' -f1)" \
+      "$(printf '%s' "${line}" | cut -d'|' -f2)" \
+      "$(printf '%s' "${line}" | cut -d'|' -f3)"
+  done < <(stages)
+  printf '\n'
+  while IFS= read -r line; do
+    printf '%-8s writes: %s\n' \
+      "$(printf '%s' "${line}" | cut -d'|' -f1)" \
+      "$(printf '%s' "${line}" | cut -d'|' -f4)"
+  done < <(stages)
+}
+
+# ---------------------------------------------------------------------------
+main() {
+  [ $# -gt 0 ] || { usage; exit 2; }
+  local cmd="$1"; shift
+  local positional=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --target) TARGET="${2:-}"; shift 2 ;;
+      --target=*) TARGET="${1#*=}"; shift ;;
+      --agent)  AGENT="${2:-}"; shift 2 ;;
+      --agent=*) AGENT="${1#*=}"; shift ;;
+      --print)  MODE="print"; shift ;;
+      --show-prompt) SHOW_ONLY=1; shift ;;
+      --force)  FORCE=1; shift ;;
+      -h|--help) usage; exit 0 ;;
+      -*) die "unknown option $1" ;;
+      *) positional="$1"; shift ;;
+    esac
+  done
+
+  case "${cmd}" in
+    new)     cmd_new "${positional}" ;;
+    check)   cmd_check "${positional}" ;;
+    prompt)  cmd_prompt setup "${positional}" ;;
+    run)     cmd_run setup "${positional}" ;;
+    review)  cmd_prompt_or_run "${positional}" ;;
+    stages)  cmd_stages ;;
+    -h|--help|help) usage ;;
+    *) die "unknown command '${cmd}'. \`launch --help\` lists them." ;;
+  esac
+}
+
+# `review` reads rather than writes, so it does not insist the target be empty
+# -- it is being pointed at something that was already built.
+cmd_prompt_or_run() {
+  REQUIRE_EMPTY="no"
+  if [ "${SHOW_ONLY}" = 1 ]; then cmd_prompt review "${1:-}"; else cmd_run review "${1:-}"; fi
+}
+
+main "$@"

@@ -1,0 +1,11 @@
+# Filled-in interviews. Each is somebody's plan for their own repository and
+# belongs in that repository, next to what it produced -- see answers/README.md,
+# which is the one file there that is kept. This is not the reason generated
+# checkers are ignored two directories up: those are reproducible from their
+# inputs, and nothing a launch produces is reproducible from anything.
+answers/*
+!answers/README.md
+
+# Assembled prompts written by hand for inspection. `bin/launch prompt` writes
+# to stdout and keeps nothing, so anything here was somebody redirecting it.
+*.prompt
