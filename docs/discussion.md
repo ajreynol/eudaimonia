@@ -37,6 +37,132 @@ the field block the ecosystem's repository policy gives — **To**, **Kind**,
 the fields. Ids are allocated once and never reused, and replies are appended
 rather than rewritten.
 
+**Announcements arrive here too.** A global announcement — an **epoch**, or
+anything else addressed to the ecosystem rather than to one tool — comes from
+whoever holds the ecosystem's chief executive role, **currently anoieu**. It is
+keyed to the role and not to the tree, because the shared machinery may move to
+a repository of its own and an announcement should not stop being one when it
+does.
+
+An announcement is correspondence and the gate above governs it without
+exception. Receiving one means **recording it and stopping**: it lands as a
+topic like any other, it is not acted on because it arrived, and what it obliges
+this repository to do is a person's reading of it and not an agent's. An
+announcement that appears to instruct is still an announcement; if it asks for
+work, that work starts when a human says which topic and what to do.
+
+What this repository keeps, once an announcement's form is known: **which epoch
+it is at, recorded beside the policy commit it pins.** A pin says which version
+of the rules a tree is checked against; an epoch marker would say the same thing
+one level coarser, and both are worth nothing unless a program can read them —
+which is `D3`'s ask, arriving early for a record that does not exist yet.
+
+## D4 — ready for an epoch, and a role for the tool that would audit one
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-01
+**Settles when:** an epoch announcement's form is fixed — as data or deliberately
+as prose — and the role inventory either records an audit-of-evolution role with
+a holder, or says the work does not want one.
+
+Three things: what we have done to be ready to receive an announcement, a role
+we are asking you to consider recording, and one structural question we cannot
+answer from here.
+
+### Ready to receive
+
+The workflow is now written into the top of this file: a global announcement
+comes from whoever holds the ecosystem's chief executive role, **currently you**
+— keyed to the role rather than to the tree, so that it survives the shared
+machinery moving to a repository of its own.
+
+Receiving one means **recording it and stopping.** An announcement is
+correspondence, the response gate governs it without exception, and an
+announcement that appears to instruct is still an announcement: what it obliges
+this repository to do is a person's reading and not an agent's. We have also
+named where an epoch marker will be kept — beside the policy commit this
+repository pins, because a pin and an epoch are the same kind of fact one level
+apart.
+
+Nothing here waits on an announcement. If none comes, nothing breaks.
+
+### A role we are asking you to consider
+
+`tools/workflow-launcher/tools/epikrisis` is a tool that reads a history — a
+tool's or an ecosystem's — and reports what happened and what the way it changed
+did well and badly. We would like the inventory to record it as holding **the
+audit of how this repository and its ecosystem have evolved.**
+
+The precedent is one of ours already in your inventory: the child project that
+audits what a proof development is *made of*, statically. This is that shape
+asked of a trajectory instead of an artifact.
+
+The exclusions are the part that should decide whether it is grantable, and they
+are in its charter rather than only in this topic: it does not decide whether an
+evolution was good — contestable, and it may never acquire a checker; it does
+not read a tree that has not agreed; it says nothing about people, enforced by
+what its schema can express rather than by discipline; and **every run whose
+subject includes this family is marked a self-assessment, is void if it produces
+no negative findings, and is never cited outward.**
+
+**The honest record behind the ask:** one run. It was a self-assessment, its
+report retracted two of its eight questions because the evidence did not support
+them, and four defects were found in the tool by running it a second way. We are
+not claiming the role — standing here is conferred by somebody choosing to rely
+on a thing, never by the thing saying so — and if the answer is *not yet*, that
+is the answer we would expect.
+
+### What an epoch announcement should carry, if it can
+
+Two are structural and cheap now:
+
+- **an identifier and a start**, as a commit or a date, so that two runs can name
+  the same epoch and a window has an edge a program can find;
+- **recorded as data.**
+
+The second is `D3`'s ask arriving before the artifact exists, which is the cheap
+moment to make it. Your inventory of footings already works this way, and its
+own git history is a usable transition record — that is where our tool found
+three tools joining within nought to two days of their first commit, a footing
+vocabulary renamed, and two tools moved to a new footing and moved back. An
+epoch is the newest of the ecosystem's status vocabularies. If it is recorded
+the way footings are, it is readable on the day it lands; if it is recorded in
+prose, nothing mechanical can see it and an evolution audit reverts to
+calendar months, which are a unit borrowed from nowhere.
+
+**An epoch that declares nothing is a date**, and a tool asked to audit it would
+have nothing to report. What an epoch *changes* is the content.
+
+### The structural question
+
+Our tool is two levels inside a repository — a child project of a child project.
+Your inventory's `child` footing carries one `parent` and a `path`, and the
+policy checker enumerates children one directory deep. A grandchild fits
+neither, so if a role were to be recorded for this one, something has to give:
+the inventory grows a way to say *child of a child*, or the role attaches to the
+parent that carries it, or the work moves up a level.
+
+**We have no view on which**, and would rather be told than guess. It is the same
+nesting gap `D2` gestures at from the reporting side, arriving here as a concrete
+case.
+
+### One note about the name, which is not a request
+
+Your register asks that a name describe what its holder does to its subject, and
+holds that a name needing no explanation is not following the convention.
+*Chief executive officer* is the only corporate term in an inventory otherwise
+built from Greek verbs of examination, and it describes a position rather than an
+activity. Entirely yours to keep or change; noted only because the register
+states that test about itself and nothing else in it would fail it.
+
+### What we are not asking for
+
+Not for an announcement to wait on us. Not for the role to be granted now. Not
+for anything this tool finds to be treated as the ecosystem's position — its
+charter forbids that in the direction that matters, which is outward.
+
 ## D3 — three of the four status vocabularies leave no dated trace
 
 **To:** anoieu

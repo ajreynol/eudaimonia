@@ -80,6 +80,76 @@ self-administered, and it is not close.
 - **Being fast, being general, being a product.** No users, no stability, no
   promise that any of it survives the first real run.
 
+## The role it is asking to hold
+
+Added 2026-09-01 by the maintainer, in an explicit instruction, which is the
+decision a scope change needs. **It is asked for and not claimed** — standing in
+this ecosystem is conferred by somebody choosing to rely on a tool, never by the
+tool saying so, and the register that would record it is in another tree.
+
+**The audit of how this repository and its ecosystem have evolved:** what
+happened, in what order, and what the way they changed did well and badly —
+answered from the trees, with every claim resting on evidence a reader can
+re-derive.
+
+The precedent is one level up and one subject over: a sibling child project
+holds the audit of what a proof development is *made of*, statically. This is
+the same shape asked of a trajectory rather than an artifact.
+
+**Not this role**, and the exclusions are the part that makes it safe to grant:
+
+- **Deciding whether the evolution was good.** That is contestable, nobody has
+  the authority to settle it, and it may never acquire a checker. What this
+  produces is evidence and an argument answerable to it.
+- **Grading any tree that has not agreed to be read.** The constraint above
+  governs; a run on somebody else's subject is internal by default.
+- **Anything about people.** Enforced by the schema, not by discipline.
+- **Speaking for its parents.** Its conclusions are not eudaimonia's positions
+  and never leave by machine.
+- **Auditing itself into significance.** Every run whose subject includes this
+  family is marked a self-assessment, a self-assessment with no negative
+  findings is void, and its conclusions are never cited outward — not as
+  evidence that these practices work, not in a vision document, not in a README.
+
+**What it has actually done, so that the ask is not read as more than it is:**
+one run, on a self-assessment, whose report retracted two of its eight questions
+because the evidence did not support them, and which found four defects in the
+tool that produced it. That is the whole record.
+
+## Receiving an epoch
+
+Global announcements reach the ecosystem from whoever holds its chief executive
+role — **currently anoieu**, and the role rather than the tree is what this is
+keyed to, since the shared machinery may move. An **epoch announcement** marks
+a boundary in the ecosystem's life, and that makes it directly this project's
+business for a reason that is not deference:
+
+**An epoch is the window this tool does not otherwise have.** Everything here is
+reported per month, and a month is an arbitrary unit borrowed from the calendar
+— it has no relationship to anything the ecosystem did. An epoch boundary is a
+unit the subject itself declares, which turns *what happened between these two
+points* from a choice this tool makes into a fact it reads. That is a better
+instrument, and it is free.
+
+**What this needs an announcement to carry**, stated now because it is far
+cheaper to say before the first one exists than after:
+
+| | why |
+| --- | --- |
+| a stable **identifier** | so two runs can name the same epoch and be compared |
+| a **start**, as a commit or a date | so a window has an edge a program can find |
+| **where it is recorded, as data** | the detectors here read status transitions out of an inventory file's own history. If an epoch is recorded that way it is readable on the day it lands; if it is recorded in prose, nothing here can see it and the audit reverts to months |
+| what it **declares** | an epoch that names nothing changed is a date, and this tool would have nothing to report about it |
+
+The last two are the ask carried upstream, and they are the same ask a topic
+from this repository already makes about the ecosystem's other status
+vocabularies. Raising it before the format exists is the cheap moment.
+
+**Until an announcement arrives, nothing here waits on it.** A tool that cannot
+work without a thing that does not exist yet has made itself somebody's
+dependency, and this one is deliberately not that: it reports per month today,
+and gains a better window when there is one.
+
 ## The two initial subjects
 
 Chosen because they are as different as two histories can be while both being
