@@ -2,7 +2,11 @@
 
 Where the Eunoia rendering of the target lives. **Goal 2.**
 
-**It is empty. Nothing has been rendered.**
+**It is empty, and it stays empty until [the gate](../README.md#the-gate)
+opens.** No rendering of anybody else's calculus is written here before its
+maintainers have been asked and have agreed — and when one is, its sources are
+the published specification and other published material only. Everything below
+describes what would go here.
 
 ## What goes here
 

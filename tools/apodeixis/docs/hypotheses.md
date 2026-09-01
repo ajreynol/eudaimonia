@@ -10,6 +10,13 @@ break rather than as an honest limitation, and how it would be settled. None is
 a claim about Alethe — the specification is its authors' and this page's
 readings of it are to be confirmed against it before any of them is used.
 
+**Written from published material only, and held.** What is described below comes
+from the published specification and from what is public about the format;
+nothing here draws on unpublished work, which is its authors' alone. And the page
+is not a plan in progress: [the gate](../README.md#the-gate) has not opened, so
+none of these predictions is being tested, and if the Alethe maintainers ask for
+this page to change or to go, it changes or goes.
+
 **How to read a prediction that turns out wrong.** A hypothesis that does not
 break is not a nuisance; it is the more valuable half of the result, because it
 converts *the framework is probably narrow here* into *the framework is general

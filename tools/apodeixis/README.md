@@ -88,6 +88,25 @@ unanswered for a good reason. A stress test is not worth much, and it is
 certainly not worth more than the right of the people who did the work to decide
 what is done with it.
 
+### The gate is local; the reasoning should not be
+
+Nothing in the ecosystem's shared policy produced any of the above. That policy
+has an argued position on what may be *said* about somebody else's code and
+nothing on what may be *taken* from it, and this project found the gap by walking
+into it.
+
+So the reasoning has been offered upward, as a proposal, in the parent's standing
+channel to the ecosystem — [`docs/discussion.md`](../../docs/discussion.md), topic
+`D1`. **This directory did not raise it and could not have:** a child project has
+no correspondence channel, precisely so that speculative work cannot open a
+conversation somebody else has to answer. A person carried it, through the
+parent, which is the only route there is.
+
+If the ecosystem settles on something stricter, this project adopts it. If it
+settles on something weaker, or declines to settle at all, the gate above stands
+anyway — a project may bind itself more tightly than its policy requires, and
+this one does.
+
 ## The charter
 
 **The question.** Does the framework generalize to a calculus it was not shaped
@@ -244,6 +263,13 @@ The reason for stating this so flatly is that the alternative reading is
 attractive and would be borrowed credibility in both directions at once — the
 framework's, for a claim about Alethe it has not earned, and Alethe's, for a
 demonstration whose real subject is a template.
+
+**None of that means no relationship.** *Not serving* is about what flows out —
+no findings, no claims, no artifact anybody there is asked to care about. [The
+gate](#the-gate) is about what flows in, and it is the opposite posture: the
+maintainers are asked first, see anything written here that describes their work,
+and can stop it. The two are consistent and the combination is the point — take
+nothing without asking, and hand back nothing that would need answering.
 
 ## An island
 

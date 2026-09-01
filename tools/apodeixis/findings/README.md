@@ -3,7 +3,16 @@
 Everything the load showed, one entry at a time. **Goal 1**, and the only
 output of this project that is meant to outlive it.
 
-**It is empty. Nothing has been run.**
+**It is empty. Nothing has been run**, and nothing will be until
+[the gate](../README.md#the-gate) opens.
+
+One rule here comes from the gate rather than from the policy, and it outranks
+everything else on this page: **an entry that describes Alethe is shown to the
+maintainers before it goes anywhere.** Most entries will not describe Alethe at
+all — a break is a fact about the framework, and the rendering that provoked it
+is usually incidental — but the ones that do are the ones a reader could take as
+a judgement on somebody else's calculus, and those are not this project's to
+publish unreviewed.
 
 ## Why a ledger and not a report
 

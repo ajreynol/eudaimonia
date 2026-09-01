@@ -9,7 +9,16 @@ wrapper around it would be one more thing that could be wrong. What this page
 replaces a harness with is a protocol short enough to follow by hand and precise
 enough that two runs are comparable.
 
-## The three rules
+## The rules
+
+**0. No run happens before the gate opens.** The charter's
+[gate](../README.md#the-gate) is a precondition of this entire page: the Alethe
+maintainers are asked first, by a person, and nothing on it is done while that
+ask is outstanding or after a no. Every stage below assumes permission that has
+not been given. The rule is placed first because a protocol page reads as an
+invitation to follow it.
+
+The rest are about measuring the right thing once there is anything to measure.
 
 **1. The parent is never modified to make a run succeed.** Not the templates,
 not the generator, not the installer, not a flag default. The moment a run only

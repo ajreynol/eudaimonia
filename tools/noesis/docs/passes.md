@@ -17,6 +17,13 @@ about what could be done *while the fork is undecided*. This page takes that
 table as its starting point and adds one column: what a Lean reimplementation of
 each pass would be, and what it could claim.
 
+Saying so is not a courtesy. The whole of what this project would contribute if
+it succeeded is a second implementation of somebody else's compiler, drafted in
+part from a document written by the tree that would be displaced by it — and the
+cheap end of the discipline the parent has raised with the ecosystem as `D1` is
+that a borrowed decomposition is cited as borrowed, every time, rather than
+absorbed into the borrower's account of its own cleverness.
+
 Two things that classification already settles, and that this project does not
 get to relitigate:
 

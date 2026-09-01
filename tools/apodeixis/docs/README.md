@@ -3,7 +3,9 @@
 Every document in this child project, and what each one is for. The charter,
 [`../README.md`](../README.md), is the entry point and everything here assumes
 it has been read — in particular that the load is Alethe and the subject is
-eudaimonia, and that nothing here is offered to the Alethe ecosystem.
+eudaimonia, that nothing here is offered to the Alethe ecosystem, and that
+**nothing proceeds until the Alethe maintainers have been asked and have
+agreed**. Every page below describes work that has not started and may never.
 
 | document | what it is for |
 | --- | --- |
