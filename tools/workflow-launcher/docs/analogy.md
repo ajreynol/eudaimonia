@@ -16,6 +16,7 @@ stale, the project has stopped doing its job.
 | --- | --- | --- |
 | **the specification you bring** | a signature (`.eo`), its semantics (`.eos`), and the SMT-LIB semantics they are read against | an answered [interview](../interview.md) |
 | **the settings** | [`config.sh`](../../../config.sh) — names, the calculus profile, the scaffolding switches | [`launcher.conf`](../launcher.conf) — the agent command, the target, the refusals |
+| **what varies by kind** | the **calculus profile**: facts about the calculus deciding what a checker needs, must prove and can inherit — a `--flag` each, recorded in the generated project | [`supplements/`](../supplements): the questions one *kind* of tool owes an answer to — `--with` each, merged into the answer file so it stays the whole record |
 | **the generator** | [`scripts/new-checker.sh`](../../../scripts/new-checker.sh) | [`bin/launch`](../bin/launch) |
 | **what it renders** | [`templates/`](../../../templates) — one file per generated file, `.in` suffixed | [`prompts/`](../prompts) — one file per stage |
 | **the substitution** | `@CHECKER@`, `@CALCULUS@`, `@FORMAT@`, `@EXE@`, `@CALCLOWER@`, `@MINI@`, `@TOOLCHAIN@` | `@NAME@`, `@TARGET@`, `@SOURCE@`, `@ANSWERS@` |

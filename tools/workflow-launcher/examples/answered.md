@@ -10,6 +10,10 @@ bin/launch check examples/answered.md
 bin/launch prompt examples/answered.md
 ```
 
+It was created with `--with measurement`, so it also shows what a supplement
+looks like merged in: the `M` questions at the bottom are not part of the core
+form and only appear because this tool's output is numbers.
+
 The tool it describes is deliberately called `mytool` and is deliberately not
 in the ecosystem's name register — a placeholder, chosen so that what this
 renders is never mistaken for a repository somebody is about to create. Note
@@ -35,6 +39,17 @@ of what it was asked for, so when the result is wrong there is no way to tell
 whether the instruction was wrong or the agent was. A filled-in interview is
 that account, and it costs a copy of one file to keep.
 
+**This form is agnostic**, and deliberately: nothing in it assumes what kind of
+tool you are building. Questions that only make sense for one *kind* of tool
+live in `supplements/` — a directory beside this file in the launcher — and are
+merged in when you ask for them,
+so the core never grows a question most launches would skip.
+
+```bash
+bin/launch supplements                    # what exists, and when each applies
+bin/launch new <name> --with measurement  # core + that supplement, in one file
+```
+
 **How to use it.**
 
 ```bash
@@ -58,6 +73,9 @@ Questions marked **required** must be answered or `run` refuses. Questions
 marked **optional** may be left empty, and an empty one is dropped from the
 prompt rather than sent as a blank — an agent handed an empty heading will fill
 it in, which is the failure this whole file exists to prevent.
+
+**Question numbers are stable.** Append; do not renumber. An answered interview
+is a record, and two of them should be comparable a year apart.
 
 **What the agent will not do**, whatever you write here: create a repository, an
 organisation or a remote; push; commit; or touch credentials. It writes files
@@ -97,38 +115,36 @@ the agent writes that entry's account of it rather than inventing one.
 ### Q2 — What it is, in two sentences
 
 **Required.** What the tool is, and what question it answers. Present tense,
-about what will exist, not about what it might grow into.
+about what will exist, not about what it might grow into. This is the front-page
+paragraph, so write it as you want it read.
 
-Then the harder half: **the question it does *not* answer.** Usually it is the
-larger one a reader will assume, and a front page that does not name it is one
-that will be read as claiming it.
+What it *refuses* to answer is asked separately, twice and for different
+reasons: Q3 asks what a successful run does not establish, and Q5 asks what the
+tool will not do. Keep this one to the positive claim.
 
 <!-- A2 required -->
-A command that reads a Eunoia signature and reports which of its rules no
-proof in a given corpus ever uses. It answers: what part of this calculus is
-specified and never exercised?
-
-It does **not** answer whether an unused rule is wrong, unnecessary, or merely
-unreached by the corpus somebody happened to have. Every one of those looks
-identical from here.
+A command that reads a Eunoia signature and a corpus of proofs, and reports
+which of the signature's rules no proof in that corpus ever uses. It answers:
+what part of this calculus is specified and never exercised?
 <!-- /A2 -->
 
 ### Q3 — The vision statement
 
 **Required.** What the work is aiming at, in a paragraph somebody could
-disagree with. This is the one answer the agent is told to treat as authoritative
-and to quote rather than paraphrase, so write it as you want it to appear.
+disagree with. This is the one answer the agent is told to treat as
+authoritative and to quote rather than paraphrase.
 
 Two things worth putting in it, because they are what the ecosystem's own
 development vision asks a new tool for and both are cheap now and expensive
 later:
 
-- **Name the first consumer.** The tool, the repository, or the job that will
-  read this tool's output, and the exact artifact it takes. A tool with no
-  nameable consumer is being built for its author, and an agent will happily
-  keep building it for its author indefinitely.
-- **Say what a successful run does not establish.** The caveat belongs on the
-  front page, not three clicks in.
+- **Name the first consumer.** The tool, the repository, the job or the person
+  that will read this tool's output, and the exact artifact it takes. A tool
+  with no nameable consumer is being built for its author, and an agent will
+  happily keep building it for its author indefinitely.
+- **Say what a successful run does not establish.** Not what the tool declines
+  to do — that is Q5 — but what a clean result is *not evidence of*. A tool
+  whose caveat is three clicks in has not published it.
 
 <!-- A3 required -->
 Coverage of a calculus is currently a thing people assert. This makes it a
@@ -142,26 +158,85 @@ that only prints a report has not started.
 
 A clean run establishes that every rule in the signature appeared in the corpus
 that was read. It establishes nothing about a corpus nobody has collected, and
-the front page says so above the fold.
+nothing about whether an unused rule is wrong.
 <!-- /A3 -->
 
-### Q4 — Out of scope
+### Q4 — What already answers this, and why it is not enough
 
-**Optional, and the most useful optional answer here.** An explicit list of what
-this tool will not do. Every item you write is a file the agent will not create
-and a section it will not add.
+**Required**, and *nothing does* is a complete answer if it is true.
 
-<!-- A4 optional -->
+Name the incumbent: the tool, the script, the paper, the spreadsheet or the
+habit that answers this question today. Then say what is wrong with it — too
+slow, too manual, wrong granularity, unmaintained, answers a nearby question
+instead.
+
+This is the mirror of naming the consumer, and it is here because it is the
+question an agent cannot answer for you and will not think to ask. Given
+silence, it will build the conventional version of your tool, which is usually
+the incumbent with a new name. Naming the incumbent is also what tells the agent
+what *not* to reimplement.
+
+**If the honest answer is that you have not looked**, write that. It is a better
+input than a guess, and it tells whoever reads this later how much weight the
+rest of the interview can carry.
+
+<!-- A4 required -->
+Nothing does it directly, and two things do it badly.
+
+The reference checker will tell you, per proof, which rules it applied — so a
+shell loop over a corpus plus `sort -u` is the incumbent, and it is what people
+actually run. It is slow, it needs the checker built, and it silently drops
+rules whose proofs fail to parse, which is exactly the population you care
+about.
+
+The calculus template reports rule *status* — proven, stubbed — which is a
+different question that is easy to mistake for this one. Do not reimplement it
+and do not import it.
+<!-- /A4 -->
+
+### Q5 — Out of scope
+
+**Required.** An explicit list of what this tool will not do. Every item you
+write is a file the agent will not create and a section it will not add.
+
+Include **the larger question a reader will assume you are answering.** That is
+usually the most valuable line in the whole interview: it is the claim your
+front page will be read as making unless it says otherwise.
+
+A perfunctory list beats an empty one. Silence here is filled with the
+conventional thing, every time.
+
+<!-- A5 required -->
 - It does not run the checker, and does not care whether a proof is valid.
 - It does not collect corpora. Point it at one.
 - It does not rank rules by importance. Used and unused is the whole output.
-<!-- /A4 -->
+- **The larger question it will be read as answering, and does not:** whether
+  the calculus has rules that are unnecessary. An unused rule may be untested,
+  unreachable, or simply not exercised by whatever proofs somebody had. This
+  tool cannot tell those apart and must say so on the front page.
+<!-- /A5 -->
+
+### Q6 — One repository, or the first of several
+
+**Optional.** If this is meant to be one tool, leave it empty and the agent will
+build one tool.
+
+If it is the first of a family — several tools around one subject, sharing a
+corpus, a format or a reporting path — say so and say what the others are
+likely to be. It changes what belongs at the top level, whether anything should
+be factored out on day one, and whether the shared part deserves its own name
+now or later. The default answer is **one**: factoring for tools that do not
+exist yet is the most expensive guess available.
+
+<!-- A6 optional -->
+
+<!-- /A6 -->
 
 ---
 
 ## What the repository contains on day one
 
-### Q5 — The initial tools
+### Q7 — The initial tools
 
 **Required.** What should exist in the repository when the launch finishes. Be
 concrete: name the executables, the entry points, the directories. "A CLI called
@@ -177,7 +252,7 @@ If the honest answer is "nothing yet, just the README", write that. It is a
 legitimate answer and the naming workflow's default, and the agent is told not
 to argue with it.
 
-<!-- A5 required -->
+<!-- A7 required -->
 - `mytool cover <signature.eo> <corpus-dir>` — a **working stub**: parses the
   signature, lists every rule name, and prints them all as unused. Wrong, and
   it runs end to end from the first command, which is the point.
@@ -185,9 +260,9 @@ to argue with it.
   This is the piece the stub is built out of, so it costs nothing extra.
 - `tests/` with one signature of four rules, one corpus of two proofs, and the
   expected output committed.
-<!-- /A5 -->
+<!-- /A7 -->
 
-### Q6 — Language, toolchain and build
+### Q8 — Language, toolchain and build
 
 **Optional.** The language, the version, how it is built and how it is run. If
 there is a version to pin, pin it here — an agent choosing a toolchain version
@@ -195,29 +270,29 @@ on your behalf will choose whatever it saw most of.
 
 Leave empty if the repository is documents for now.
 
-<!-- A6 optional -->
+<!-- A8 optional -->
 Python 3.11, no dependencies outside the standard library, run as
 `python3 -m mytool`. No packaging, no virtualenv, no lock file until something
 needs one.
-<!-- /A6 -->
+<!-- /A8 -->
 
-### Q7 — Tests and evidence
+### Q9 — Tests and evidence
 
 **Optional.** What the first test is, and what it establishes. If the tool makes
 claims about somebody else's program, say whether their output is to be recorded
 from a real run and committed, rather than written from memory.
 
-<!-- A7 optional -->
+<!-- A9 optional -->
 One case, committed: the four-rule signature, the two-proof corpus, and the
 expected list of two unused rules. The corpus is real proofs recorded from a
 run of the reference checker, not proofs written by hand to make the test pass.
-<!-- /A7 -->
+<!-- /A9 -->
 
 ---
 
 ## What to take from the Eunoia ecosystem
 
-### Q8 — What to adopt, and what to leave
+### Q10 — What to adopt, and what to leave
 
 **Required**, and "nothing" is a complete answer. This is the question the
 launcher exists for: everything below already exists, works, and is somebody
@@ -241,7 +316,17 @@ more than a compliant one with nothing to say, and the ordering is deliberate:
 knowing what you are building is what makes the rest of it decidable. Adopting
 the policy later is one command; unpicking a layout you never wanted is not.
 
-<!-- A8 required -->
+**If your subject is outside the ecosystem**, say so here, because it changes
+what the reporting rows mean. The ecosystem distinguishes projects it *includes*
+from projects it *serves* — the solver is the second kind, outside and the
+reason the rest exists — and a tool pointed at one of those is reporting
+outward, to maintainers who did not ask and are under no obligation. Two things
+follow that the table does not capture: nothing crosses a repository boundary by
+machine, a person carries it; and a member already runs a findings loop against
+the solver, so the pattern exists and is worth reading before inventing a second
+one. Name the project your findings are *about*, and who you expect to read one.
+
+<!-- A10 required -->
 - the repository policy — **later**. There is nothing to comply about on day
   one and adopting it early would decide a layout before the tool has a shape.
 - the membership declaration — **later**, with the policy.
@@ -249,15 +334,19 @@ the policy later is one command; unpicking a layout you never wanted is not.
 - the reporting workflow — **later**, and only if this starts making claims
   about somebody else's tree. Reporting a coverage number is not that.
 - the shared reporting machinery — **no**.
-- the calculus template — **no**. This does not check proofs.
+- the calculus template — **no**. This does not check proofs. See the incumbent
+  answer: its rule-status report is the thing not to reimplement.
 - the proof checker and its compiler — **no**. Reading a signature for rule
   names does not need the compiler, and taking the dependency to avoid writing
   a small parser would be the expensive way round.
 - the analyzer — **no** as a dependency. It already parses signatures, so the
   overlap is worth a conversation later, not a dependency now.
-<!-- /A8 -->
 
-### Q9 — Who runs the work
+The subject is inside the ecosystem: the signature is ours, and nothing here
+reports outward to anybody.
+<!-- /A10 -->
+
+### Q11 — Who runs the work
 
 **Optional.** People, agents, or both — and under what supervision. This decides
 one paragraph the ecosystem's policy asks every front page to end with, and it
@@ -270,16 +359,16 @@ Leave empty and the agent is told to state the honest default — that the
 repository was set up by an agent from this interview, and that who maintains it
 is undecided.
 
-<!-- A9 optional -->
+<!-- A11 optional -->
 Set up by an agent from this interview. Who maintains it afterwards is
 undecided, and the front page should say exactly that rather than guess.
-<!-- /A9 -->
+<!-- /A11 -->
 
 ---
 
 ## Bounds on the launch
 
-### Q10 — What the agent must not do
+### Q12 — What the agent must not do
 
 **Optional.** Anything beyond the standing refusals. Files not to create,
 directories not to touch, conventions not to import, opinions not to have. This
@@ -290,14 +379,14 @@ The standing refusals, which you do not need to repeat: no repository, no
 remote, no push, no commit, no credentials, and nothing written outside the
 target directory.
 
-<!-- A10 optional -->
+<!-- A12 optional -->
 - Do not write a CI workflow. There is nothing worth gating yet.
 - Do not add a documentation index or a `docs/` directory. One README.
 - Do not add packaging metadata.
 - Do not invent an etymology for the name.
-<!-- /A10 -->
+<!-- /A12 -->
 
-### Q11 — The target directory
+### Q13 — The target directory
 
 **Optional.** Where the repository is, if you already know. `--target` on the
 command line overrides whatever is written here.
@@ -307,6 +396,171 @@ ecosystem's policy deliberately places behind a person, because a workflow that
 could notice a gap, argue for a tool, take a name, write its README *and*
 publish it would have no person in it anywhere.
 
-<!-- A11 optional -->
+<!-- A13 optional -->
 
-<!-- /A11 -->
+<!-- /A13 -->
+
+---
+
+## Measurement
+
+For a tool whose output is **numbers** — timings, counts, sizes, coverage,
+scores. These questions are here rather than in the core because most launches
+do not need them, and because a measurement tool that has not answered them will
+produce numbers that look exactly like numbers that mean something.
+
+The order is the one that matters: what you measure decides everything else, and
+the last question is the one that decides whether anybody should believe any of
+it.
+
+### M1 — What is measured, and in what unit
+
+**Required.** The quantity, and what it is expressed in. Be exact about the
+unit: wall-clock seconds and instruction counts are different measurements of
+different things, and so are *lines* and *nonblank noncomment lines*.
+
+If more than one quantity, list them and say which is **primary** — the one a
+run reports when nobody asked for detail. A tool with three co-equal headline
+numbers has not decided what it is for.
+
+<!-- AM1 required -->
+Two counts and one list. Primary is **the list**: the names of rules that
+appear in the signature and in no proof in the corpus, one per line.
+
+The counts are `rules in signature` and `rules covered`, both integers. There
+is no percentage and there will not be one — a coverage percentage over a
+corpus nobody chose is the number most likely to be quoted and least likely to
+mean anything.
+<!-- /AM1 -->
+
+### M2 — The corpus, and where it comes from
+
+**Required.** What the tool runs on: which inputs, how many, where they come
+from, and whether they are **committed, fetched at a pin, or assumed present on
+the machine.**
+
+The third of those is the one that quietly ruins a measurement tool: a number
+nobody else can re-measure cannot be argued with, and a corpus that lives only
+on its author's disk makes every result a claim about that disk. Say which
+kind you are choosing, and if it is the third, say why.
+
+Also say whether the corpus is **fixed or growing**, because a number compared
+across a changing corpus is not a comparison.
+
+<!-- AM2 required -->
+A directory of `.proof` files given on the command line. **Not committed and
+not fetched** — the corpus is the user's, and this tool has no opinion about
+which one is right.
+
+The test corpus, which is two proofs, *is* committed, and it exists to test the
+tool rather than to measure anything.
+
+A corpus is whatever the directory held at the moment of the run, so it is
+growing by default. Every run records the file count and the corpus path
+beside its output for that reason.
+<!-- /AM2 -->
+
+### M3 — The baseline
+
+**Required.** What a number is compared against. A measurement with no baseline
+is a fact about one run and is not yet information.
+
+The usual candidates, and they behave differently: a **committed baseline** in
+this repository, which makes a regression fail this build before it reaches
+anybody; a **previous revision** of the thing being measured, which needs the
+revision recorded with the number; an **external reference** — a competitor, a
+published result, a target; or **none yet**, which is a legitimate day-one answer
+if you say so.
+
+Say also what a baseline being *stale* looks like and who notices.
+
+<!-- AM3 required -->
+**None yet, deliberately.** The first version compares nothing: it reports the
+list for one signature and one corpus, and that is the whole output.
+
+A baseline becomes meaningful once somebody runs it twice on the same corpus
+across two signature revisions, and the right form then is a committed baseline
+in the repository that owns the calculus, not here. Do not build one now.
+<!-- /AM3 -->
+
+### M4 — Noise, and the threshold
+
+**Required.** What makes two runs of the same thing on the same input differ,
+and **how large a difference has to be before you would report it.**
+
+This is the question that separates a measurement tool from a stopwatch. Say
+what varies — machine load, scheduling, cache state, randomised seeds,
+timeouts — how many runs a number is taken over and how they are combined, and
+the threshold below which the tool says *no change* rather than a small number.
+
+An agent given silence here will report the difference between two single runs
+to three decimal places, and it will look authoritative.
+
+<!-- AM4 required -->
+**None: this measurement is deterministic.** The same signature and the same
+corpus give the same list every time, because nothing is timed and nothing is
+sampled.
+
+That is worth stating rather than leaving implicit, because it is what makes
+the threshold question empty here and it is the reason a single run is enough.
+If a future version ever times anything, this answer stops being true and the
+threshold question becomes real.
+<!-- /AM4 -->
+
+### M5 — The environment, and what a number is not portable across
+
+**Optional.** Hardware, parallelism, timeouts, resource limits, build
+configuration — whatever a number depends on that is not the input.
+
+Then the part worth the most: **name what makes two numbers incomparable.** A
+different machine, a different build type, a different core count, a different
+timeout. Whatever is on that list should be recorded beside every number, and
+saying so here is what makes the agent record it.
+
+<!-- AM5 optional -->
+Irrelevant to the number: no timing, no parallelism, no resource limits.
+
+What two results are **not** comparable across: a different corpus, a different
+signature revision. Both are recorded beside every run.
+<!-- /AM5 -->
+
+### M6 — What a number is not allowed to claim
+
+**Required.** The epistemic caveat, stated so it can go on the front page rather
+than three clicks in.
+
+Measurement tools are believed more than they deserve, and by exactly the
+readers least able to check them. Say plainly what a result is *not* evidence
+of: that a regression is a defect, that an improvement is causal, that the
+corpus is representative, that what was measured is what anybody cares about.
+
+If a number would be reported to somebody who owns the thing measured, this
+answer is what stops it being read as an accusation.
+
+<!-- AM6 required -->
+A rule appearing in the unused list is **not** evidence that it is wrong,
+unnecessary, dead, or untested. It is evidence of one thing only: no proof in
+the corpus that was read applied it.
+
+The likeliest cause is that nobody has generated proofs exercising it, which is
+a fact about the corpus and not about the calculus. This belongs on the front
+page above the fold, and a report that omits it will be read as a list of rules
+to delete.
+<!-- /AM6 -->
+
+### M7 — The first number you want to see
+
+**Optional, and the sharpest scoping question here.** The smallest end-to-end
+measurement worth having on day one: one input, one quantity, one number
+printed.
+
+It pairs with the working-stub answer in the core. A measurement tool whose
+day-one stub actually runs one case and prints one real number is in a
+completely different state from one that arrives as scaffolding — you can be
+wrong about it immediately, which is the whole point.
+
+<!-- AM7 optional -->
+One signature, four rules, two proofs, and the two-line list of the rules those
+proofs did not use. Printed by `mytool cover` on the day the repository is
+created.
+<!-- /AM7 -->

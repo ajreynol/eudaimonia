@@ -35,6 +35,7 @@ if [ -f "${root}/launcher.conf" ]; then . "${root}/launcher.conf"; fi
 
 FORCE=0
 SHOW_ONLY=0
+WITH=""
 
 die()  { printf 'launch: %s\n' "$*" >&2; exit 2; }
 note() { printf '%s\n' "$*" >&2; }
@@ -44,6 +45,7 @@ usage() {
 usage: launch <command> [options] [NAME]
 
   new NAME     Copy interview.md to answers/NAME.md, ready to be answered.
+               --with merges one or more supplements into the copy.
   check [NAME] Report which questions are answered and which are not. A
                required question left empty is what `run` refuses on.
   prompt [NAME]
@@ -55,6 +57,7 @@ usage: launch <command> [options] [NAME]
                Hand the review prompt to an agent: read what was built against
                what was asked, and change nothing.
   stages       The catalogue: each prompt, what it is for, and what it writes.
+  supplements  The extra question sets, and which kind of tool each is for.
 
 options:
   --target DIR  Where the launch writes. Must exist, must be a directory, must
@@ -62,6 +65,7 @@ options:
   --agent CMD   The agent command to run (default: from launcher.conf).
   --print       Run the agent non-interactively and print the result.
   --show-prompt Print the prompt and exit, whatever the command.
+  --with IDS    Supplements to merge, comma-separated. `new` only.
   --force       Accept a target that already has files in it.
 
 NAME is the launch's name: `answers/NAME.md`, or a path to an answer file.
@@ -84,6 +88,36 @@ stages() {
 setup|prompts/setup.md|write the repository from the answered interview|files in the target, staged, never committed
 review|prompts/review.md|read what was built against what was asked|nothing; a report on stdout
 CATALOGUE
+}
+
+# ---------------------------------------------------------------------------
+# The supplement catalogue.
+#
+# One line per supplement:  id | for | size
+#
+# A supplement holds the questions one *kind* of tool owes an answer to, and is
+# merged into the answer file at `new` so that file stays the whole record of
+# what was asked. The counterpart of the calculus profile downstairs: facts
+# about the kind of thing being built, rather than about this one.
+#
+# Adding one is a file in supplements/ and a line here.
+# ---------------------------------------------------------------------------
+supplements() {
+  cat <<'CATALOGUE'
+measurement|a tool whose output is numbers: timings, counts, sizes, coverage|7 questions, 5 required
+CATALOGUE
+}
+
+cmd_supplements() {
+  printf '%-14s %-62s %s\n' SUPPLEMENT FOR SIZE
+  while IFS= read -r line; do
+    printf '%-14s %-62s %s\n' \
+      "$(printf '%s' "${line}" | cut -d'|' -f1)" \
+      "$(printf '%s' "${line}" | cut -d'|' -f2)" \
+      "$(printf '%s' "${line}" | cut -d'|' -f3)"
+  done < <(supplements)
+  printf '\n  bin/launch new <name> --with <id>[,<id>...]\n'
+  printf '  supplements/README.md says when to write one.\n'
 }
 
 # ---------------------------------------------------------------------------
@@ -123,11 +157,15 @@ parse() {
       head = h
       next
     }
-    /^<!-- A[0-9]+ (required|optional) -->[ \t]*$/ {
+    /^<!-- A[A-Za-z0-9]+ (required|optional) -->[ \t]*$/ {
       flush()
-      id = "Q" substr($2, 2); req = $3; text = ""; capture = 1; next
+      # Core questions are A1..An and display as Q1..Qn; a supplement prefixes
+      # its own letter -- AM1 displays as M1 -- so the two cannot collide.
+      id = substr($2, 2)
+      if (id ~ /^[0-9]/) id = "Q" id
+      req = $3; text = ""; capture = 1; next
     }
-    /^<!-- \/A[0-9]+ -->[ \t]*$/ { capture = 0; flush(); next }
+    /^<!-- \/A[A-Za-z0-9]+ -->[ \t]*$/ { capture = 0; flush(); next }
     capture { text = text $0 "\n" }
     END { flush() }
   ' "${file}"
@@ -241,13 +279,28 @@ invoke() {
 # ---------------------------------------------------------------------------
 cmd_new() {
   local name="${1:-}"
-  [ -n "${name}" ] || die "usage: launch new <name>"
+  [ -n "${name}" ] || die "usage: launch new <name> [--with <id>[,<id>...]]"
   local dest="${root}/${ANSWER_DIR}/${name}.md"
   if [ -e "${dest}" ]; then
     die "${ANSWER_DIR}/${name}.md already exists; answering it twice is not the same launch."
   fi
+  # Every supplement is resolved before anything is written: a typo should not
+  # leave half a form behind.
+  local ids="" id
+  if [ -n "${WITH}" ]; then
+    ids=$(printf '%s' "${WITH}" | tr ',' ' ')
+    for id in ${ids}; do
+      [ -f "${root}/supplements/${id}.md" ] ||
+        die "no supplement '${id}'. \`launch supplements\` lists them."
+    done
+  fi
   mkdir -p "${root}/${ANSWER_DIR}"
   cp "${root}/interview.md" "${dest}"
+  for id in ${ids}; do
+    printf '\n' >> "${dest}"
+    cat "${root}/supplements/${id}.md" >> "${dest}"
+    note "merged supplement: ${id}"
+  done
   note "wrote ${ANSWER_DIR}/${name}.md"
   note "answer it, then: launch check ${name}"
 }
@@ -323,6 +376,8 @@ main() {
       --agent=*) AGENT="${1#*=}"; shift ;;
       --print)  MODE="print"; shift ;;
       --show-prompt) SHOW_ONLY=1; shift ;;
+      --with)   WITH="${2:-}"; shift 2 ;;
+      --with=*) WITH="${1#*=}"; shift ;;
       --force)  FORCE=1; shift ;;
       -h|--help) usage; exit 0 ;;
       -*) die "unknown option $1" ;;
@@ -337,6 +392,7 @@ main() {
     run)     cmd_run setup "${positional}" ;;
     review)  cmd_prompt_or_run "${positional}" ;;
     stages)  cmd_stages ;;
+    supplements) cmd_supplements ;;
     -h|--help|help) usage ;;
     *) die "unknown command '${cmd}'. \`launch --help\` lists them." ;;
   esac

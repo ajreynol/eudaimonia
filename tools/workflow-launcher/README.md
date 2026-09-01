@@ -105,7 +105,8 @@ Three things, and the first two are the point.
 | | |
 | --- | --- |
 | [docs/ai-workflows.md](docs/ai-workflows.md) | **The findings register.** What this ecosystem is doing that looks novel, what of it generalises past this ecosystem, and — on the same list rather than in a section at the end — what is wrong with it. Every claim carries what would falsify it, because the failure mode of a document like this written by an agent is a list of flattering observations. anoieu's development-vision page grades the tools and remains the authority on whether the work is good; this asks the different question of what has been found out. |
-| [interview.md](interview.md) | **The form.** What this is, and what a person has to settle before a repository exists: the name and where it is registered, the vision, the initial tools, the toolchain, which ecosystem machinery to adopt and which to leave, how the work will be run, and what the agent must not do. Eleven questions, five of them required. |
+| [interview.md](interview.md) | **The form.** What a person has to settle before a repository exists: the name and where it is registered, what it is, the vision, what already answers this and why that is not enough, what is out of scope, the initial tools, the toolchain, which ecosystem machinery to adopt and which to leave, how the work will be run, and what the agent must not do. Thirteen questions, seven required, and **agnostic** — nothing in it assumes what kind of tool you are building. |
+| [supplements/](supplements) | **The specialisation, kept out of the core.** Extra questions for one *kind* of tool, merged into a copy of the form when asked for, so the agnostic version never grows a question most launches would skip. One exists: `measurement`, for a tool whose output is numbers. |
 | [bin/launch](bin/launch) and [prompts/](prompts) | **The machinery.** Assemble the answers into a prompt, show it, and — separately, explicitly — hand it to an agent in a directory somebody already made. An informal install: the same stage as compiling a signature, with none of the guarantees. |
 
 ## The analogy, in one table
@@ -113,6 +114,7 @@ Three things, and the first two are the point.
 | | Eudaimonia | here |
 | --- | --- | --- |
 | what you bring | a signature and its semantics | an answered interview |
+| what varies by *kind* | the calculus profile — facts about the calculus that decide what a checker needs | [`supplements/`](supplements) — questions the kind of tool owes an answer to |
 | the settings | [`config.sh`](../../config.sh) | [`launcher.conf`](launcher.conf) |
 | the generator | [`scripts/new-checker.sh`](../../scripts/new-checker.sh) | [`bin/launch`](bin/launch) |
 | what it renders | [`templates/`](../../templates), one file per generated file | [`prompts/`](prompts), one file per stage |
@@ -138,6 +140,14 @@ tools/workflow-launcher/bin/launch check mytool   # what is still unanswered
 tools/workflow-launcher/bin/launch prompt mytool  # the assembled prompt, and nothing else
 ```
 
+If the tool is of a kind the core form does not cover, merge a supplement into
+the copy — the questions come with it and are answered in the same file:
+
+```bash
+tools/workflow-launcher/bin/launch supplements               # what exists
+tools/workflow-launcher/bin/launch new mytool --with measurement
+```
+
 Then, once a person has created the target directory:
 
 ```bash
@@ -161,6 +171,7 @@ tools/workflow-launcher/bin/launch prompt tools/workflow-launcher/examples/answe
 
 ```bash
 tools/workflow-launcher/bin/launch stages         # the catalogue: what each prompt is for
+tools/workflow-launcher/bin/launch supplements    # the extra question sets
 tools/workflow-launcher/bin/launch --help
 ```
 
@@ -168,7 +179,8 @@ tools/workflow-launcher/bin/launch --help
 
 | path | what it holds |
 | --- | --- |
-| `interview.md` | the form: the questions, why each is asked, and the answer slots |
+| `interview.md` | the core form: the questions every launch answers, why each is asked, and the answer slots |
+| `supplements/` | extra questions for one kind of tool, merged in with `--with` |
 | `launcher.conf` | where a launch writes, which agent command to use, and the defaults |
 | `bin/launch` | assemble, check, show, run, review |
 | `prompts/setup.md` | the setup prompt — what an agent is told to build |

@@ -12,6 +12,17 @@ of what it was asked for, so when the result is wrong there is no way to tell
 whether the instruction was wrong or the agent was. A filled-in interview is
 that account, and it costs a copy of one file to keep.
 
+**This form is agnostic**, and deliberately: nothing in it assumes what kind of
+tool you are building. Questions that only make sense for one *kind* of tool
+live in `supplements/` — a directory beside this file in the launcher — and are
+merged in when you ask for them,
+so the core never grows a question most launches would skip.
+
+```bash
+bin/launch supplements                    # what exists, and when each applies
+bin/launch new <name> --with measurement  # core + that supplement, in one file
+```
+
 **How to use it.**
 
 ```bash
@@ -35,6 +46,13 @@ Questions marked **required** must be answered or `run` refuses. Questions
 marked **optional** may be left empty, and an empty one is dropped from the
 prompt rather than sent as a blank — an agent handed an empty heading will fill
 it in, which is the failure this whole file exists to prevent.
+
+**No relative links in this file.** It is copied into `answers/` and is read
+from wherever the copy lands, so a link that resolves here resolves nowhere
+else. Name paths in backticks and say what they are relative to.
+
+**Question numbers are stable.** Append; do not renumber. An answered interview
+is a record, and two of them should be comparable a year apart.
 
 **What the agent will not do**, whatever you write here: create a repository, an
 organisation or a remote; push; commit; or touch credentials. It writes files
@@ -69,11 +87,12 @@ word, where the entry is, and what you take the scope in that entry to be.
 ### Q2 — What it is, in two sentences
 
 **Required.** What the tool is, and what question it answers. Present tense,
-about what will exist, not about what it might grow into.
+about what will exist, not about what it might grow into. This is the front-page
+paragraph, so write it as you want it read.
 
-Then the harder half: **the question it does *not* answer.** Usually it is the
-larger one a reader will assume, and a front page that does not name it is one
-that will be read as claiming it.
+What it *refuses* to answer is asked separately, twice and for different
+reasons: Q3 asks what a successful run does not establish, and Q5 asks what the
+tool will not do. Keep this one to the positive claim.
 
 <!-- A2 required -->
 
@@ -82,39 +101,85 @@ that will be read as claiming it.
 ### Q3 — The vision statement
 
 **Required.** What the work is aiming at, in a paragraph somebody could
-disagree with. This is the one answer the agent is told to treat as authoritative
-and to quote rather than paraphrase, so write it as you want it to appear.
+disagree with. This is the one answer the agent is told to treat as
+authoritative and to quote rather than paraphrase.
 
 Two things worth putting in it, because they are what the ecosystem's own
 development vision asks a new tool for and both are cheap now and expensive
 later:
 
-- **Name the first consumer.** The tool, the repository, or the job that will
-  read this tool's output, and the exact artifact it takes. A tool with no
-  nameable consumer is being built for its author, and an agent will happily
-  keep building it for its author indefinitely.
-- **Say what a successful run does not establish.** The caveat belongs on the
-  front page, not three clicks in.
+- **Name the first consumer.** The tool, the repository, the job or the person
+  that will read this tool's output, and the exact artifact it takes. A tool
+  with no nameable consumer is being built for its author, and an agent will
+  happily keep building it for its author indefinitely.
+- **Say what a successful run does not establish.** Not what the tool declines
+  to do — that is Q5 — but what a clean result is *not evidence of*. A tool
+  whose caveat is three clicks in has not published it.
 
 <!-- A3 required -->
 
 <!-- /A3 -->
 
-### Q4 — Out of scope
+### Q4 — What already answers this, and why it is not enough
 
-**Optional, and the most useful optional answer here.** An explicit list of what
-this tool will not do. Every item you write is a file the agent will not create
-and a section it will not add.
+**Required**, and *nothing does* is a complete answer if it is true.
 
-<!-- A4 optional -->
+Name the incumbent: the tool, the script, the paper, the spreadsheet or the
+habit that answers this question today. Then say what is wrong with it — too
+slow, too manual, wrong granularity, unmaintained, answers a nearby question
+instead.
+
+This is the mirror of naming the consumer, and it is here because it is the
+question an agent cannot answer for you and will not think to ask. Given
+silence, it will build the conventional version of your tool, which is usually
+the incumbent with a new name. Naming the incumbent is also what tells the agent
+what *not* to reimplement.
+
+**If the honest answer is that you have not looked**, write that. It is a better
+input than a guess, and it tells whoever reads this later how much weight the
+rest of the interview can carry.
+
+<!-- A4 required -->
 
 <!-- /A4 -->
+
+### Q5 — Out of scope
+
+**Required.** An explicit list of what this tool will not do. Every item you
+write is a file the agent will not create and a section it will not add.
+
+Include **the larger question a reader will assume you are answering.** That is
+usually the most valuable line in the whole interview: it is the claim your
+front page will be read as making unless it says otherwise.
+
+A perfunctory list beats an empty one. Silence here is filled with the
+conventional thing, every time.
+
+<!-- A5 required -->
+
+<!-- /A5 -->
+
+### Q6 — One repository, or the first of several
+
+**Optional.** If this is meant to be one tool, leave it empty and the agent will
+build one tool.
+
+If it is the first of a family — several tools around one subject, sharing a
+corpus, a format or a reporting path — say so and say what the others are
+likely to be. It changes what belongs at the top level, whether anything should
+be factored out on day one, and whether the shared part deserves its own name
+now or later. The default answer is **one**: factoring for tools that do not
+exist yet is the most expensive guess available.
+
+<!-- A6 optional -->
+
+<!-- /A6 -->
 
 ---
 
 ## What the repository contains on day one
 
-### Q5 — The initial tools
+### Q7 — The initial tools
 
 **Required.** What should exist in the repository when the launch finishes. Be
 concrete: name the executables, the entry points, the directories. "A CLI called
@@ -130,11 +195,11 @@ If the honest answer is "nothing yet, just the README", write that. It is a
 legitimate answer and the naming workflow's default, and the agent is told not
 to argue with it.
 
-<!-- A5 required -->
+<!-- A7 required -->
 
-<!-- /A5 -->
+<!-- /A7 -->
 
-### Q6 — Language, toolchain and build
+### Q8 — Language, toolchain and build
 
 **Optional.** The language, the version, how it is built and how it is run. If
 there is a version to pin, pin it here — an agent choosing a toolchain version
@@ -142,25 +207,25 @@ on your behalf will choose whatever it saw most of.
 
 Leave empty if the repository is documents for now.
 
-<!-- A6 optional -->
+<!-- A8 optional -->
 
-<!-- /A6 -->
+<!-- /A8 -->
 
-### Q7 — Tests and evidence
+### Q9 — Tests and evidence
 
 **Optional.** What the first test is, and what it establishes. If the tool makes
 claims about somebody else's program, say whether their output is to be recorded
 from a real run and committed, rather than written from memory.
 
-<!-- A7 optional -->
+<!-- A9 optional -->
 
-<!-- /A7 -->
+<!-- /A9 -->
 
 ---
 
 ## What to take from the Eunoia ecosystem
 
-### Q8 — What to adopt, and what to leave
+### Q10 — What to adopt, and what to leave
 
 **Required**, and "nothing" is a complete answer. This is the question the
 launcher exists for: everything below already exists, works, and is somebody
@@ -184,11 +249,21 @@ more than a compliant one with nothing to say, and the ordering is deliberate:
 knowing what you are building is what makes the rest of it decidable. Adopting
 the policy later is one command; unpicking a layout you never wanted is not.
 
-<!-- A8 required -->
+**If your subject is outside the ecosystem**, say so here, because it changes
+what the reporting rows mean. The ecosystem distinguishes projects it *includes*
+from projects it *serves* — the solver is the second kind, outside and the
+reason the rest exists — and a tool pointed at one of those is reporting
+outward, to maintainers who did not ask and are under no obligation. Two things
+follow that the table does not capture: nothing crosses a repository boundary by
+machine, a person carries it; and a member already runs a findings loop against
+the solver, so the pattern exists and is worth reading before inventing a second
+one. Name the project your findings are *about*, and who you expect to read one.
 
-<!-- /A8 -->
+<!-- A10 required -->
 
-### Q9 — Who runs the work
+<!-- /A10 -->
+
+### Q11 — Who runs the work
 
 **Optional.** People, agents, or both — and under what supervision. This decides
 one paragraph the ecosystem's policy asks every front page to end with, and it
@@ -201,15 +276,15 @@ Leave empty and the agent is told to state the honest default — that the
 repository was set up by an agent from this interview, and that who maintains it
 is undecided.
 
-<!-- A9 optional -->
+<!-- A11 optional -->
 
-<!-- /A9 -->
+<!-- /A11 -->
 
 ---
 
 ## Bounds on the launch
 
-### Q10 — What the agent must not do
+### Q12 — What the agent must not do
 
 **Optional.** Anything beyond the standing refusals. Files not to create,
 directories not to touch, conventions not to import, opinions not to have. This
@@ -220,11 +295,11 @@ The standing refusals, which you do not need to repeat: no repository, no
 remote, no push, no commit, no credentials, and nothing written outside the
 target directory.
 
-<!-- A10 optional -->
+<!-- A12 optional -->
 
-<!-- /A10 -->
+<!-- /A12 -->
 
-### Q11 — The target directory
+### Q13 — The target directory
 
 **Optional.** Where the repository is, if you already know. `--target` on the
 command line overrides whatever is written here.
@@ -234,6 +309,6 @@ ecosystem's policy deliberately places behind a person, because a workflow that
 could notice a gap, argue for a tool, take a name, write its README *and*
 publish it would have no person in it anywhere.
 
-<!-- A11 optional -->
+<!-- A13 optional -->
 
-<!-- /A11 -->
+<!-- /A13 -->
