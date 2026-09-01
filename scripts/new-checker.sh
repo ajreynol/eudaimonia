@@ -88,9 +88,9 @@ to fill in, which is the expected state before a calculus has been settled on.
 
 Examples:
   scripts/new-checker.sh
-  scripts/new-checker.sh --checker Apodeixis --calculus Lra
+  scripts/new-checker.sh --checker Demo --calculus Lra
   scripts/new-checker.sh --calculus Lra --signature ~/sigs/Lra.eo
-  scripts/new-checker.sh --checker Apodeixis --out ~/apodeixis
+  scripts/new-checker.sh --checker Demo --out ~/demo
   scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
 USAGE
 }

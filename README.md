@@ -171,7 +171,7 @@ scripts/new-checker.sh
 Or give the settings on the command line, which override that file:
 
 ```bash
-scripts/new-checker.sh --checker Apodeixis --calculus Lra \
+scripts/new-checker.sh --checker Demo --calculus Lra \
   --signature ~/sigs/Lra.eo --semantics ~/sigs/Lra.eos
 ```
 

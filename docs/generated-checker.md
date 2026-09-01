@@ -375,7 +375,7 @@ hand-written Lean — the per-rule proofs live inside the generated package — 
 that wants a repository of its own:
 
 ```bash
-scripts/new-checker.sh --checker Apodeixis --out ~/apodeixis
+scripts/new-checker.sh --checker Demo --out ~/demo
 ```
 
 It builds without anything from the generator, so it can equally be generated in

@@ -14,6 +14,80 @@ So: take a real calculus that was specified elsewhere, by other people, for
 another checker, with no knowledge of this framework and no interest in it, and
 see where the framework stops. The target is **Alethe**.
 
+Which is somebody else's work, and that fact governs this project rather than
+decorating it.
+
+## The gate
+
+> **Status: not proceeding.** Nothing has been rendered, nothing has been run,
+> and nothing will be until the Alethe maintainers have been asked and have
+> agreed. **This project may never start, and that is an acceptable outcome** —
+> it is written down here as one of the endings rather than as a risk.
+
+Two commitments, and the first holds whatever happens with the second.
+
+**1. Unpublished work on Alethe is its authors', and this project does not touch
+it.** Not drafts, not preprints shared in confidence, not unreleased rule sets,
+not work in progress in anybody's branch, not what somebody said at a workshop.
+Unpublished research is the thing its authors have the sole right to develop and
+to publish first, and a stress test that fed on it would be taking the most
+valuable thing they have in exchange for nothing. This holds even if permission
+under (2) is given and even if the material is handed over: material shared in
+confidence stays theirs, is not reproduced here, is not committed, and nothing
+derived from it goes anywhere without their explicit say. **The working sources
+are the published specification and other published material, in the form their
+authors published it.**
+
+**2. This proceeds only in collaboration with the Alethe maintainers, with their
+permission, or not at all.** Permission is asked for by a person, before any of
+goals 2 to 4 begins, and what is asked for is collaboration rather than
+clearance: that they know what is being done with their calculus, that they see
+anything written here that describes Alethe before it goes anywhere, that they
+can correct a rendering that misreads their work, and that their names and their
+project's name are attached to nothing they have not agreed to. **Permission is
+revocable without reason.** If it is withdrawn, this retires, and what was
+written under it stops being used.
+
+### Why permission and not merely licence
+
+The specification is public and reading it is nobody's to authorise. That is the
+argument this project deliberately does not run on.
+
+The asymmetry is the reason. This is a stress test of *eudaimonia*: it takes
+Alethe as a load, gives the Alethe ecosystem nothing, explicitly disclaims
+serving it, and produces — if it produces anything — a public record of a
+framework straining against somebody else's calculus. A record like that is very
+easy to misread as a judgement on the calculus. The people who would carry the
+cost of that misreading are the people who wrote it, and they have no stake in
+the question being asked and no say in how it is phrased. **A one-sided ask is
+exactly the case where being within one's rights is not the standard that
+matters**, and asking is cheap.
+
+### What exists before the gate opens
+
+The charter, the request, and [docs/hypotheses.md](docs/hypotheses.md) —
+predictions about where the *framework* is expected to strain, written from the
+published specification and from what is public about the format, and containing
+no Alethe material. Nothing else: no rendering, no run, no finding, no summary.
+
+If the maintainers ask that even this much be changed or removed, it is changed
+or removed.
+
+### Who asks, and how
+
+A person, through this repository, in the open. Not this directory and not an
+agent: a child project has no correspondence channel by design, precisely so that
+speculative work cannot open a conversation somebody else then has to answer.
+There is no fallback path here — if the ask is not made, the project does not
+start.
+
+**And if the answer is no, the answer is no.** Not a smaller version, not the
+same work with the target unnamed, not a version that avoids the word Alethe. The
+retirement note gets written and this directory records that the question went
+unanswered for a good reason. A stress test is not worth much, and it is
+certainly not worth more than the right of the people who did the work to decide
+what is done with it.
+
 ## The charter
 
 **The question.** Does the framework generalize to a calculus it was not shaped
@@ -22,7 +96,9 @@ output is not a verdict but a boundary: the list of things that had to be bent,
 what each bend cost, and which of them are the framework's to fix rather than
 the calculus's to accept.
 
-**The goals, in order.**
+**The goals, in order.** Every one of them is behind [the gate](#the-gate) and
+none begins before permission — which makes the list below a description of what
+would be done rather than of what is being done.
 
 1. Keep the **ledger of breaks** — everything the framework refused, mis-shaped,
    accepted while meaning something else, or made expensive out of proportion to
@@ -53,10 +129,16 @@ stopped is a result, provided the stopping point is written down precisely.
 
 **What is out of scope.**
 
+- **Anything unpublished.** Stated above as a commitment rather than a
+  preference, and it is the one boundary here that no permission relaxes: work
+  its authors have not published is theirs to develop and to publish first.
+- **Proceeding without the maintainers.** Also above. There is no version of this
+  project that runs while the ask is outstanding, and none that runs after a no.
 - **Serving the Alethe ecosystem.** This is stated at length below because it is
   the boundary most likely to be misread. Nothing here is an Alethe checker,
   nothing here is offered to Alethe's users or its tools, and no claim about
-  Alethe is a deliverable of this project.
+  Alethe is a deliverable of this project. That it gives them nothing is exactly
+  why it has to ask them first.
 - **The Alethe file format.** A generated checker accepts Ethos s-expression
   proofs, and the framework says so as a fixed point rather than a limitation.
   Reading `.alethe` files is a different front end and this project does not
@@ -96,14 +178,16 @@ and it was not one — the names were reserved and chosen for separate reasons,
 and the fit was noticed afterwards. It is recorded because a name whose story
 improves after the fact is worth flagging as such.
 
-**A collision to know about.** `Apodeixis` appears in this repository's usage
-examples as a placeholder checker name, in the front page, in
+**A collision, since resolved.** `Apodeixis` was this repository's placeholder
+checker name in its usage examples — on the front page, in
 [`docs/generated-checker.md`](../../docs/generated-checker.md) and in
-`scripts/new-checker.sh`. That predates this directory and is not a pointer to
-it. It is nonetheless a reader trap — the front page appearing to name a child
-project is exactly what a child project is not supposed to arrange — and the
-resolution, either renaming the placeholder or renaming this, is a person's
-decision and has not been made.
+`scripts/new-checker.sh` — which predated this directory and pointed at nothing.
+It was a reader trap all the same: the front page appearing to name a child
+project is exactly the arrangement a child project is supposed to avoid, and the
+name of the trap is that the parent's own credibility gets lent to speculative
+work by accident. The placeholder is now `Demo`, which the same documents
+already used elsewhere and which nobody can mistake for a project. The parent
+names nothing here.
 
 **The register.** The ecosystem's names live in
 [anoieu's register][names] and `apodeixis` is not in it: it is neither taken nor
@@ -179,7 +263,7 @@ the modification instead of applying it. Everything written stays under
 artifact, and it has no correspondence channel — a child project is addressed
 through the repository that carries it.
 
-[`tools/noesis`](../noesis/README.md) is the other island. Its goal 2 wants
+[`tools/noesis`](../noesis/README.md) is the other island. Its goal 1 wants
 what goal 3 here produces, and that is an intellectual debt in one direction and
 nothing more: neither imports from the other, and if either is retired the other
 loses a data point and keeps working.
@@ -221,12 +305,20 @@ becomes rows in `TODO.md` and `docs/limitations.md`, which is the likeliest good
 outcome; or it is **retired in place**, with a line here saying what the load
 showed and why it stopped.
 
-Going quiet is not one of them.
+And a fourth, which is the likeliest of all and is an ending rather than a
+failure: **retired unstarted**, because permission was not given or was never
+asked for. A project that stops at its own gate has produced one thing — a
+written account of why somebody else's work was not taken — and that is a
+smaller result than a stress test and a better one than a stress test run
+without asking.
 
-*Started 2026-09-01 by the maintainer, in an explicit instruction. Nothing here
-has been delivered yet, so nothing above is an exception the policy would ask
-this project to name, and the island is stated as fact rather than as
-intention.*
+Going quiet is not one of them, and neither is waiting indefinitely on an ask
+nobody made.
+
+*Started 2026-09-01 by the maintainer, in an explicit instruction, and gated the
+same day. Nothing here has been delivered yet, so nothing above is an exception
+the policy would ask this project to name, and the island is stated as fact
+rather than as intention.*
 
 [names]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/names.md
 [manual]: https://github.com/cvc5/ethos/blob/main/user_manual.md

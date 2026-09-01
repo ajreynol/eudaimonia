@@ -7,7 +7,7 @@
 >
 > — ynoia, [`why-eunoia.md`][why], open question 7
 
-**Goal 2.** This page reads what this repository already knows about that line,
+**Goal 1.** This page reads what this repository already knows about that line,
 in one place, and then says which part of the question that leaves open.
 
 Its method is unglamorous and is the reason it is worth doing here: three
@@ -122,26 +122,53 @@ first calculus that was not CPC exposed three bugs CPC could not, all of them
 invisible while CPC was the only test, and none of them the kind of bug anybody
 predicted.
 
-So goal 2 is not answered until a calculus nobody designed this framework around
+So goal 1 is not answered until a calculus nobody designed this framework around
 has been through it. That is [`tools/apodeixis`](../../apodeixis/README.md), and
 the three questions above are what it is being watched for — not whether it
 succeeds, which is not the interesting outcome either way.
 
-## Why noesis needs this before it needs anything else
+## The other tree draws a different line and calls it the same question
 
-A Lean definition of `.eos` is a definition of **what the symbols mean**. The
-paragraph above says the meaning of the symbols is precisely what the invariant
-core does not contain — so the boundary this page is drawing is, exactly, the
-interface such a definition would have to sit behind.
+The compiler's tree claims open question 7 *"can now be read off this tree rather
+than argued"*, and it means something real: after its configuration
+restructuring, 1,215 lines say what Eunoia is, 336 say what a target is, and
+3,185 lines of configuration say what a theory does. That is a boundary somebody
+can point at, and it was not available before.
 
-Concretely, the preservation statement goal 3 asks for is: *if the semantics
-sends the signature's symbols to these SMT-LIB terms, then a run that reports
-`correct` has established that the conjunction of the proof's assumptions is
-unsatisfiable under that reading.* Every phrase in it is fixed by the three
-answers above except *these SMT-LIB terms*, which is the definition noesis would
-supply. Writing the statement is therefore free once the line is drawn, and
-impossible before — which is why the entry's blocker and this repository's are
-one question, and why this ledger is worth keeping whichever way the fork goes.
+**It is not this page's boundary.** That line runs through the *compiler's
+inputs* — language, target, theory. This one runs through the *checker's proof* —
+what a soundness statement depends on. Both are legitimate readings of the same
+one-sentence question, and whether they are the same line is itself unanswered:
+there is no reason in advance why the split that makes a compiler modular should
+coincide with the split that makes a proof reusable, and finding out they differ
+would be a more interesting result than finding out they agree.
+
+Naming both is the useful move. A project that quoted one of them as *the*
+answer to open question 7 would be making the question look settled from
+whichever tree it happened to be standing in.
+
+## Why the compiler needs this before it needs anything else
+
+A Lean definition of `.eos` is a definition of **what the symbols mean**, and the
+sections above say the meaning of the symbols is precisely what the invariant
+core does not contain. So the boundary drawn here is, exactly, the interface such
+a definition sits behind — and for a compiler that emits the development, it is
+something sharper than an interface: **it is the specification of what the
+emitter is allowed to vary.**
+
+Concretely, the preservation statement the charter's goal 4 asks for is: *if the
+semantics sends the signature's symbols to these SMT-LIB terms, then a run that
+reports `correct` has established that the conjunction of the proof's assumptions
+is unsatisfiable under that reading.* Every phrase is fixed by the three answers
+above except *these SMT-LIB terms*, which is what the definitions supply. The
+statement is therefore free once the line is drawn and impossible before.
+
+The failure mode this guards against is specific and would be invisible for a
+long time. A compiler written while the line is only known from CPC will emit
+what CPC needs, its theorem will be true, and the first calculus that contributes
+something CPC did not will find the emitter silently unable to express it — with
+a proof attached saying everything is fine. That is why goal 1 is goal 1 and not
+an appendix.
 
 ## One observation about the source material
 
