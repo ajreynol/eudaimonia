@@ -308,6 +308,44 @@ canaries turning out to cost more than the defects they catch. **Wrong with it
 today:** only two of the four do it deliberately; the other two found their
 vacuous check by accident and did not generalise from it.
 
+### N12 — Powerful analysis, held unambitious in implementation on purpose
+
+The rule adopted for the tool that audits this family's evolution, and the
+argument generalises past it: **ambitious in functionality, unambitious in
+implementation** — with the implementation limits *counted* rather than
+preferred.
+
+What makes it more than a taste for small things is the failure mode it names.
+**An analysis tool goes wrong by absorbing judgement into code, where nobody can
+argue with it, and a tool that has done so looks better rather than worse.**
+Four cases from one week: a matcher that returned 982 matches from 105 claims,
+where a smarter one would have returned a plausible number and hidden that its
+window exceeded four subjects' entire histories; a classifier that filed a
+750-line program as neither code nor prose, where a cleverer one would have
+guessed right and been unfalsifiable; a refusal to let a model read commit
+messages, which is the most tempting available improvement; and a flag raised
+when a threshold is edited after the evidence exists, because a threshold fitted
+to the answer is a judgement that has moved into a constant. **In each case the
+dumber implementation is the one whose errors were visible.**
+
+The counted form is what makes it work: a line ceiling, prose that may not
+outgrow the tool, zero third-party and zero network imports, and — the load
+bearing one — **two subprocess call sites, both git wrappers**, so that no
+model, service or other program can structurally enter the derivation path. On
+breach the first move is to delete a detector or move a judgement into the
+report; raising a limit is a person's decision, taken last.
+
+The other half is the part most likely to be dropped in transmission: *this
+cannot establish that* is an acceptable result, and *it answers a smaller
+question instead* is not. A budget with no such clause becomes an argument for
+weaker questions.
+
+*Falsified by:* a case where the cleverer implementation was also the more
+checkable one, or a budget that stopped a real improvement rather than a
+disguised judgement. **Wrong with it today:** it has governed one tool for one
+day, and the line ceiling is a number somebody chose, not one derived from
+anything.
+
 ## What is wrong
 
 ### W1 — The system diagnoses precisely and does not treat

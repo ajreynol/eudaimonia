@@ -116,6 +116,73 @@ one run, on a self-assessment, whose report retracted two of its eight questions
 because the evidence did not support them, and which found four defects in the
 tool that produced it. That is the whole record.
 
+## The guardrail on the role: ambitious in functionality, unambitious in implementation
+
+A granted role is a licence to grow, so the limit is attached to the request
+rather than left for later. **The ambition goes into the questions and the
+evidence. It does not go into the machinery.**
+
+### Why this particular guardrail, and not a general plea for simplicity
+
+Because there is a specific way an analysis tool goes wrong, and it does not
+look like sprawl. **Implementation ambition in a tool like this takes the form
+of absorbing judgement into code, where nobody can see it.** A cleverer detector
+is one that has swallowed a decision somebody should have been able to argue
+with. Four instances from this project's own first week:
+
+- a matcher joined 105 claims to 123 events and produced **982 matches**. A
+  smarter matcher would have produced a plausible number and hidden the fact
+  that its window was wider than four of the five subjects' entire histories;
+- a classifier filed a 750-line program as neither code nor prose. A cleverer
+  classifier would have guessed right and been unfalsifiable;
+- reading commit messages to decide what happened is refused outright, and is
+  the single most tempting improvement available;
+- a threshold edited after the events exist sets a flag on the run, because a
+  threshold fitted to the answer is a judgement that has moved into a constant.
+
+In every case the *dumber* implementation is the one whose errors were visible.
+That is the whole argument.
+
+### What is held small, counted
+
+`epikrisis budget` counts it, exits non-zero over any limit, and the selftest
+proves that check can fail:
+
+| | limit | why |
+| --- | --- | --- |
+| the tool | **1,500 lines** | a reader must be able to check the whole of it in an hour. A tool whose findings can only be trusted is not evidence |
+| prose about the tool | **no more than the tool** | the account may not outgrow the thing it accounts for. Counted over `docs/` and this file |
+| third-party imports | **zero** | stdlib only: no install, no version skew, no supply chain |
+| network imports | **zero** | the corpus is on disk. Nothing here fetches, and nothing here can be pointed at a service |
+| subprocess call sites | **two**, both git wrappers | **the derivation path may run `git` and nothing else.** This is the limit that matters: it is what makes it structurally impossible for a model, a service or any other program to enter stages 1–4 |
+
+**On breach, the first move is not to raise a limit.** It is to delete a
+detector whose candidates are always dropped, or to move a judgement out of the
+code and into the report where a reader can disagree with it. Raising a number
+is a person's decision and is recorded as one.
+
+### And the other half, which is not negotiable either
+
+*Unambitious in implementation* must not become an excuse to ask a smaller
+question. So, held large:
+
+- **The question stays whole.** What happened, in what order, and what the way
+  it changed did well and badly — over a whole ecosystem, across repositories,
+  over its entire history. Nothing is narrowed to fit the machinery.
+- **It may be pointed at any subject a person names**, at any scale, including
+  ones far larger than anything it has run on.
+- **It may say hard things**, including about the family that carries it, and
+  the arrangement that a self-assessment is void without negative findings
+  exists to make that likelier rather than safer.
+- **Refusing to answer is allowed; shrinking the question is not.** *This tool
+  cannot establish that* is a result. *This tool answers a smaller question
+  instead* is a failure, and the second is what a budget tempts you toward.
+
+The test, in one line: **if this became twice as useful, the code should not get
+much bigger** — the detector catalogue would get better failure modes and the
+questions would get sharper. If usefulness and size move together, judgement is
+being absorbed and the guardrail has already failed.
+
 ## Receiving an epoch
 
 Global announcements reach the ecosystem from whoever holds its chief executive

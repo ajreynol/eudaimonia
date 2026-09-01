@@ -13,11 +13,16 @@ See docs/design.md for why the split is where it is.
     epikrisis delta   <subject>
     epikrisis prompt  <subject>
     epikrisis check   <subject>
+    epikrisis ratio   <subject>
+    epikrisis selftest          -- prove `check` and `budget` can fail
+    epikrisis budget            -- what the implementation is allowed to become
 
-Stdlib only. No network: `pin` is pointed at mirrors somebody already has.
+Stdlib only. No network: `pin` is pointed at mirrors somebody already has, and
+the derivation path runs `git` and nothing else -- see `budget`.
 """
 
 import argparse
+import ast
 import signal
 import hashlib
 import json
@@ -1034,11 +1039,114 @@ def cmd_selftest(a):
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
+    tiny = dict(BUDGET, tool_lines=1, doc_lines_over_tool=0.0,
+                subprocess_sites=0)
+    if budget_problems(budget_facts(), tiny):
+        print("  ok    caught: an implementation over budget")
+    else:
+        failures.append("NOT caught: an implementation over budget")
+        print("  FAIL  NOT caught: an implementation over budget")
+
     if failures:
         print(f"selftest: FAIL — {len(failures)} condition(s) do not fire")
         return 1
     print(f"selftest: ok — the clean canary passes and all "
           f"{len(MUTATIONS)} conditions fire")
+    return 0
+
+
+# Ambitious in functionality, unambitious in implementation. The questions this
+# tool asks are as large as they need to be; the machinery that answers them is
+# held small on purpose, because the way an analysis tool goes wrong is by
+# absorbing judgement into code where nobody can see it. Each limit is a number
+# somebody chose, and raising one is a person's decision, recorded.
+BUDGET = {
+    "tool_lines": 1500,          # a reader must be able to check it in an hour
+    "doc_lines_over_tool": 1.0,  # prose about the tool may not outgrow the tool
+    "third_party_imports": 0,    # stdlib only: no install, no version skew
+    "network_imports": 0,        # the corpus is on disk; nothing here fetches
+    "subprocess_sites": 2,       # exactly the two git wrappers, and nothing else
+}
+NETWORK = {"urllib", "http", "socket", "ssl", "ftplib", "smtplib", "asyncio",
+           "requests", "httpx", "aiohttp", "telnetlib", "xmlrpc"}
+
+
+def budget_facts():
+    src = open(os.path.join(HERE, "bin", "epikrisis")).read()
+    tree = ast.parse(src)
+    mods = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            mods |= {a.name.split(".")[0] for a in n.names}
+        elif isinstance(n, ast.ImportFrom) and n.module and not n.level:
+            mods.add(n.module.split(".")[0])
+    sites = sum(1 for n in ast.walk(tree)
+                if isinstance(n, ast.Call)
+                and isinstance(n.func, ast.Attribute)
+                and n.func.attr == "run"
+                and isinstance(n.func.value, ast.Name)
+                and n.func.value.id == "subprocess")
+    docs = 0
+    for d in (os.path.join(HERE, "docs"), HERE):
+        for f in sorted(os.listdir(d)):
+            if f.endswith(".md") and os.path.isfile(os.path.join(d, f)):
+                docs += sum(1 for _ in open(os.path.join(d, f)))
+    stdlib = getattr(sys, "stdlib_module_names", set())
+    return {
+        "tool_lines": src.count("\n"),
+        "doc_lines": docs,
+        "third_party_imports": sorted(m for m in mods
+                                      if stdlib and m not in stdlib),
+        "network_imports": sorted(mods & NETWORK),
+        "subprocess_sites": sites,
+    }
+
+
+def budget_problems(f, limits):
+    bad = []
+    if f["tool_lines"] > limits["tool_lines"]:
+        bad.append(f"the tool is {f['tool_lines']} lines, over {limits['tool_lines']}")
+    if f["tool_lines"] and f["doc_lines"] > limits["doc_lines_over_tool"] * f["tool_lines"]:
+        bad.append(f"{f['doc_lines']} lines of prose against {f['tool_lines']} of "
+                   f"tool: the account has outgrown the thing it accounts for")
+    if len(f["third_party_imports"]) > limits["third_party_imports"]:
+        bad.append(f"imports outside the stdlib: {f['third_party_imports']}")
+    if len(f["network_imports"]) > limits["network_imports"]:
+        bad.append(f"network imports: {f['network_imports']}")
+    if f["subprocess_sites"] > limits["subprocess_sites"]:
+        bad.append(f"{f['subprocess_sites']} subprocess call sites, over "
+                   f"{limits['subprocess_sites']}: the derivation path may run "
+                   f"git and nothing else")
+    return bad
+
+
+def cmd_budget(a):
+    """What the implementation is allowed to become, counted.
+
+    A budget with no counter is a preference. This is the counter.
+    """
+    f = budget_facts()
+    print(f"  tool                 {f['tool_lines']:>6} lines   "
+          f"(limit {BUDGET['tool_lines']})")
+    print(f"  prose about it       {f['doc_lines']:>6} lines   "
+          f"(limit {BUDGET['doc_lines_over_tool']:g}x the tool = "
+          f"{int(BUDGET['doc_lines_over_tool'] * f['tool_lines'])})")
+    print(f"  third-party imports  {len(f['third_party_imports']):>6}         "
+          f"(limit {BUDGET['third_party_imports']})")
+    print(f"  network imports      {len(f['network_imports']):>6}         "
+          f"(limit {BUDGET['network_imports']})")
+    print(f"  subprocess sites     {f['subprocess_sites']:>6}         "
+          f"(limit {BUDGET['subprocess_sites']}, both git wrappers)")
+    bad = budget_problems(f, BUDGET)
+    if bad:
+        print("budget: OVER")
+        for b in bad:
+            print("  - " + b)
+        print("  The first move is not to raise a limit. Delete a detector whose "
+              "candidates are always dropped, or move a judgement out of the "
+              "code and into the report where a reader can see it.")
+        return 1
+    print("budget: ok")
     return 0
 
 
@@ -1068,6 +1176,7 @@ def main():
     for name, fn, needs in (("subjects", cmd_subjects, False),
                             ("detectors", cmd_detectors, False),
                             ("selftest", cmd_selftest, False),
+                            ("budget", cmd_budget, False),
                             ("pin", cmd_pin, True), ("events", cmd_events, True),
                             ("record", cmd_record, True), ("delta", cmd_delta, True),
                             ("prompt", cmd_prompt, True), ("check", cmd_check, True),

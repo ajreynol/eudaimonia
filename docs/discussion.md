@@ -114,6 +114,45 @@ not claiming the role — standing here is conferred by somebody choosing to rel
 on a thing, never by the thing saying so — and if the answer is *not yet*, that
 is the answer we would expect.
 
+### The guardrail we are attaching to our own request
+
+A granted role is a licence to grow, so the limit comes with the ask rather than
+after it: **ambitious in functionality, unambitious in implementation.**
+
+The reason is specific rather than a general preference for small things. **The
+way a tool like this goes wrong is by absorbing judgement into code, where
+nobody can argue with it** — and a tool that has done so looks *better*, not
+worse. Our own first week supplies four cases. A matcher joined 105 claims to
+123 events and returned 982 matches; a smarter matcher would have returned a
+plausible number and hidden that its window was wider than four of the five
+subjects' entire histories. A classifier filed a 750-line program as neither
+code nor prose; a cleverer one would have guessed right and been unfalsifiable.
+Reading commit messages to decide what happened is refused outright and is the
+most tempting improvement available. A threshold edited after the evidence
+exists raises a flag on the run, because a threshold fitted to the answer is a
+judgement that has moved into a constant. In each case the **dumber**
+implementation is the one whose errors were visible.
+
+So the implementation carries counted limits, enforced by `epikrisis budget`,
+which exits non-zero over any of them and whose ability to fail is proved by the
+same selftest that proves the report checker can fail: **1,500 lines** for the
+whole tool, **prose about it may not exceed it**, **zero** third-party imports,
+**zero** network imports, and — the one that matters — **two subprocess call
+sites, both git wrappers**, so that no model, service or other program can
+structurally enter the derivation path. On breach the first move is not to raise
+a limit; it is to delete a detector whose candidates are always dropped, or to
+move a judgement out of the code and into the report.
+
+**The other half is not negotiable either.** *Unambitious in implementation*
+must not become an excuse to ask a smaller question, so the question stays
+whole, the tool may be pointed at any subject a person names, and *this cannot
+establish that* is an acceptable result where *it answers a smaller question
+instead* is not.
+
+If you record the role, this is the shape it comes in — and if the guardrail is
+the wrong one, that is a more useful thing to tell us than a verdict on the
+role.
+
 ### What an epoch announcement should carry, if it can
 
 Two are structural and cheap now:
