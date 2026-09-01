@@ -3,21 +3,51 @@
   "kind": "ecosystem",
   "self": true,
   "sources": [
-    { "id": "logos",      "origin": "https://github.com/ajreynol/logos" },
-    { "id": "anoieu",     "origin": "https://github.com/ajreynol/anoieu" },
-    { "id": "eudaimonia", "origin": "https://github.com/ajreynol/eudaimonia" },
-    { "id": "dokimasia",  "origin": "https://github.com/ajreynol/dokimasia" },
-    { "id": "koine",      "origin": "https://github.com/ajreynol/koine" }
+    {
+      "id": "logos",
+      "origin": "https://github.com/ajreynol/logos"
+    },
+    {
+      "id": "anoieu",
+      "origin": "https://github.com/ajreynol/anoieu"
+    },
+    {
+      "id": "eudaimonia",
+      "origin": "https://github.com/ajreynol/eudaimonia"
+    },
+    {
+      "id": "dokimasia",
+      "origin": "https://github.com/ajreynol/dokimasia"
+    },
+    {
+      "id": "koine",
+      "origin": "https://github.com/ajreynol/koine"
+    }
   ],
-  "exclude": ["deps/", "checkers/", ".lake/"],
+  "exclude": [
+    "deps/",
+    "checkers/",
+    ".lake/"
+  ],
   "not_in_corpus": [
-    "ethos, which holds the proof checker and the compiler and is by role a member of this ecosystem, is not ours: a run over somebody else's tree is internal by default and this run's evidence is committed, so it is left out. The effect is that the ecosystem's history as this run can see it is missing one of the two trees that hold its executable artifacts.",
+    "ethos, which holds the proof checker and the compiler, is not read here: it is somebody else's tree, a run over one is internal by default, and this run's evidence is committed. Its footing in the ecosystem's own inventory is candidate, not member -- a fact this subject was written without checking. The effect is that the ecosystem's history as this run sees it is missing one of the two trees holding its executable artifacts.",
     "issue trackers, pull requests and discussion threads, for every source, by design",
-    "anything unpublished, absolutely"
+    "anything unpublished, absolutely",
+    "the source list here is hand-written and the inventory is the authority: this run reads logos, whose footing is candidate rather than member, and does not read ethos, also a candidate. The set is therefore not the ecosystem's own set, which is the `repo-added` failure mode occurring in the run that states it."
   ],
   "thresholds": {
     "prefix_depth": 1,
     "quiet_min_days": 3,
     "rewrite_window_days": 7
+  },
+  "inventory": {
+    "source": "anoieu",
+    "path": "tools/ecosystem.json",
+    "track": [
+      "status",
+      "proposed",
+      "parent"
+    ],
+    "note": "the ecosystem keeps one footing per tool in this file; its git history is the status-transition record, and reading it is the only reason this run can tell joining apart from repository creation"
   }
 }

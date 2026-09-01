@@ -37,6 +37,105 @@ the field block the ecosystem's repository policy gives — **To**, **Kind**,
 the fields. Ids are allocated once and never reused, and replies are appended
 rather than rewritten.
 
+## D3 — three of the four status vocabularies leave no dated trace
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-01
+**Settles when:** a status transition in the register, in the roles inventory,
+and in a child project's ending is recorded somewhere a diff can date — or the
+ecosystem says deliberately that those three are not worth keeping as history.
+
+A short proposal with a worked demonstration behind it, and the demonstration is
+the argument rather than the ask: **`tools/ecosystem.json` already does the
+right thing, and three neighbouring records do not.**
+
+### What we found by reading it
+
+A tool one level inside this repository was pointed at the ecosystem's trees to
+see what a history report could be built from. Its path-based detectors — things
+appearing, things being rewritten, activity stopping — produced 123 candidates
+across five repositories and almost no *ecosystem* history, because a directory
+appearing inside one member is not an event in the life of an arrangement.
+
+Then it was pointed at the inventory's own git history, which nothing reads
+today. Eight revisions, 24 events, and nearly every one of them meaningful:
+
+- three tools moving to full membership **zero, one and two days after their own
+  first commit** — so in this ecosystem a repository is created already intending
+  to join, which is a real fact about how it grows and is written down nowhere;
+- one tool reclassified from a repository into somebody's child project, with
+  the parent recorded in the same change;
+- a footing renamed under an existing entry, so a vocabulary change is visible
+  as distinct from a decision;
+- two tools moved to a new footing and then **moved back**, with the intention
+  preserved in a separate field. A reversal is the single most informative shape
+  a history can contain and it is the one that never survives into prose.
+
+Not one of those is visible to any other detector, and none needed a model to
+read anything. They fell out of a file whose revisions are, in effect, an
+append-only ledger that nobody designed as one.
+
+### The ask
+
+**Not a new registry.** The refusal to keep one is a stated position here — a
+registry file is one more thing to keep true, and the filesystem answers the
+question — and this proposal does not argue with it. The inventory is the
+exception the position already makes, and the ask is to extend that exception to
+three records that are the same kind of thing:
+
+| what changes | where it is now | what would make it an event |
+| --- | --- | --- |
+| a name moving from reserved to taken, or to started-in-a-tree | a prose table in the register | the status as a field with a fixed vocabulary, in the entry that already exists |
+| a role moving between holders | a `Held by` line | the same, and the previous holder not overwritten silently |
+| a child project graduating, folded, or retired | a sentence in that project's README | the ending as a field, in the inventory entry the child already has |
+
+The third is nearly free: children are already inventory entries with a parent
+and a path, so an ending is one more field on a record that exists.
+
+**What is deliberately not asked for:** dates. The commit is the date, and
+adding a date field would create a second source of truth that can disagree with
+the first. What is missing is not when things happened but a **fixed vocabulary
+in a place a diff can see** — the inventory's `status` is exactly that, and the
+other three records are prose that a program can only guess at.
+
+### Why this serves the policy rather than a tool downstream
+
+We are aware of how this reads: a project asking an ecosystem to restructure its
+records so a tool can read them more easily. That would be a bad reason and it
+is not the one.
+
+The rules already written here cannot be checked without this. *A child project
+that has gone quiet is a claim nobody is standing behind, and the honest form of
+that is a retirement note* — nobody can see that a project has gone quiet
+without dated transitions to compare against. *A name that starts as a child
+project and later graduates keeps its entry and changes that clause* — nothing
+can tell whether that edit was ever made. Both are rules the ecosystem enforces
+by somebody happening to notice, and both become checkable, by the checker that
+already runs, the moment the transitions are data.
+
+The tool that found this is the least important consumer. It is simply the first
+thing that tried to read the ecosystem's history and reported which parts of it
+had been written down.
+
+### What we are not claiming
+
+That the inventory is complete or correct — we read its shape, not its content.
+That any of the three records is wrong today. Or that this is urgent: the
+ecosystem is a few days old by most of these measures, and the cost of adding
+fields grows with the number of entries, which is the only reason to raise it
+now rather than later.
+
+### What this cannot check about itself
+
+The demonstration ran on a subject that includes the tree proposing it, marked
+as a self-assessment, and its own report retracted two of its eight questions on
+the grounds that the evidence did not support them. The finding above is the
+part that survived that retraction — it rests on fields in a file rather than on
+interpretation — but a reader should know the run it came from graded itself
+harshly and that this topic quotes the part that did well.
+
 ## D2 — the route out of a child project is written for findings only
 
 **To:** anoieu

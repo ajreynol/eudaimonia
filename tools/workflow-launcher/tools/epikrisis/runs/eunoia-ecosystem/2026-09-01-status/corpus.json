@@ -1,0 +1,95 @@
+{
+  "date_field": "committer date, --date=short, as git reports it",
+  "detectors_implemented": [
+    "listed",
+    "joined",
+    "status-change",
+    "delisted",
+    "transplant",
+    "birth",
+    "death",
+    "rewrite",
+    "release",
+    "governance",
+    "apparatus",
+    "quiet",
+    "hands",
+    "repo-added",
+    "relation"
+  ],
+  "detectors_not_implemented": {
+    "dependency": "needs per-manifest parsing; the demo would only be able to say that a manifest changed, which `governance` already says"
+  },
+  "exclude": [
+    "deps/",
+    "checkers/",
+    ".lake/"
+  ],
+  "kind": "ecosystem",
+  "not_in_corpus": [
+    "ethos, which holds the proof checker and the compiler, is not read here: it is somebody else's tree, a run over one is internal by default, and this run's evidence is committed. Its footing in the ecosystem's own inventory is candidate, not member -- a fact this subject was written without checking. The effect is that the ecosystem's history as this run sees it is missing one of the two trees holding its executable artifacts.",
+    "issue trackers, pull requests and discussion threads, for every source, by design",
+    "anything unpublished, absolutely",
+    "the source list here is hand-written and the inventory is the authority: this run reads logos, whose footing is candidate rather than member, and does not read ethos, also a candidate. The set is therefore not the ecosystem's own set, which is the `repo-added` failure mode occurring in the run that states it."
+  ],
+  "pinned": "2026-09-01-status",
+  "questions_digest": "39075bf556d8885fa355332ae4203fc1d5b6ef588734ef51112d6bf0f5b75a55",
+  "self": true,
+  "sources": [
+    {
+      "commit": "6cb59db508dcdd4ea00d359aa44ae7e787717a6b",
+      "commits": 707,
+      "first_commit": "2026-03-03",
+      "id": "logos",
+      "last_commit": "2026-08-31",
+      "origin": "https://github.com/ajreynol/logos"
+    },
+    {
+      "commit": "a736ba3e92da30e3e61dc8d58d20a106ffe20001",
+      "commits": 96,
+      "first_commit": "2026-08-29",
+      "id": "anoieu",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/anoieu"
+    },
+    {
+      "commit": "f9ae07000288d8819659c5dcb8281e56ebb00352",
+      "commits": 46,
+      "first_commit": "2026-08-29",
+      "id": "eudaimonia",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/eudaimonia"
+    },
+    {
+      "commit": "58bfdf395f1a8959e05a2b631629d8d354a959f4",
+      "commits": 31,
+      "first_commit": "2026-08-30",
+      "id": "dokimasia",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/dokimasia"
+    },
+    {
+      "commit": "38a7dc91e5b0bd869a9d0da02670c07c34843973",
+      "commits": 10,
+      "first_commit": "2026-08-31",
+      "id": "koine",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/koine"
+    }
+  ],
+  "subject": "eunoia-ecosystem",
+  "thresholds": {
+    "delta_lag_days": 7,
+    "governance_lines": 40,
+    "hands_window_days": 14,
+    "min_commits_prefix": 3,
+    "prefix_depth": 1,
+    "quiet_median_multiple": 6.0,
+    "quiet_min_days": 3,
+    "rewrite_churn_ratio": 1.0,
+    "rewrite_window_days": 7,
+    "transplant_min_files": 3
+  },
+  "thresholds_changed_after_events": false,
+  "tool_version": "0.1.0-demo"
+}

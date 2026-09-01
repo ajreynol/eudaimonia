@@ -24,6 +24,76 @@ design is arranged around.
 So: a detector that fires often is not broken. A detector whose candidates are
 *always* dropped is, and the rule for it is below.
 
+## For an ecosystem, status transitions are the primary events
+
+The catalogue below was written for a **tool**: things that happen to code and
+to the files around it. Applied to an *ecosystem* it produces a great many
+candidates and very little history, because it is answering the wrong question —
+a directory appearing inside one member is not an event in the life of an
+ecosystem, and the events that are do not appear in any single tree's log.
+
+**An ecosystem's events are memberships.** A tool joins; a tool changes what it
+is to the others; a tool leaves; a project inside somebody's tree is recognised
+as one; a name is taken; a role moves from one holder to another. Each of those
+changes what the arrangement *is*, and none of them is a change to any file that
+a path-based detector watches.
+
+This is derivable only where somebody keeps the status as data. Where a footing
+is written into a table in prose, the tree records that a paragraph changed and
+nothing that a program can call a transition — so the reach of this detector
+family is set by the subject's own record-keeping rather than by the detector.
+That is a fact worth reporting about a subject rather than a limitation to
+apologise for: **an ecosystem whose status changes leave no dated trace is one
+whose history cannot be read**, including by the people in it.
+
+The demo subject keeps one footing per tool in a single file, so its transitions
+are readable, and the first run of this family found: three tools joining within
+zero to two days of their first commit; a footing vocabulary being renamed
+under an existing entry; a tool reclassified from a repository into somebody's
+child project; and two tools moved from one footing to another and then moved
+back, with the intention recorded in a separate field. Not one of those is
+visible to any other detector in this catalogue.
+
+### Repository creation is not joining
+
+`repo-added` fires on a source's first commit. That is the birth of a
+repository, and it is **not** the same event as a tool becoming part of an
+ecosystem — a tree can exist for a year before anybody proposes it, and can be
+recorded as a member on the day it is created.
+
+Both are real and the pair is worth more than either: **the gap between them is
+a measurement.** A long gap says the ecosystem admitted something that had grown
+up elsewhere; a gap of zero says the repository was created already intending to
+join, which is a fact about how the arrangement grows and is not otherwise
+written down anywhere. `joined` therefore carries the distance from the source's
+first commit as a measure rather than reporting a bare date.
+
+### What is not derivable, and why that is a decision rather than a limit
+
+The demo subject records **one** of its status vocabularies as data. It has at
+least four:
+
+| what changes status | where it is recorded | dated? | machine-readable? |
+| --- | --- | --- | --- |
+| a tool's footing in the arrangement | one field per tool in an inventory file | by its commit | **yes** |
+| a name moving from reserved to taken, or to started-in-somebody's-tree | a prose table in a register | no | no |
+| a role moving from one holder to another | a `Held by` line in a prose inventory | no | no |
+| a project inside a tree graduating, being folded, or being retired | a sentence in that project's own README | no | no |
+
+The first row is the one this family reads, and it is the only one that
+produces events. The other three are transitions the ecosystem cares about
+enough to have written rules about — a name's entry is supposed to change when a
+project graduates, a project that has gone quiet is supposed to be retired
+rather than parked — and none of them leaves a trace a program can date.
+
+**That is not a gap in this catalogue.** No detector can recover a transition
+that was never recorded as one, and inferring status changes from prose diffs is
+exactly the model-reads-the-text step this design refuses. It is a fact about the
+subject, it is reportable as one, and the observation has been carried upward as
+a proposal to the tree that keeps those records — through the parent, by a
+person, as topic `D3`. Whether anything changes is theirs to decide, and this
+catalogue describes what is derivable today either way.
+
 ## The threshold problem
 
 Every detector has a parameter, and a parameter adjusted until the events look
@@ -44,6 +114,20 @@ Three rules, in order of how much they help:
 
 ## The catalogue
 
+**Status transitions**, read out of a declared inventory file's own history.
+The subject names the file; the detectors are generic over "a record whose
+revisions are the status history".
+
+| detector | fires on | emits | known failure mode |
+| --- | --- | --- | --- |
+| `listed` | a tool appearing in the inventory | tool, the status it appeared as | the inventory's first revision is a state, not a transition: everybody present at the start is reported at once, dated to the file's birthday rather than to theirs |
+| `joined` | a tool's status becoming full membership | tool, from, to, **days after its own first commit** | it dates the *recording* of a join, not the join. Where the two differ the inventory is late and this cannot tell |
+| `status-change` | any tracked field of an entry changing | tool, field, from, to | it sees a field change and never a reason — a footing corrected, a vocabulary renamed and a decision reversed all have one shape |
+| `delisted` | a tool disappearing from the inventory | tool, the status it held | removal and rename are indistinguishable without a stable key |
+
+**Everything else in the catalogue is a tool's events**, and is reported per
+source:
+
 | detector | fires on | emits | known failure mode |
 | --- | --- | --- | --- |
 | `transplant` | a body of content appearing at a new path, closely matching content that disappeared | old and new prefixes, similarity, size | a genuine rewrite that keeps the structure scores as a move. The similarity threshold is the most fittable number in the set |
@@ -56,7 +140,7 @@ Three rules, in order of how much they help:
 | `dependency` | a manifest gaining, losing or repinning a dependency | manifest, name, from, to | lockfile churn drowns the manifest; transitive changes are invisible; vendored dependencies are invisible by construction |
 | `quiet` | a gap between commits exceeding a multiple of the subject's own trailing median | gap length, bounding commits | development in branches; a single-maintainer project, whose median is close to meaningless; ordinary absence |
 | `hands` | a change in the *number* of distinct contributors over a window | counts only, before and after | one person with several addresses inflates the count; bots; the effect of a `.mailmap` arriving is itself detected as a change in hands, which it is not |
-| `repo-added`, `repo-removed` | a source entering or leaving an ecosystem's declared set | source id, date, where declared | the set's history is configuration, so this is only as good as what somebody wrote down |
+| `repo-added` | a source's first commit — the birth of a repository, **not** a join | source id, date, distance from the first source | the set of sources is hand-written configuration, so this is only as good as what somebody wrote down. It was wrong on the first run: the subject listed a tool the ecosystem's own inventory records as a candidate rather than a member |
 | `relation` | a pin to another source, a CI step running another source's tool, a cross-repository reference in a governing document | from, to, kind, commit | pins in CI are reliable and rare; references in prose are neither, and are emitted as claims rather than as facts |
 
 `transplant` runs before `birth` and `death` and suppresses the pair it explains.

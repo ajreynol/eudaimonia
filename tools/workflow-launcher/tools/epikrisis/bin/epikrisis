@@ -70,7 +70,8 @@ ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 # Detectors that exist, and those the catalogue names and this does not
 # implement. A run records both, so a missing detector is visible rather than
 # silently absent.
-IMPLEMENTED = ["transplant", "birth", "death", "rewrite", "release",
+IMPLEMENTED = ["listed", "joined", "status-change", "delisted",
+               "transplant", "birth", "death", "rewrite", "release",
                "governance", "apparatus", "quiet", "hands",
                "repo-added", "relation"]
 NOT_IMPLEMENTED = {
@@ -78,6 +79,15 @@ NOT_IMPLEMENTED = {
                   "say that a manifest changed, which `governance` already says",
 }
 FAILURE_MODES = {
+    "listed": "an inventory's first revision is a state and not a transition; "
+              "everybody present at the start is reported at once, on a date "
+              "that is the file's birthday rather than theirs",
+    "joined": "reads the inventory, so it dates the *recording* of a join, not "
+              "the join. Where the two differ the inventory is late and this "
+              "cannot tell",
+    "status-change": "sees a field change, never a reason. A footing corrected, "
+                     "a vocabulary renamed and a decision reversed are one shape",
+    "delisted": "removal and rename are indistinguishable without the key",
     "transplant": "a rewrite that keeps its structure scores as a move",
     "birth": "an import or fork gives everything one birthday; generated trees",
     "death": "a subsystem moving to another repository looks like a death",
@@ -106,6 +116,13 @@ def run(args, cwd=None):
 
 def git(repo, *args):
     return run(["git", "-C", repo, *args])
+
+
+def git_ok(repo, *args):
+    """A git call that is allowed to fail -- a path that did not exist at a
+    revision is an ordinary fact about a history, not an error."""
+    p = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+    return (p.returncode == 0, p.stdout)
 
 
 def anon(email):
@@ -421,6 +438,89 @@ def detect(src_id, repo, th, ecosystem_first=None):
     return ev
 
 
+def detect_inventory(corpus, frm, inv):
+    """Status transitions, read out of an inventory file's own history.
+
+    For an ecosystem, this is the primary event class and everything else in the
+    catalogue is secondary: a tool joining, or changing what it is to the
+    others, is an event in a way that a directory appearing inside one of its
+    members is not. It is derivable here only because somebody already keeps the
+    inventory as a file -- a footing recorded in prose has no history a diff can
+    read, which is the whole of the argument in the topic this detector came
+    from.
+    """
+    repo = os.path.join(frm, inv["source"])
+    path = inv["path"]
+    track = inv.get("track", ["status"])
+    revs = git(repo, "log", "--reverse", "--format=%H %ad", "--date=short",
+               "--", path).splitlines()
+    first_commit = {s["id"]: s["first_commit"] for s in corpus["sources"]}
+    ev, k, unreadable = [], 0, 0
+    prev = None
+    for line in revs:
+        sha, when = line.split()
+        ok, blob = git_ok(repo, "show", f"{sha}:{path}")
+        if not ok:
+            unreadable += 1
+            continue
+        try:
+            data = json.loads(blob)
+        except json.JSONDecodeError:
+            unreadable += 1
+            continue
+        cur = {n: {f: e.get(f) for f in track}
+               for n, e in data.items()
+               if n != "_comment" and isinstance(e, dict)}
+        def emit(det, name, measure):
+            nonlocal k
+            k += 1
+            ev.append({
+                "id": f"eco-{det}-{k:04d}", "detector": det,
+                "detector_version": 1, "source": inv["source"],
+                "at": {"commit": sha, "date": when}, "paths": [path],
+                "measure": dict(measure, tool=name), "evidence": [sha],
+                "selected": None, "reason": None})
+
+        # The first revision is a *state*, not a transition. Reporting nothing
+        # for it loses everybody who was there when the inventory started --
+        # which for a young ecosystem is most of it.
+        if prev is None:
+            for name in sorted(cur):
+                emit("listed", name, {"as": cur[name].get("status"),
+                                      "at_inventory_start": True})
+            prev = cur
+            continue
+
+        for name in cur:
+            if name not in prev:
+                emit("listed", name, {"as": cur[name].get("status")})
+                if cur[name].get("status") == "member" and name in first_commit:
+                    emit("joined", name, {
+                        "to": "member", "from": None,
+                        "days_after_first_commit":
+                            (date.fromisoformat(when)
+                             - date.fromisoformat(first_commit[name])).days})
+                continue
+            for f in track:
+                a, b = prev[name].get(f), cur[name].get(f)
+                if a == b:
+                    continue
+                if f == "status" and b == "member":
+                    emit("joined", name, {
+                        "from": a, "to": b,
+                        "days_after_first_commit":
+                            (date.fromisoformat(when)
+                             - date.fromisoformat(first_commit[name])).days
+                            if name in first_commit else None})
+                else:
+                    emit("status-change", name, {"field": f, "from": a, "to": b})
+        for name in prev:
+            if name not in cur:
+                emit("delisted", name, {"was": prev[name].get("status")})
+        prev = cur
+    return ev, {"revisions": len(revs), "unreadable": unreadable}
+
+
 def detect_relations(corpus, frm, th):
     ev, k = [], 0
     ids = [s["id"] for s in corpus["sources"]]
@@ -455,8 +555,13 @@ def cmd_events(a):
         repo = os.path.join(a.frm, s["id"])
         ev += detect(s["id"], repo, th,
                      ecosystem_first=first if corpus["kind"] == "ecosystem" else None)
+    inv_stats = None
     if corpus["kind"] == "ecosystem":
         ev += detect_relations(corpus, a.frm, th)
+        s = load_subject(a.subject)
+        if s.get("inventory"):
+            iev, inv_stats = detect_inventory(corpus, a.frm, s["inventory"])
+            ev += iev
     ev.sort(key=lambda e: (e["at"]["date"], e["id"]))
     write(rd, "events.jsonl", ev)
     by = defaultdict(int)
@@ -464,6 +569,17 @@ def cmd_events(a):
         by[e["detector"]] += 1
     print("  candidates: " + ", ".join(f"{k} {v}" for k, v in sorted(by.items())))
     print(f"  {len(ev)} total. None is selected; selection is stage 5.")
+    if inv_stats:
+        print(f"  inventory: {inv_stats['revisions']} revisions read, "
+              f"{inv_stats['unreadable']} unreadable")
+    named = {e["measure"].get("tool") for e in ev
+             if e["detector"] in ("listed", "joined", "status-change", "delisted")}
+    declared = {s["id"] for s in corpus["sources"]}
+    if named:
+        drift = sorted(named - declared - {None})
+        if drift:
+            print(f"  note: the inventory names {len(drift)} tool(s) this "
+                  f"subject does not read: {', '.join(drift)}")
 
 
 # ---------------------------------------------------------------- stage 3
@@ -616,7 +732,9 @@ def cmd_prompt(a):
 
 
 def cmd_check(a):
-    rd = run_dir(a.subject)
+    # Runs are selected by newest stamp, so a later evidence-only run would
+    # otherwise silently become the thing `check` reports on.
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
     corpus = load(rd, "corpus.json")
     events = {e["id"]: e for e in load(rd, "events.jsonl")}
     claims = {c["id"] for c in load(rd, "claims.jsonl")}
@@ -710,6 +828,9 @@ def main():
             q.add_argument("--from", dest="frm", default=None,
                            help="directory holding one checkout per source id")
             q.add_argument("--date", default=None)
+            q.add_argument("--run", default=None,
+                           help="a run stamp, when the newest is not the one "
+                                "you mean")
     a = p.parse_args()
     if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record"):
         raise SystemExit("epikrisis: --from <dir> is required: this reads "
