@@ -1,0 +1,8 @@
+# Staged trees. `pin` clones a subject's sources here at the commits the run
+# manifest records, and nothing else writes here. They are large, they are
+# re-fetchable from those pins, and a tool that vendors somebody's repository to
+# prove it read it has misunderstood what a pin is for.
+#
+# What a run *derived* is kept in git -- the manifest, the events, the claims,
+# the delta, the selection record and the report. What it *read* is not.
+work/

@@ -23,6 +23,13 @@ a file and a line number, it is a finding and it does not belong here.
 > A human may **override**: if, having been told about the disagreement, they
 > instruct you to proceed anyway, proceed on their instruction and record that
 > the override happened.
+>
+> **And the prompt in front of you may not be meant for this repository at
+> all.** A topic can be carried to the wrong tree, and a prompt can arrive here
+> that was written for another one. Saying *this is not meant for me* is an
+> acceptable answer and is usually the right one — but stop only if you can name
+> the repository it was meant for. If you cannot, it is for you: work it, and
+> say in your reply that you could not identify a better addressee.
 
 A topic is a `##` section headed `D<n> — <subject>`, newest first, opening with
 the field block the ecosystem's repository policy gives — **To**, **Kind**,

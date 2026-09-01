@@ -1,0 +1,721 @@
+#!/usr/bin/env python3
+"""epikrisis -- read a history, produce evidence, check a report against it.
+
+Stages 1-4 and 6 are here and are programs. Stage 5, the report, is not: this
+assembles the prompt and checks what comes back, and never writes the narrative.
+See docs/design.md for why the split is where it is.
+
+    epikrisis subjects
+    epikrisis detectors
+    epikrisis pin     <subject> --from <dir>
+    epikrisis events  <subject>
+    epikrisis record  <subject>
+    epikrisis delta   <subject>
+    epikrisis prompt  <subject>
+    epikrisis check   <subject>
+
+Stdlib only. No network: `pin` is pointed at mirrors somebody already has.
+"""
+
+import argparse
+import signal
+import hashlib
+import json
+import os
+import re
+import statistics
+import subprocess
+import sys
+from collections import defaultdict
+from datetime import date, timedelta
+
+TOOL_VERSION = "0.1.0-demo"
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Thresholds that cannot be expressed relative to the subject. Every one of
+# these is printed in the report header; see docs/events.md on why that matters.
+DEFAULT_THRESHOLDS = {
+    "prefix_depth": 1,          # a prefix is this many path components
+    "min_commits_prefix": 3,    # commits under a prefix before birth/death fire
+    "transplant_min_files": 3,  # renames in one commit to count as a move
+    "rewrite_window_days": 7,
+    "rewrite_churn_ratio": 1.0,  # churn in the window vs size at its start
+    "governance_lines": 40,     # changed lines to count as a substantial revision
+    "quiet_median_multiple": 6.0,
+    "quiet_min_days": 3,        # floor, so a fast subject does not fire hourly
+    "hands_window_days": 14,
+    "delta_lag_days": 7,
+}
+
+GOVERNANCE = re.compile(
+    r"(^|/)(policy|charter|vision|roles|governance|contributing|code_of_conduct|"
+    r"names|proposals|reporting-policy|license|licence)[^/]*\.(md|txt)$|"
+    r"(^|/)(CONTRIBUTING|LICENSE|COPYING)([.-][^/]*)?$", re.I)
+
+APPARATUS = [
+    ("ci", re.compile(r"^\.github/workflows/.*\.ya?ml$")),
+    ("tests", re.compile(r"^(tests?|regress|smtlibTests)/")),
+    ("manifest", re.compile(
+        r"^(pyproject\.toml|package\.json|Cargo\.toml|lakefile\.(lean|toml)|"
+        r"CMakeLists\.txt|setup\.py|lean-toolchain)$")),
+    ("style", re.compile(r"^(\.clang-format|\.editorconfig|ruff\.toml|"
+                         r"\.flake8|setup\.cfg|\.pre-commit-config\.yaml)$")),
+    ("ignore", re.compile(r"^\.gitignore$")),
+    ("scripts", re.compile(r"^(scripts|bin|tools)/")),
+]
+
+VERSION_TAG = re.compile(r"^v?\d+(\.\d+)+")
+ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+
+# Detectors that exist, and those the catalogue names and this does not
+# implement. A run records both, so a missing detector is visible rather than
+# silently absent.
+IMPLEMENTED = ["transplant", "birth", "death", "rewrite", "release",
+               "governance", "apparatus", "quiet", "hands",
+               "repo-added", "relation"]
+NOT_IMPLEMENTED = {
+    "dependency": "needs per-manifest parsing; the demo would only be able to "
+                  "say that a manifest changed, which `governance` already says",
+}
+FAILURE_MODES = {
+    "transplant": "a rewrite that keeps its structure scores as a move",
+    "birth": "an import or fork gives everything one birthday; generated trees",
+    "death": "a subsystem moving to another repository looks like a death",
+    "rewrite": "formatting sweeps and regenerated files; size is approximated "
+               "by cumulative added-minus-deleted, not measured at the commit",
+    "release": "projects that do not tag are invisible to it",
+    "governance": "the fact of the document is the event; it cannot see whether "
+                  "anybody followed it",
+    "apparatus": "apparatus inherited at creation is not an event, and this "
+                 "cannot tell that from adoption",
+    "quiet": "branch development and ordinary absence look identical",
+    "hands": "one person with several addresses inflates the count",
+    "repo-added": "the membership set is configuration, so this is only as good "
+                  "as what somebody wrote down",
+    "relation": "finds when a mention first appeared, not when a dependency "
+                "became real",
+}
+
+
+def run(args, cwd=None):
+    p = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    if p.returncode != 0:
+        raise SystemExit(f"epikrisis: {' '.join(args[:3])}...: {p.stderr.strip()}")
+    return p.stdout
+
+
+def git(repo, *args):
+    return run(["git", "-C", repo, *args])
+
+
+def anon(email):
+    """Stage 1 sees an address; nothing downstream does. Only counts travel."""
+    return hashlib.sha256(email.strip().lower().encode()).hexdigest()[:12]
+
+
+def prefix_of(path, depth):
+    parts = path.split("/")
+    if len(parts) == 1:
+        return "(root)"
+    return "/".join(parts[:depth])
+
+
+def subject_path(name):
+    return os.path.join(HERE, "subjects", f"{name}.json")
+
+
+def load_subject(name):
+    p = subject_path(name)
+    if not os.path.exists(p):
+        raise SystemExit(f"epikrisis: no subject {name!r} in subjects/")
+    s = json.load(open(p))
+    t = dict(DEFAULT_THRESHOLDS)
+    t.update(s.get("thresholds", {}))
+    s["thresholds"] = t
+    return s
+
+
+def run_dir(name, when=None):
+    d = os.path.join(HERE, "runs", name)
+    if when:
+        return os.path.join(d, when)
+    if not os.path.isdir(d):
+        raise SystemExit(f"epikrisis: no runs for {name}; `pin` first")
+    stamps = sorted(x for x in os.listdir(d) if not x.startswith("."))
+    if not stamps:
+        raise SystemExit(f"epikrisis: no runs for {name}; `pin` first")
+    return os.path.join(d, stamps[-1])
+
+
+def load(rd, base):
+    p = os.path.join(rd, base)
+    if not os.path.exists(p):
+        raise SystemExit(f"epikrisis: {base} missing; run the earlier stage")
+    if base.endswith(".jsonl"):
+        return [json.loads(l) for l in open(p) if l.strip()]
+    return json.load(open(p))
+
+
+def write(rd, base, obj):
+    os.makedirs(rd, exist_ok=True)
+    p = os.path.join(rd, base)
+    with open(p, "w") as f:
+        if base.endswith(".jsonl"):
+            for r in obj:
+                f.write(json.dumps(r, sort_keys=True) + "\n")
+        else:
+            json.dump(obj, f, indent=2, sort_keys=True)
+            f.write("\n")
+    print(f"  wrote {os.path.relpath(p, HERE)}")
+    return p
+
+
+# ---------------------------------------------------------------- stage 1
+
+def cmd_pin(a):
+    s = load_subject(a.subject)
+    stamp = a.date or date.today().isoformat()
+    rd = run_dir(a.subject, stamp)
+    sources = []
+    for src in s["sources"]:
+        repo = os.path.join(a.frm, src.get("mirror", src["id"]))
+        if not os.path.isdir(os.path.join(repo, ".git")):
+            raise SystemExit(f"epikrisis: {repo} is not a git checkout")
+        if git(repo, "rev-parse", "--is-shallow-repository").strip() == "true":
+            raise SystemExit(f"epikrisis: {src['id']} is a shallow clone; "
+                             "every detector would silently under-report")
+        log = git(repo, "log", "--reverse", "--format=%ad", "--date=short").split()
+        sources.append({
+            "id": src["id"], "origin": src["origin"],
+            "commit": git(repo, "rev-parse", "HEAD").strip(),
+            "first_commit": log[0], "last_commit": log[-1], "commits": len(log),
+        })
+    qd = hashlib.sha256(open(os.path.join(HERE, "questions.md"), "rb").read()).hexdigest()
+    corpus = {
+        "subject": s["subject"], "kind": s["kind"], "self": s.get("self", False),
+        "pinned": stamp, "tool_version": TOOL_VERSION,
+        "date_field": "committer date, --date=short, as git reports it",
+        "sources": sources, "exclude": s.get("exclude", []),
+        "thresholds": s["thresholds"], "questions_digest": qd,
+        "thresholds_changed_after_events": False,
+        "detectors_implemented": IMPLEMENTED,
+        "detectors_not_implemented": NOT_IMPLEMENTED,
+        "not_in_corpus": s.get("not_in_corpus", []),
+    }
+    write(rd, "corpus.json", corpus)
+    print(f"  {len(sources)} source(s), "
+          f"{sum(x['commits'] for x in sources)} commits, "
+          f"{min(x['first_commit'] for x in sources)} .. "
+          f"{max(x['last_commit'] for x in sources)}")
+
+
+# ---------------------------------------------------------------- stage 2
+
+def read_log(repo, exclude, depth):
+    """One pass for churn, one for statuses. Returns per-commit records.
+
+    Author addresses are read here and reduced to an opaque id immediately;
+    nothing this function returns can name a person.
+    """
+    out = []
+    sep = "\x01"
+    raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
+              f"--format={sep}%H%x02%ad%x02%ae", "--numstat")
+    for block in raw.split(sep):
+        if not block.strip():
+            continue
+        head, *rest = block.strip("\n").split("\n")
+        sha, when, email = head.split("\x02")
+        files = []
+        for line in rest:
+            if not line.strip():
+                continue
+            parts = line.split("\t")
+            if len(parts) != 3:
+                continue
+            add, dele, path = parts
+            if any(path.startswith(x) for x in exclude):
+                continue
+            files.append((0 if add == "-" else int(add),
+                          0 if dele == "-" else int(dele), path))
+        out.append({"sha": sha, "date": when, "who": anon(email), "files": files})
+    return out
+
+
+def read_status(repo, exclude):
+    """A/D/R statuses, with rename detection on. Renames are what make a
+    reorganisation distinguishable from a subsystem dying."""
+    out = []
+    sep = "\x01"
+    raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
+              f"--format={sep}%H%x02%ad", "--name-status", "-M50%")
+    for block in raw.split(sep):
+        if not block.strip():
+            continue
+        head, *rest = block.strip("\n").split("\n")
+        sha, when = head.split("\x02")
+        recs = []
+        for line in rest:
+            parts = line.split("\t")
+            if len(parts) < 2:
+                continue
+            st = parts[0]
+            paths = parts[1:]
+            if any(any(p.startswith(x) for x in exclude) for p in paths):
+                continue
+            recs.append((st[0], paths))
+        out.append({"sha": sha, "date": when, "recs": recs})
+    return out
+
+
+def detect(src_id, repo, th, ecosystem_first=None):
+    depth = th["prefix_depth"]
+    exclude = th.get("_exclude", [])
+    log = read_log(repo, exclude, depth)
+    status = read_status(repo, exclude)
+    alive = set()
+    for p in git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines():
+        if not any(p.startswith(x) for x in exclude):
+            alive.add(prefix_of(p, depth))
+
+    ev = []
+    n = [0]
+
+    def emit(det, when, sha, paths, measure, evidence=None, note=None):
+        n[0] += 1
+        ev.append({
+            "id": f"{src_id}-{det}-{n[0]:04d}", "detector": det,
+            "detector_version": 1, "source": src_id,
+            "at": {"commit": sha, "date": when},
+            "paths": paths, "measure": measure,
+            "evidence": evidence or ([sha] if sha else []),
+            "selected": None, "reason": None,
+        })
+
+    # ---- transplant, first: it suppresses the birth/death pair it explains
+    moved = set()
+    for c in status:
+        groups = defaultdict(list)
+        for st, paths in c["recs"]:
+            if st == "R" and len(paths) == 2:
+                groups[(prefix_of(paths[0], depth), prefix_of(paths[1], depth))].append(paths)
+        for (a, b), ps in groups.items():
+            if a != b and len(ps) >= th["transplant_min_files"]:
+                emit("transplant", c["date"], c["sha"], [a, b],
+                     {"files": len(ps)})
+                moved.add((a, c["date"]))
+                moved.add((b, c["date"]))
+
+    # ---- per-prefix aggregates
+    first_add, last_touch, touches = {}, {}, defaultdict(int)
+    for c in status:
+        for st, paths in c["recs"]:
+            p = prefix_of(paths[-1], depth)
+            touches[p] += 1
+            last_touch[p] = (c["date"], c["sha"])
+            if st == "A" and p not in first_add:
+                first_add[p] = (c["date"], c["sha"])
+
+    for p, (when, sha) in sorted(first_add.items()):
+        if touches[p] >= th["min_commits_prefix"] and (p, when) not in moved:
+            emit("birth", when, sha, [p], {"later_commits": touches[p]})
+    for p, (when, sha) in sorted(last_touch.items()):
+        if p not in alive and touches[p] >= th["min_commits_prefix"] \
+                and (p, when) not in moved:
+            emit("death", when, sha, [p], {"commits_before_death": touches[p]})
+
+    # ---- rewrite: churn in a window against size at its start
+    size = defaultdict(int)
+    win = timedelta(days=th["rewrite_window_days"])
+    by_prefix = defaultdict(list)
+    for c in log:
+        d = date.fromisoformat(c["date"])
+        agg = defaultdict(lambda: [0, 0])
+        for add, dele, path in c["files"]:
+            p = prefix_of(path, depth)
+            agg[p][0] += add
+            agg[p][1] += dele
+        for p, (add, dele) in agg.items():
+            by_prefix[p].append((d, add, dele, c["sha"]))
+    for p, items in by_prefix.items():
+        if p not in alive:
+            continue
+        i = 0
+        while i < len(items):
+            start, cur = items[i][0], size[p]
+            churn = 0
+            j, last = i, items[i][3]
+            while j < len(items) and items[j][0] - start <= win:
+                churn += items[j][1] + items[j][2]
+                size[p] += items[j][1] - items[j][2]
+                last = items[j][3]
+                j += 1
+            if cur > 0 and churn >= th["rewrite_churn_ratio"] * cur:
+                emit("rewrite", start.isoformat(), last, [p],
+                     {"churn": churn, "size_at_start": cur,
+                      "ratio": round(churn / cur, 2)})
+            i = j
+
+    # ---- release
+    for tag in git(repo, "tag").split():
+        if VERSION_TAG.match(tag):
+            when = git(repo, "log", "-1", "--format=%ad", "--date=short", tag).strip()
+            sha = git(repo, "rev-list", "-1", tag).strip()
+            emit("release", when, sha, [], {"tag": tag})
+
+    # ---- governance and apparatus
+    seen_app = set()
+    gov_added = set()
+    for c in status:
+        for st, paths in c["recs"]:
+            path = paths[-1]
+            if st == "A" and GOVERNANCE.search(path) and path not in gov_added:
+                gov_added.add(path)
+                emit("governance", c["date"], c["sha"], [path], {"kind": "added"})
+            if st == "A":
+                for kind, pat in APPARATUS:
+                    if kind not in seen_app and pat.match(path):
+                        seen_app.add(kind)
+                        emit("apparatus", c["date"], c["sha"], [path],
+                             {"kind": kind})
+    for c in log:
+        for add, dele, path in c["files"]:
+            if GOVERNANCE.search(path) and add + dele >= th["governance_lines"] \
+                    and path in gov_added:
+                emit("governance", c["date"], c["sha"], [path],
+                     {"kind": "revised", "lines": add + dele})
+
+    # ---- quiet
+    days = sorted({date.fromisoformat(c["date"]) for c in log})
+    if len(days) > 2:
+        gaps = [(days[i + 1] - days[i]).days for i in range(len(days) - 1)]
+        med = max(statistics.median(gaps), 1)
+        for i, g in enumerate(gaps):
+            if g >= max(th["quiet_median_multiple"] * med, th["quiet_min_days"]):
+                emit("quiet", days[i].isoformat(), None, [],
+                     {"gap_days": g, "median_gap_days": med,
+                      "resumed": days[i + 1].isoformat()})
+
+    # ---- hands (counts only)
+    wnd = th["hands_window_days"]
+    if log:
+        start = date.fromisoformat(log[0]["date"])
+        end = date.fromisoformat(log[-1]["date"])
+        prev = None
+        d = start
+        while d <= end:
+            hi = d + timedelta(days=wnd)
+            who = {c["who"] for c in log if d <= date.fromisoformat(c["date"]) < hi}
+            if prev is not None and len(who) != prev and who:
+                emit("hands", d.isoformat(), None, [],
+                     {"distinct": len(who), "was": prev, "window_days": wnd})
+            if who:
+                prev = len(who)
+            d = hi
+
+    # ---- repo-added (ecosystem mode)
+    if ecosystem_first is not None and log:
+        emit("repo-added", log[0]["date"], log[0]["sha"], [],
+             {"source": src_id, "days_after_first_source":
+              (date.fromisoformat(log[0]["date"]) - ecosystem_first).days})
+    return ev
+
+
+def detect_relations(corpus, frm, th):
+    ev, k = [], 0
+    ids = [s["id"] for s in corpus["sources"]]
+    for s in corpus["sources"]:
+        repo = os.path.join(frm, s["id"])
+        for other in ids:
+            if other == s["id"]:
+                continue
+            found = git(repo, "log", "--reverse", "--format=%H %ad",
+                        "--date=short", "-S", other, "--", ".").splitlines()
+            if found:
+                sha, when = found[0].split()
+                k += 1
+                ev.append({
+                    "id": f"eco-relation-{k:04d}", "detector": "relation",
+                    "detector_version": 1, "source": s["id"],
+                    "at": {"commit": sha, "date": when}, "paths": [],
+                    "measure": {"from": s["id"], "to": other,
+                                "kind": "first mention in tracked files"},
+                    "evidence": [sha], "selected": None, "reason": None})
+    return ev
+
+
+def cmd_events(a):
+    rd = run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    th = dict(corpus["thresholds"])
+    th["_exclude"] = corpus.get("exclude", [])
+    first = min(date.fromisoformat(s["first_commit"]) for s in corpus["sources"])
+    ev = []
+    for s in corpus["sources"]:
+        repo = os.path.join(a.frm, s["id"])
+        ev += detect(s["id"], repo, th,
+                     ecosystem_first=first if corpus["kind"] == "ecosystem" else None)
+    if corpus["kind"] == "ecosystem":
+        ev += detect_relations(corpus, a.frm, th)
+    ev.sort(key=lambda e: (e["at"]["date"], e["id"]))
+    write(rd, "events.jsonl", ev)
+    by = defaultdict(int)
+    for e in ev:
+        by[e["detector"]] += 1
+    print("  candidates: " + ", ".join(f"{k} {v}" for k, v in sorted(by.items())))
+    print(f"  {len(ev)} total. None is selected; selection is stage 5.")
+
+
+# ---------------------------------------------------------------- stage 3
+
+def cmd_record(a):
+    rd = run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    claims, k = [], 0
+
+    def add(src, path, line, kind, when, text):
+        nonlocal k
+        k += 1
+        claims.append({"id": f"C{k:04d}", "source": src,
+                       "at": {"path": path, "line": line},
+                       "kind": kind, "asserted": when,
+                       "text": text.strip()[:300]})
+
+    for s in corpus["sources"]:
+        repo = os.path.join(a.frm, s["id"])
+        files = git(repo, "ls-tree", "-r", "--name-only", "HEAD").splitlines()
+        for path in files:
+            if not path.endswith(".md"):
+                continue
+            base = os.path.basename(path)
+            try:
+                text = open(os.path.join(repo, path), encoding="utf-8").read()
+            except (OSError, UnicodeDecodeError):
+                continue
+            lines = text.splitlines()
+            for i, ln in enumerate(lines):
+                nxt = "\n".join(lines[i:i + 8])
+                m = re.match(r"^##\s+(D\d+)\s+—\s+(.+)$", ln)
+                if m and base == "discussion.md":
+                    d = re.search(r"\*\*Opened:\*\*\s*(\d{4}-\d{2}-\d{2})", nxt)
+                    add(s["id"], path, i + 1, "dated-topic",
+                        d.group(1) if d else None, ln)
+                    continue
+                if base == "names.md" and re.search(r"\*\*(Started|Approved)\*\*", ln):
+                    add(s["id"], path, i + 1, "register-entry", None, ln)
+                    continue
+                if re.match(r"^\*\*Decided:\*\*", ln):
+                    d = ISO.search(nxt)
+                    add(s["id"], path, i + 1, "decision",
+                        d.group(1) if d else None, ln)
+                    continue
+                if base in ("TODO.md", "ROADMAP.md") and re.match(r"^\s*-\s*\[x\]", ln):
+                    add(s["id"], path, i + 1, "checkbox", None, ln)
+                    continue
+                if re.search(r"folded into|retired in place|retired unstarted|"
+                             r"has since been \*\*folded", ln, re.I):
+                    d = ISO.search(nxt)
+                    add(s["id"], path, i + 1, "retirement",
+                        d.group(1) if d else None, ln)
+    write(rd, "claims.jsonl", claims)
+    by = defaultdict(int)
+    for c in claims:
+        by[c["kind"]] += 1
+    print("  claims: " + ", ".join(f"{k} {v}" for k, v in sorted(by.items())))
+    dated = sum(1 for c in claims if c["asserted"])
+    print(f"  {len(claims)} total, {dated} carry a date "
+          f"({len(claims) - dated} cannot be placed on a timeline)")
+
+
+# ---------------------------------------------------------------- stage 4
+
+def cmd_delta(a):
+    rd = run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    events = load(rd, "events.jsonl")
+    claims = load(rd, "claims.jsonl")
+    lag = corpus["thresholds"]["delta_lag_days"]
+
+    # A date window only discriminates if it is small against the subject's own
+    # span. On a subject whose whole history is days long it matches everything
+    # to everything, which the first run of this pipeline duly did -- 982 pairs
+    # out of 105 claims. So: proximity alone is not a match unless the window is
+    # narrow relative to the span, and a shared path is required otherwise.
+    per_source_span = {}
+    for s in corpus["sources"]:
+        per_source_span[s["id"]] = max(
+            (date.fromisoformat(s["last_commit"])
+             - date.fromisoformat(s["first_commit"])).days, 1)
+    weak_ok = {sid: lag * 4 <= span for sid, span in per_source_span.items()}
+
+    matched, disagreeing, used_e, used_c = [], [], set(), set()
+    for c in claims:
+        if not c["asserted"]:
+            continue
+        cd = date.fromisoformat(c["asserted"])
+        for e in events:
+            if e["source"] != c["source"]:
+                continue
+            gap = abs((date.fromisoformat(e["at"]["date"]) - cd).days)
+            shares_path = any(p and p != "(root)" and p in c["text"]
+                              for p in e["paths"])
+            if not shares_path and not weak_ok.get(e["source"], False):
+                continue
+            if gap <= lag:
+                matched.append({"event": e["id"], "claim": c["id"],
+                                "lag_days": gap,
+                                "strength": "strong" if shares_path else "weak"})
+                used_e.add(e["id"])
+                used_c.add(c["id"])
+            elif shares_path:
+                disagreeing.append({"event": e["id"], "claim": c["id"],
+                                    "lag_days": gap})
+                used_e.add(e["id"])
+                used_c.add(c["id"])
+    delta = {
+        "matched": matched, "disagreeing": disagreeing,
+        "declared_only": [c["id"] for c in claims if c["id"] not in used_c],
+        "derived_only": [e["id"] for e in events if e["id"] not in used_e],
+        "note": ("undated claims cannot be matched and fall to declared_only; "
+                 "see the matcher's limits in the report"),
+        "weak_matching": {sid: ("enabled" if ok else
+                                "disabled: the lag window is not small against "
+                                "this source's span")
+                          for sid, ok in weak_ok.items()},
+    }
+    write(rd, "delta.json", delta)
+    print(f"  matched {len(matched)}, disagreeing {len(disagreeing)}, "
+          f"declared-only {len(delta['declared_only'])}, "
+          f"derived-only {len(delta['derived_only'])}")
+
+
+# ---------------------------------------------------------------- stage 5/6
+
+def cmd_prompt(a):
+    rd = run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    events = load(rd, "events.jsonl")
+    claims = load(rd, "claims.jsonl")
+    delta = load(rd, "delta.json")
+    q = open(os.path.join(HERE, "questions.md")).read()
+    print("=" * 72)
+    print("EVIDENCE. Write the report from this and nothing else.")
+    print("Every claim-bearing sentence cites an event or claim id.")
+    print("=" * 72)
+    print(json.dumps(corpus, indent=2, sort_keys=True))
+    print("--- events ---")
+    for e in events:
+        print(json.dumps(e, sort_keys=True))
+    print("--- claims ---")
+    for c in claims:
+        print(json.dumps(c, sort_keys=True))
+    print("--- delta ---")
+    print(json.dumps(delta, indent=2, sort_keys=True))
+    print("--- questions ---")
+    print(q)
+
+
+def cmd_check(a):
+    rd = run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    events = {e["id"]: e for e in load(rd, "events.jsonl")}
+    claims = {c["id"] for c in load(rd, "claims.jsonl")}
+    rp = os.path.join(rd, "report.md")
+    ap = os.path.join(rd, "assessments.jsonl")
+    if not os.path.exists(rp) or not os.path.exists(ap):
+        raise SystemExit("epikrisis: no report.md/assessments.jsonl in " + rd)
+    report = open(rp).read()
+    assessments = [json.loads(l) for l in open(ap) if l.strip()]
+    sel = {}
+    sp = os.path.join(rd, "selection.jsonl")
+    if os.path.exists(sp):
+        sel = {r["event"]: r for r in (json.loads(l) for l in open(sp) if l.strip())}
+
+    bad = []
+    cited = set(re.findall(r"\b([a-z0-9-]+-\d{4}|C\d{4})\b", report))
+    for i in cited:
+        if i not in events and i not in claims:
+            bad.append(f"report cites {i}, which is in no evidence file")
+    for A in assessments:
+        if not A.get("rests_on"):
+            bad.append(f"{A['id']} rests on nothing")
+        for i in A.get("rests_on", []):
+            if i not in events and i not in claims:
+                bad.append(f"{A['id']} rests on {i}, which does not exist")
+        if not A.get("falsified_by", "").strip():
+            bad.append(f"{A['id']} has no falsifier")
+        if A.get("direction") not in ("well", "badly"):
+            bad.append(f"{A['id']} has no direction")
+    if not any(A.get("direction") == "badly" for A in assessments):
+        bad.append("no assessment in the `badly` direction: a run with nothing "
+                   "negative is a failed run, not a clean subject")
+    if corpus.get("self") and not any(A.get("direction") == "badly"
+                                      for A in assessments):
+        bad.append("self-assessment with no negative findings is void")
+    unaccounted = [i for i in events
+                   if i not in cited
+                   and not any(i in A.get("rests_on", []) for A in assessments)
+                   and i not in sel]
+    if unaccounted:
+        bad.append(f"{len(unaccounted)} candidate events are neither cited nor "
+                   f"dropped with a reason (first: {sorted(unaccounted)[:3]})")
+    for flag, why in (("thresholds_changed_after_events", "fitted thresholds"),
+                      ("self", "self-assessment")):
+        if corpus.get(flag) and why not in report.lower() \
+                and flag.replace("_", " ") not in report.lower():
+            bad.append(f"manifest flag {flag!r} is not reproduced in the report "
+                       f"header")
+    if bad:
+        print("check: FAIL")
+        for b in bad:
+            print("  - " + b)
+        return 1
+    print(f"check: ok — {len(assessments)} assessments, {len(cited)} ids cited, "
+          f"{len(events)} candidates all accounted for")
+    return 0
+
+
+def cmd_subjects(a):
+    d = os.path.join(HERE, "subjects")
+    for f in sorted(os.listdir(d)):
+        if f.endswith(".json"):
+            s = json.load(open(os.path.join(d, f)))
+            print(f"{s['subject']:24} {s['kind']:10} "
+                  f"{len(s['sources'])} source(s)"
+                  f"{'  [self]' if s.get('self') else ''}")
+
+
+def cmd_detectors(a):
+    for d in IMPLEMENTED:
+        print(f"{d:14} implemented   -- {FAILURE_MODES[d]}")
+    for d, why in NOT_IMPLEMENTED.items():
+        print(f"{d:14} NOT written   -- {why}")
+
+
+def main():
+    # `prompt` writes more than a screen and is meant to be piped.
+    if hasattr(signal, "SIGPIPE"):
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    p = argparse.ArgumentParser(prog="epikrisis", description=__doc__.split("\n")[0])
+    sub = p.add_subparsers(dest="cmd", required=True)
+    for name, fn, needs in (("subjects", cmd_subjects, False),
+                            ("detectors", cmd_detectors, False),
+                            ("pin", cmd_pin, True), ("events", cmd_events, True),
+                            ("record", cmd_record, True), ("delta", cmd_delta, True),
+                            ("prompt", cmd_prompt, True), ("check", cmd_check, True)):
+        q = sub.add_parser(name)
+        q.set_defaults(fn=fn)
+        if needs:
+            q.add_argument("subject")
+            q.add_argument("--from", dest="frm", default=None,
+                           help="directory holding one checkout per source id")
+            q.add_argument("--date", default=None)
+    a = p.parse_args()
+    if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record"):
+        raise SystemExit("epikrisis: --from <dir> is required: this reads "
+                         "mirrors somebody already has, and never fetches")
+    sys.exit(a.fn(a) or 0)
+
+
+if __name__ == "__main__":
+    main()
