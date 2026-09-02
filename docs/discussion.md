@@ -456,6 +456,94 @@ The argument for resolving sooner is unchanged and slightly stronger: the
 negative cadence is the cheapest artifact anybody here has, and it is the likelier
 of the two to be quietly fixed.
 
+
+### Reply — 2026-09-02, third: we were wrong about them, and the error is ours
+
+**Retraction first.** Twice in this topic we wrote that a score which cannot be
+re-derived *cannot be contested* and that **there is nowhere to send this.**
+That is false, and we did not check it before asserting it twice.
+
+`EXT-1` publishes a correction route, and it names our exact finding class:
+
+> *"A factual error in a published report — a mismatched package, stale
+> evidence, **a value that cannot be reproduced from its inputs** — should be
+> flagged with the repository's full name and the specific metric in question"*
+
+> *"Confirmed data errors trigger a re-scan."*
+
+There is an address (`mail@inspect.software`), a form with *"Correction to a
+report"* as a subject option, a stated policy that methodology disagreements are
+answered with the documented formula, and **a public repository for the scanner
+where, in their words, "the diagnosis and fix can be reviewed."**
+
+**What survives, stated narrowly, because the broad version was the wrong one:**
+a third party still cannot rebuild the score independently, so contesting it
+requires their cooperation. That is a real difference from a pinned, re-derivable
+artifact. **It is not the same claim as "nowhere to send it", and we should not
+have made the second one.**
+
+### The uncomfortable part, which is the reason to record this at all
+
+**Our sharpest criticism of `EXT-1` was that it makes unfalsifiable assertions.
+We made an unfalsifiable assertion about `EXT-1`, twice, in writing, to you.**
+It took one fetch to check and we did not make it until we went looking for what
+they do *well* rather than for what is broken.
+
+That is a fact about our method and not about theirs, and it is the strongest
+argument we have yet produced for the rule we keep citing at other people: **a
+scan that only finds faults, written by a party that has just built a rival,
+should be distrusted first by the party that wrote it.**
+
+### What is impressive, since we had not asked
+
+- **They publish the decomposition, not just the composite.** Vitality 81 shown
+  as Development Activity 99 beside Release Discipline 54 is **the only reason
+  the defect was findable.** An index printing *86, Excellent* would have been
+  unfalsifiable. **They handed us the instrument that caught them.**
+- **A documented correction channel that names the class of error we found**, and
+  a stated remediation — a confirmed data error triggers a re-scan.
+- **A public scanner repository** where a diagnosis can be reviewed. This
+  materially undercuts *unverifiable by construction*.
+- **Methodology versioned as a whole**, `v2.10.0`, with a published version
+  history and a bands page.
+- **The missing-data rule is published.** We think renormalising it away is
+  wrong; publishing the rule that makes scores non-comparable is more honest than
+  most measurement we have read, including some of ours.
+- **AI Readiness deliberately sized at 4%** so that a project with no agent
+  tooling can still reach 100/100 — restraint on a fashionable axis, stated.
+- **Red flags as multipliers.** They diagnosed the same weakness we did — that a
+  weighted average drowns a categorical fact — and built a partial answer to it.
+- **They compose OpenSSF Scorecard and OSV rather than reinventing them**, which
+  is the argument this ecosystem makes about references.
+- **An explicit scope limit:** *"Results inform review and procurement; they do
+  not replace expert judgement."*
+
+### What we still do not understand, listed as unknown rather than implied
+
+1. How far the calibration curve moves a score when the **population** moves.
+2. The bound and trigger conditions on **red-flag multipliers** — the largest
+   lever in the system.
+3. What **Stewardship** and **Package maintenance** actually read.
+4. How **Maintainer resilience** is computed, and whether it touches people in a
+   way we would refuse.
+5. The **recompute cadence.** The report we read was stamped 2026-08-13 and read
+   2026-09-02 — twenty days. We do not know whether that is normal or triggered.
+6. Whether **raw inputs** are published, or only sub-scores.
+7. There is a **"Certification & pricing"** section, and the pull request body
+   states that scores cannot be bought. **Those are compatible** — a
+   certification is not a score — **and we do not know the relationship.** It is
+   recorded as an unknown, and anybody turning it into an insinuation is doing
+   something this topic is against.
+
+### One thing we are not doing, and it is your call rather than ours
+
+They invite exactly this report and a confirmed error triggers a re-scan. **We
+have not sent it**, because a finding leaving this family toward an outside party
+is not a thing a tool decides. **We think it should probably be sent** — it is
+courteous, it is cheap, and an index that fixes a reported bug is better for
+everybody including cvc5. If you disagree, the finding stays internal and
+nothing is lost but the fix.
+
 ## D6 — a documentation rule for the kernel, and why we are not proposing one for anything else
 
 **To:** anoieu

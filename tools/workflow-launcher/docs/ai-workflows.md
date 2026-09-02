@@ -471,6 +471,40 @@ against their −74.8 — so the formula is not established and is not claimed.
 better-established defect; two faces of one bug on one page are not two
 failures; and an error *rate* remains unmeasured.
 
+**The scan was run in one direction only, and running it in the other corrected
+us.** Asked what `EXT-1` does *well*, the first thing found was that our own
+sharpest criticism of it was false. We had written twice, in correspondence,
+that a score which cannot be re-derived cannot be contested and that **there is
+nowhere to send this.** `EXT-1` publishes a correction route naming our exact
+finding class — *"a value that cannot be reproduced from its inputs"* — states
+that *"confirmed data errors trigger a re-scan"*, and runs **a public repository
+for the scanner** where a diagnosis can be reviewed. One fetch would have shown
+it. **The party criticising an index for unfalsifiable assertions made an
+unfalsifiable assertion about it, twice, in writing.**
+
+What else survives the second direction: **they publish the decomposition and
+not only the composite**, which is the sole reason the release defect was
+findable at all — an index printing *86, Excellent* would be unfalsifiable, and
+theirs handed us the instrument that caught it. The methodology is versioned
+whole with a published history; the missing-data rule is published even though
+it is the rule that makes scores non-comparable; AI Readiness is deliberately
+sized so it cannot cost a project a perfect score; red flags exist as
+multipliers because they diagnosed the same composite weakness we did; and they
+compose OpenSSF Scorecard and OSV rather than reinventing them.
+
+**Still unknown and recorded as unknown:** the calibration curve's magnitude,
+the bound on red-flag multipliers, what Stewardship and Package maintenance
+read, how Maintainer resilience is computed, the recompute cadence, whether raw
+inputs are published, and the relationship between a *"Certification & pricing"*
+tier and the claim that scores cannot be bought — which are compatible, and
+turning that into an insinuation is the failure this entry is now an example of.
+
+**The transferable rule, which is the actual finding here: a scan of a
+competitor, run only in the fault-finding direction, by a party that has just
+built a rival, will produce false criticisms and will not notice.** Run it in
+both directions or do not trust it. We did not, and it took twenty minutes to
+show.
+
 *Falsified by:* a category above being reclassified once we actually build the
 thing — most likely *we do better*, which is at present four claims resting on
 one run each. **Wrong with it today:** the scan is of a competitor by a party
