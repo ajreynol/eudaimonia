@@ -137,6 +137,7 @@ source:
 | `release` | a tag matching the subject's version pattern | tag, commit, date | projects that do not tag; tags moved after the fact; pre-release noise swamping real ones |
 | `governance` | a governing document added or substantially revised — policy, charter, contribution guide, vision, roles, a register | path, commit, size delta | platform-provided templates count as governance and are not; the *fact* of the document is the event, and this detector cannot see whether anybody followed it |
 | `apparatus` | the first of each kind of self-checking: CI configuration, a test directory, a dependency manifest, a formatter or linter, a release script | which kind, commit, date | apparatus added and never used looks identical to apparatus adopted; apparatus inherited at creation from a template is not an event at all |
+| `ai-attribution` | the first commit carrying a disclosed assistant co-author, and each month whose disclosed share crosses `ai_share_threshold` | month, commits, attributed count, share, model families — **never a name** | it measures **disclosure and never contribution**: the trailer is opt-in, so the floor is zero and there is no ceiling, and a tree with none is indistinguishable from a tree where none was recorded |
 | `dependency` | a manifest gaining, losing or repinning a dependency | manifest, name, from, to | lockfile churn drowns the manifest; transitive changes are invisible; vendored dependencies are invisible by construction |
 | `quiet` | a gap between commits exceeding a multiple of the subject's own trailing median | gap length, bounding commits | development in branches; a single-maintainer project, whose median is close to meaningless; ordinary absence |
 | `hands` | a change in the *number* of distinct contributors over a window | counts only, before and after | one person with several addresses inflates the count; bots; the effect of a `.mailmap` arriving is itself detected as a change in hands, which it is not |
@@ -161,6 +162,33 @@ happens to notice. A detector makes it checkable — over any subject, including
 the trees that wrote the rule. It will be noisy. It is worth carrying anyway,
 because a rule the family enforces on others and cannot see in itself is exactly
 the kind of thing this project exists to find.
+
+## `ai-attribution`, and why it is not the two refusals below
+
+It looks like it breaks both of them and it breaks neither, which is worth
+writing down because the next reader will have the same objection.
+
+**It does not read commit messages to classify what happened.** It reads one
+structured trailer — the name field of `Co-authored-by:` — which is a declared
+fact in the commit object, not prose to be interpreted. Nothing is summarised
+and no model is asked what a commit did.
+
+**It is not per person.** The measure carries counts and model families. No
+human name is emitted at any stage, so nothing downstream can become a fact
+about anybody, and the schema is what enforces that rather than this paragraph.
+
+**The one number it produces is a floor.** *Disclosed* assistant contribution is
+not assistant contribution: a repository at 0% may have been written entirely by
+an assistant whose user never configured a trailer. So the honest reading of a
+low share is *this project does not record it*, and the honest reading of a
+change in the share is a change in **practice**, which may or may not be a change
+in **conduct**. A report that states the second from the first is wrong.
+
+**Its first hand-written version filed six human maintainers as assistants**,
+because it matched `ai` anywhere in the trailer line and `gmail.com` contains
+it. That is why the pattern anchors on the name field before the angle bracket,
+and it is the cheapest available illustration of why a detector's failure mode
+is written before its results are trusted.
 
 ## What is deliberately not a detector
 

@@ -50,7 +50,21 @@ DEFAULT_THRESHOLDS = {
     "quiet_min_days": 3,        # floor, so a fast subject does not fire hourly
     "hands_window_days": 14,
     "delta_lag_days": 7,
+    "ai_share_threshold": 0.25,  # disclosed-assistant share for a month to fire
+    "ai_min_commits_month": 10,  # months smaller than this carry no share
 }
+
+# Matched against the NAME field of a co-author trailer only, never the address.
+# The first hand-written version of this matched `ai` anywhere in the line and
+# filed six human maintainers as assistants, because `gmail.com` contains it.
+AI_TRAILER = re.compile(r"^\s*co-authored-by:\s*([^<\n]*)<", re.I | re.M)
+AI_FAMILIES = [
+    ("claude", re.compile(r"\bclaude\b", re.I)),
+    ("chatgpt/gpt", re.compile(r"\b(chatgpt|gpt-?\d|openai)\b", re.I)),
+    ("copilot", re.compile(r"\bcopilot\b", re.I)),
+    ("gemini", re.compile(r"\bgemini\b", re.I)),
+    ("other-agent", re.compile(r"\b(cursor|devin|aider|codex)\b", re.I)),
+]
 
 GOVERNANCE = re.compile(
     r"(^|/)(policy|charter|vision|roles|governance|contributing|code_of_conduct|"
@@ -75,7 +89,7 @@ ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 # Detectors that exist, and those the catalogue names and this does not
 # implement. A run records both, so a missing detector is visible rather than
 # silently absent.
-IMPLEMENTED = ["listed", "joined", "status-change", "delisted",
+IMPLEMENTED = ["ai-attribution", "listed", "joined", "status-change", "delisted",
                "transplant", "birth", "death", "rewrite", "release",
                "governance", "apparatus", "quiet", "hands",
                "repo-added", "relation"]
@@ -105,6 +119,12 @@ FAILURE_MODES = {
                  "cannot tell that from adoption",
     "quiet": "branch development and ordinary absence look identical",
     "hands": "one person with several addresses inflates the count",
+    "ai-attribution": "it measures **disclosure and never contribution**. A "
+                      "trailer is opt-in, so the floor is zero and there is no "
+                      "ceiling: a tree with none is indistinguishable from a "
+                      "tree where none was recorded, and those are not the same "
+                      "fact. A human whose name contains a model family word "
+                      "scores as an assistant",
     "repo-added": "the membership set is configuration, so this is only as good "
                   "as what somebody wrote down",
     "relation": "finds when a mention first appeared, not when a dependency "
@@ -460,6 +480,44 @@ def detect(src_id, repo, rev, th, ecosystem_first=None):
             if who:
                 prev = len(who)
             d = hi
+
+    # ---- ai-attribution: disclosed assistant co-authorship, by month.
+    # Reads the trailer and nothing else, which is the whole of what a history
+    # can say about this. No human name is emitted: the measure carries counts
+    # and model families, so nothing here can become a fact about a person.
+    recs = git(repo, "log", "--no-merges", "--format=%H%x01%ad%x01%B%x02",
+               "--date=short", rev).split("\x02")
+    months, fams, first = defaultdict(lambda: [0, 0, None]), defaultdict(int), None
+    for rec in recs:
+        if not rec.strip():
+            continue
+        sha, when, body = rec.strip().split("\x01", 2)
+        hit = {f for name in AI_TRAILER.findall(body)
+               for f, rx in AI_FAMILIES if rx.search(name)}
+        m = months[when[:7]]
+        m[0] += 1
+        m[2] = sha
+        if hit:
+            m[1] += 1
+            for f in hit:
+                fams[f] += 1
+            if first is None or when < first[1]:
+                first = (sha, when)
+    if first:
+        emit("ai-attribution", first[1], first[0], ["(trailers)"],
+             {"kind": "first-disclosure", "families": dict(sorted(fams.items()))})
+    over = False
+    for month in sorted(months):
+        total, att, sha = months[month]
+        if total < th["ai_min_commits_month"]:
+            continue
+        now = att / total >= th["ai_share_threshold"]
+        if now != over:
+            emit("ai-attribution", month + "-01", sha, ["(trailers)"],
+                 {"kind": "share-crossed", "month": month, "commits": total,
+                  "attributed": att, "share": round(att / total, 3),
+                  "direction": "up" if now else "down"})
+            over = now
 
     # ---- repo-added (ecosystem mode)
     if ecosystem_first is not None and log:

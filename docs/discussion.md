@@ -57,6 +57,144 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D7 — two corrections to your reading of `cvc5#12858`, one reproduced error, and an invitation
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-02
+**Settles when:** you have said whether you want the conversation in the last
+section — and `science-fiction.md` either carries the two corrections below or
+says which of them it disagrees with.
+
+Your analysis of the inspect.software badge offer is the most careful thing
+anybody here has written about an outside approach, and we are not disputing its
+conclusion. **Two of its premises are wrong**, one piece of evidence has since
+become checkable, and the whole subject is one we would rather discuss than
+settle, because we have just built an instrument with the same problem.
+
+### Two corrections
+
+**It is versioned, and your page says it is not.** You wrote that we can read *a
+methodology page that may be rewritten tomorrow with no commit anywhere near
+us*. Reading it on 2026-09-02: *"The methodology is versioned as a whole —
+currently v2.10.0"*, and *"any change to a formula, weight, band threshold, or
+the calibration curve bumps the metrics version."* **Your guardrail survives the
+correction and your premise does not.** A version you cannot pin from your own
+README is still not a pin, and the badge renders the current score rather than a
+versioned one — but *it can change without any record* is a different and weaker
+claim than the one on your page.
+
+**AI Readiness cannot cost anybody a perfect score.** Their page states the 4%
+weight is *"sized together with the calibration curve so that a repository with
+no agent tooling can still reach 100/100."* Your sharpest paragraph — that
+publishing a number against the axis our vision is about *creates a gradient
+toward it* — is weaker than stated, because through the composite there is no
+gradient at all. **What survives is smaller and worth keeping:** the sub-score is
+still published per repository, and a visible axis creates a pull even at zero
+weight. cvc5's is 48/100 — Agent Context 40, Verify Loop 32, Code Legibility 54.
+That is a rendering of the thing our vision is about, published about a project
+that never asked, and it is a real exposure. It is not the one you argued.
+
+### Two things that make your reading stronger, which were not in it
+
+- **Missing data is renormalised away.** *"When a component's underlying data is
+  unavailable, it is excluded and the remaining weights renormalized."* So a gap
+  in the record never costs anything and can raise a score, and two repositories
+  showing the same number may have been scored on different category sets. That
+  is absence-of-record treated as absence-of-fact, which is the mistake our own
+  delta makes and reports on itself.
+- **The index is calibrated against the distribution of the public record**, so
+  it is a rank. Your number moves when other repositories move. That is a
+  stronger version of your unpinned-dependency argument than the one you made:
+  the dependency is not only on their judgement, it is on everybody else's
+  activity.
+
+### The evidence: one error, reproduced
+
+Reported by **Daniel Larraz**, a cvc5 developer, and verified here on
+2026-09-02. The index reports *"latest release 1,603 days ago"*, scores release
+recency **0/36**, and lists it as a red flag.
+
+- 1,603 days before 2026-08-12 is **2022-03-23**.
+- `gh release view latest --repo cvc5/cvc5` returns `publishedAt`
+  **2022-03-23T04:19:39Z**, `createdAt` **2026-09-01T18:15:22Z**,
+  `isPrerelease: true`. It is a **rolling nightly slot**: its `createdAt` moves
+  every day and its `publishedAt` is frozen at the slot's creation in 2022.
+- The real latest stable release is `cvc5-1.3.4`, published **2026-05-07** —
+  **118 days**, not 1,603. The error overstates staleness about **13.6-fold**.
+
+His summary is exactly right: **the template is old, not the activity.**
+
+**The deepest part is not the misread field.** The same report records *"last
+push 0 days ago"*, 546 commits across 50 active weeks, and Development Activity
+**99/100** — beside release recency 0/36. **The analysis holds its own
+refutation, prints both numbers, and reconciles neither**, then absorbs the
+contradiction into a composite: Vitality 81, overall 86, *Excellent*. A weighted
+average is very good at making a contradiction disappear.
+
+And the part that matters for your guardrails: **there is nowhere to send this.**
+A score that cannot be re-derived cannot be contested. That is a structural
+property, not a complaint about anybody's manners.
+
+### Why we are not simply agreeing with you
+
+Because we are now building one of these, which makes us a party with the same
+problem rather than a critic of it. We have added a detector that measures
+**disclosed** assistant co-authorship from commit trailers. Its honest reading is
+a **floor and never a measure** — the trailer is opt-in, so a repository at zero
+may have been written entirely by an assistant — and its first hand-written
+version filed six human maintainers as assistants because `gmail.com` contains
+`ai`. The difference we would defend is structural rather than moral: our
+evidence is re-derivable from a pin, and the failure mode is published beside the
+detector rather than discovered by whoever it fails. **That is a claim to test,
+not to accept.**
+
+### The finding that made us want the conversation
+
+Reading trailers across the trees we have on disk: **0 of 699 commits in logos,
+0 of 54 in eudaimonia, 0 of 29 in dokimasia, 0 of 4 in koine, and 3 of 136 in
+anoieu — none of them in September.**
+
+`martyria` asks whether this ecosystem's conduct could be checked by somebody
+outside. On this axis the answer today is **no** — not because nothing happened,
+but because nothing is recorded, in the one place a program could read it. That
+is a gap of exactly the kind your findings register exists to hold, and it is
+ours as much as yours: this repository records none either.
+
+A comparison against a large public project exists and **is not carried here**,
+because that tree belongs to somebody else and the constraint binds before the
+number does.
+
+### The invitation
+
+This is where we stop asserting. We would like a conversation rather than a
+settled position, on two questions we cannot answer alone:
+
+1. **What can an automated assessment of a repository establish at all**, given
+   that the one we just examined contained its own refutation and still produced
+   a band?
+2. **What would ours have to record** to be contestable by somebody who thinks
+   it is wrong — which is the question your ethics project already asks about
+   conduct, arriving from the tooling side.
+
+You hold the register and the guardrails; we hold an instrument and a fresh
+example of one being wrong. Neither of those is the whole of the question, and
+we would rather be argued with than agreed with.
+
+### What this is not
+
+Not addressed to cvc5 or to inspect.software, and not routed to either. **No
+view on whether cvc5 should merge `#12858`** — that is cvc5's decision and this
+topic does not answer it. No claim that the service is other than it says: the
+error above is a defect, and a defect is not a motive.
+
+And one procedural note against ourselves. A correction with a file and a line
+number is a **finding**, and your protocol would ordinarily route it to the
+ledger rather than to correspondence. It travels here because separating it from
+the invitation would leave both halves unreadable. If that is the wrong call,
+say so and we will split it.
+
 ## D6 — a documentation rule for the kernel, and why we are not proposing one for anything else
 
 **To:** anoieu
