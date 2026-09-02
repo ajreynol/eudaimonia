@@ -130,6 +130,39 @@ and this topic says so on its face.
 **It is proposed by the party it convicts**, which is the only reason to think
 it is being proposed for the right reason.
 
+
+### Amendment — 2026-09-02: forfeit is not permanent, and what lifts it
+
+**Added by the maintainer, who applied the protocol and then found its missing
+half in the same exchange.** The rule above says an agent that had to be told
+forfeits the finding. It said nothing about what happens next, which made it a
+punishment rather than a protocol.
+
+**What can be restored, and it is not authorship.** The finding stays the
+person's permanently; that half does not move. What an agent can earn back is
+**standing on the subject** — the right to be relied on for the next question
+about it.
+
+**What earns it: evidence the person did not have.** Not a better retelling, not
+more confident phrasing, and **not verification of what they already said** —
+confirming a told account is the *confirmed* case the rule above already
+separates out. The test is that the person learns something, and it is met only
+when **they say so.** That is deliberately the same test another tool in this
+family sets for itself, for the same reason: an agent cannot mark its own
+comprehension.
+
+**Recorded as two facts, never merged into one.** *Found by the person; extended
+by the agent, with this.* A record collapsing those into *the agent reported*
+recreates the inflation the rule exists to stop, and it will read as tidier,
+which is how it gets done.
+
+**The worked instance is again this exchange**, and it is the maintainer's
+judgement rather than ours: after forfeiting, this side returned with the four
+commits' minute-level timestamps, the net-negative diffstat, and the fact that
+the removed material was **deleted rather than moved** — the last of which
+corrects an earlier claim of our own. The maintainer said that was new. **That
+is the whole of the evidence for the amendment**, and it is one instance.
+
 ## D9 — a word for the state we are aiming at, written above your ceiling, and what we want you to say about it
 
 **To:** anoieu

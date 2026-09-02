@@ -137,6 +137,7 @@ source:
 | `release` | a tag matching the subject's version pattern | tag, commit, date | projects that do not tag; tags moved after the fact; pre-release noise swamping real ones |
 | `governance` | a governing document added or substantially revised — policy, charter, contribution guide, vision, roles, a register | path, commit, size delta | platform-provided templates count as governance and are not; the *fact* of the document is the event, and this detector cannot see whether anybody followed it |
 | `apparatus` | the first of each kind of self-checking: CI configuration, a test directory, a dependency manifest, a formatter or linter, a release script | which kind, commit, date | apparatus added and never used looks identical to apparatus adopted; apparatus inherited at creation from a template is not an event at all |
+| `reversal` | a commit removing at least `reversal_min_lines` net from a path that gained at least that many within `reversal_window_hours` | path, net removed, added in window, **minutes since the last addition**, commits in window | a rollback, a draft cut back, a generated file shrinking and a section moved to a page this run excludes are **one shape**. It is a prompt to go and read four commits, never a finding |
 | `message-join` | each month whose share of subjects naming nothing their own commit touched crosses `join_none_threshold` | month, commits, count naming nothing, share, direction | a subject can be excellent and join nothing — *correct the off-by-one boundary* names no path — and can join everything and say nothing, as *update docs* over `docs/` does. **A subject naming nothing is not thereby a bad one** |
 | `ai-attribution` | the first commit carrying a disclosed assistant co-author, and each month whose disclosed share crosses `ai_share_threshold` | month, commits, attributed count, share, model families — **never a name** | it measures **disclosure and never contribution**: the trailer is opt-in, so the floor is zero and there is no ceiling, and a tree with none is indistinguishable from a tree where none was recorded |
 | `dependency` | a manifest gaining, losing or repinning a dependency | manifest, name, from, to | lockfile churn drowns the manifest; transitive changes are invisible; vendored dependencies are invisible by construction |
@@ -163,6 +164,34 @@ happens to notice. A detector makes it checkable — over any subject, including
 the trees that wrote the rule. It will be noisy. It is worth carrying anyway,
 because a rule the family enforces on others and cannot see in itself is exactly
 the kind of thing this project exists to find.
+
+## `reversal`, and what it is honestly worth
+
+**It exists because a day-granular pipeline structurally cannot see a
+correction.** Every date in this tool is truncated to a day; a change made and
+undone inside an hour is therefore invisible, and one was — ten commits creating
+a governing document, four of which reversed a direction inside 21 minutes,
+produced no candidate from any other detector.
+
+**What it reads is timestamps and line counts. Nothing else.** No message is
+read, no intent is inferred, and it cannot tell a rollback from a section moved
+to an excluded path. `transplant` already claims moves it can see; this claims
+nothing.
+
+**The honest measure of it, from its first run:** on a 165-commit subject it
+emitted **18 candidates** and the one that prompted it came **third**, by
+recency. It surfaced the event into the top three of eighteen. **It did not
+identify it**, and a reader still had to open four commits — which is what the
+failure mode says it is for.
+
+**One field was added after that first run, and the change is recorded rather
+than quiet.** The detector first reported the span back to the *oldest* addition
+in the window, which put a 21-minute reversal at 1,114 minutes and buried it.
+`minutes_since_last_addition` measures recency instead. **The justification is
+not that it ranks the known case better** — that would be fitting — but that
+recency is the quantity the argument for reverting actually rests on: recent
+work has had no time to be built upon, and the span to the oldest edit does not
+measure that.
 
 ## `message-join`, and the two words it is careful not to use
 

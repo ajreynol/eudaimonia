@@ -31,8 +31,8 @@ import re
 import statistics
 import subprocess
 import sys
-from collections import defaultdict
-from datetime import date, timedelta
+from collections import Counter, defaultdict
+from datetime import date, datetime, timedelta
 
 TOOL_VERSION = "0.1.0-demo"
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,12 +48,14 @@ DEFAULT_THRESHOLDS = {
     "governance_lines": 40,     # changed lines to count as a substantial revision
     "quiet_median_multiple": 6.0,
     "quiet_min_days": 3,        # floor, so a fast subject does not fire hourly
-    "hands_window_days": 14,
     "delta_lag_days": 7,
     "ai_share_threshold": 0.25,  # disclosed-assistant share for a month to fire
     "ai_min_commits_month": 10,  # months smaller than this carry no share
     "join_none_threshold": 0.5,  # share of subjects naming nothing they touched
     "join_min_commits_month": 10,
+    "session_gap_minutes": 90,    # silence this long starts a new session
+    "reversal_window_hours": 24,  # how recent an addition must be to count
+    "reversal_min_lines": 40,     # net removal, and additions, worth reporting
 }
 
 # Tokens too common to count as naming anything. Declared rather than learned:
@@ -99,11 +101,16 @@ ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 # Detectors that exist, and those the catalogue names and this does not
 # implement. A run records both, so a missing detector is visible rather than
 # silently absent.
-IMPLEMENTED = ["ai-attribution", "message-join", "listed", "joined", "status-change", "delisted",
+IMPLEMENTED = ["ai-attribution", "message-join", "reversal", "listed", "joined", "status-change", "delisted",
                "transplant", "birth", "death", "rewrite", "release",
-               "governance", "apparatus", "quiet", "hands",
+               "governance", "apparatus", "quiet",
                "repo-added", "relation"]
 NOT_IMPLEMENTED = {
+    "hands": "deleted 2026-09-02, not unwritten. It counted distinct committers "
+             "per window; `questions.md` asks nothing about people or rates of "
+             "work, so every candidate it ever produced was dropped. Removing a "
+             "detector whose output no question can use is what this project "
+             "says to do before raising a limit",
     "dependency": "needs per-manifest parsing; the demo would only be able to "
                   "say that a manifest changed, which `governance` already says",
 }
@@ -128,7 +135,11 @@ FAILURE_MODES = {
     "apparatus": "apparatus inherited at creation is not an event, and this "
                  "cannot tell that from adoption",
     "quiet": "branch development and ordinary absence look identical",
-    "hands": "one person with several addresses inflates the count",
+    "reversal": "it sees a net removal following recent additions and cannot "
+                "see why. A rollback, a draft cut back, a generated file "
+                "shrinking and a section moved to a page this run excludes are "
+                "one shape. It is a **prompt to go and read four commits**, "
+                "never a finding on its own",
     "message-join": "a subject can be excellent and join nothing -- *correct "
                     "the off-by-one boundary* names no path -- and can join "
                     "everything and say nothing, as *update docs* does over "
@@ -482,22 +493,6 @@ def detect(src_id, repo, rev, th, ecosystem_first=None):
                      {"gap_days": g, "median_gap_days": med,
                       "resumed": days[i + 1].isoformat()})
 
-    # ---- hands (counts only)
-    wnd = th["hands_window_days"]
-    if log:
-        start = date.fromisoformat(log[0]["date"])
-        end = date.fromisoformat(log[-1]["date"])
-        prev = None
-        d = start
-        while d <= end:
-            hi = d + timedelta(days=wnd)
-            who = {c["who"] for c in log if d <= date.fromisoformat(c["date"]) < hi}
-            if prev is not None and len(who) != prev and who:
-                emit("hands", d.isoformat(), None, [],
-                     {"distinct": len(who), "was": prev, "window_days": wnd})
-            if who:
-                prev = len(who)
-            d = hi
 
     # ---- ai-attribution: disclosed assistant co-authorship, by month.
     # Reads the trailer and nothing else, which is the whole of what a history
@@ -571,6 +566,51 @@ def detect(src_id, repo, rev, th, ecosystem_first=None):
                   "named_nothing": none_n, "share": round(none_n / total, 3),
                   "direction": "up" if now else "down"})
             none_over = now
+
+    # ---- reversal: recent work removed inside a short window.
+    # The one signal a day-granular pipeline structurally cannot see, and the
+    # reason this detector exists: a correction made and undone inside an hour
+    # is invisible when every date is truncated to a day. Timestamps and line
+    # counts only -- no message is read and no intent is inferred.
+    rv = git(repo, "log", "--reverse", "--no-merges", "--format=%x01%H%x02%at",
+             "--numstat", rev)
+    hist = defaultdict(list)
+    for block in rv.split("\x01"):
+        if not block.strip():
+            continue
+        head, *rest = block.strip("\n").split("\n")
+        sha, at = head.split("\x02")
+        for line in rest:
+            f = line.split("\t")
+            if len(f) != 3:
+                continue
+            a_, d_, path = f
+            if any(path.startswith(x) for x in exclude):
+                continue
+            hist[path].append((int(at), 0 if a_ == "-" else int(a_),
+                               0 if d_ == "-" else int(d_), sha))
+    win = th["reversal_window_hours"] * 3600
+    floor = th["reversal_min_lines"]
+    for path, rows in sorted(hist.items()):
+        for i, (t, a_, d_, sha) in enumerate(rows):
+            if d_ - a_ < floor:
+                continue
+            prior = [x for x in rows[:i] if 0 < t - x[0] <= win and x[1]]
+            added = sum(x[1] for x in prior)
+            if added < floor:
+                continue
+            emit("reversal", date.fromtimestamp(t).isoformat(), sha,
+                 [prefix_of(path, depth)],
+                 {"path": path, "net_removed": d_ - a_, "added_in_window": added,
+                  # Recency, which is the number that separates a correction
+                  # from a long editing day: minutes back to the *most recent*
+                  # addition, not to the oldest one in the window. Added after
+                  # the detector's first run buried a 21-minute reversal among
+                  # eighteen candidates by reporting the span to the oldest.
+                  "minutes_since_last_addition": min(t - x[0] for x in prior) // 60,
+                  "window_minutes": max(t - x[0] for x in prior) // 60,
+                  "commits_in_window": len(prior)},
+                 evidence=[sha] + [x[3] for x in prior])
 
     # ---- repo-added (ecosystem mode)
     if ecosystem_first is not None and log:
@@ -1186,6 +1226,76 @@ def cmd_panel(a):
     return 0
 
 
+def cmd_recent(a):
+    """Recent activity as sessions, with what the detectors saw in each.
+
+    A session, not a commit: *forty-one commits over six hours, containing one
+    reversal* is an altitude a reader can use and forty-one line-counts is not.
+    **Coverage prints with the answer**, because a confidence that does not say
+    what the tool could not see is worthless.
+    """
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    gap = corpus["thresholds"].get("session_gap_minutes", 90) * 60
+    ep = os.path.join(rd, "events.jsonl")
+    seen = defaultdict(list)
+    for e in (load(rd, "events.jsonl") if os.path.exists(ep) else []):
+        for sha in (e.get("evidence") or []):
+            seen[sha].append(e)
+    hhmm = lambda t: datetime.fromtimestamp(t).strftime("%H:%M")
+    for src in corpus["sources"]:
+        repo = os.path.join(a.frm, src["id"])
+        verify_pin(repo, src)
+        rows = []
+        for b in git(repo, "log", "--reverse", "--no-merges",
+                     "--format=%x01%H%x02%at", "--numstat",
+                     src["commit"]).split("\x01"):
+            if not b.strip():
+                continue
+            head, *rest = b.strip("\n").split("\n")
+            sha, at = head.split("\x02")
+            churn, paths = 0, []
+            for line in rest:
+                f = line.split("\t")
+                if len(f) == 3:
+                    churn += sum(0 if x == "-" else int(x) for x in f[:2])
+                    paths.append(f[2])
+            rows.append((int(at), sha, churn, paths))
+        ses, cur = [], []
+        for r in rows:
+            if cur and r[0] - cur[-1][0] > gap:
+                ses.append(cur)
+                cur = []
+            cur.append(r)
+        if cur:
+            ses.append(cur)
+        print(f"\n{src['id']}: {len(rows)} commits in {len(ses)} sessions "
+              f"(silence over {gap // 60} min starts one)")
+        blind = shown = 0
+        for g in ses[-4:]:
+            hits = {e["id"]: e for r in g for e in seen.get(r[1], [])}
+            quiet = sum(1 for r in g if not seen.get(r[1]))
+            blind, shown = blind + quiet, shown + len(g)
+            top = Counter(p.rsplit("/", 1)[0] or "(root)"
+                          for r in g for p in r[3]).most_common(2)
+            print(f"  {date.fromtimestamp(g[0][0])} {hhmm(g[0][0])}-{hhmm(g[-1][0])}"
+                  f"  {len(g):3d} commits {(g[-1][0]-g[0][0])//60:4d} min"
+                  f" {sum(r[2] for r in g):6d} lines  "
+                  f"{', '.join(f'{k} x{v}' for k, v in top)}\n      "
+                  f"{dict(Counter(e['detector'] for e in hits.values())) or 'NO CANDIDATES'}"
+                  f"   no candidate: {quiet}/{len(g)}")
+            for k in sorted(hits):
+                if hits[k]["detector"] == "reversal":
+                    m = hits[k]["measure"]
+                    print(f"      ** {k}: {m['net_removed']} lines off "
+                          f"{m['path']}, {m['minutes_since_last_addition']} min "
+                          f"after the last addition to it")
+        print(f"  confidence: {100 * (shown - blind) // max(shown, 1)}% of the "
+              f"{shown} commits shown produced a candidate; the rest are "
+              f"invisible to every detector and this cannot say what they were.")
+    return 0
+
+
 def cmd_selftest(a):
     """Prove that `check` can fail, one condition at a time.
 
@@ -1376,7 +1486,8 @@ def main():
                             ("record", cmd_record, True), ("delta", cmd_delta, True),
                             ("prompt", cmd_prompt, True), ("check", cmd_check, True),
                             ("ratio", cmd_ratio, True),
-                            ("panel", cmd_panel, True)):
+                            ("panel", cmd_panel, True),
+                            ("recent", cmd_recent, True)):
         q = sub.add_parser(name)
         q.set_defaults(fn=fn)
         if needs:
@@ -1389,7 +1500,8 @@ def main():
                                 "you mean")
     a = p.parse_args()
     if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record",
-                                                     "ratio", "panel"):
+                                                     "ratio", "panel",
+                                                     "recent"):
         raise SystemExit("epikrisis: --from <dir> is required: this reads "
                          "mirrors somebody already has, and never fetches")
     sys.exit(a.fn(a) or 0)
