@@ -511,6 +511,80 @@ one run each. **Wrong with it today:** the scan is of a competitor by a party
 that has just built a rival, three of whose four *we do better* entries have
 never been run against a subject outside this family.
 
+### N15 — Who accepts an unsolicited badge, and whether they share the vision it scores
+
+**Not an `epikrisis` run, and the distinction is load-bearing.** This reads pull
+requests, which that tool's scope explicitly excludes as not reproducible from a
+pin. It is research done by hand against a live platform, it will not reproduce
+identically tomorrow, and it is filed here rather than as evidence.
+
+**The campaign.** `EXT-1` (`N14`) opened **105 pull requests** offering its
+health badge — **85 of them on a single day**, 2026-08-19. As of 2026-09-02:
+
+| outcome | count | share |
+| --- | --- | --- |
+| merged | 15 | 14% |
+| closed without merging | 52 | 50% |
+| still open, no decision | 38 | 36% |
+| **of the 67 decided** | **15 accepted** | **22%** |
+
+**A correction against ourselves, recorded because it nearly went unnoticed.**
+The first pass used a listing capped at 100 results, found 87 PRs and reported
+16% acceptance. The cap was silent. Querying the total directly gives 105 and
+22%. **A truncated denominator is the easiest way to be confidently wrong about
+a rate**, and the only reason it was caught is that this register requires
+saying what was dropped.
+
+### The deeper question: do accepters share the vision being scored?
+
+`EXT-1` scores an **AI Readiness** axis — agent context, verify loop, code
+legibility, interfaces — which is a fair four-word summary of what this ecosystem
+spends its time on. So: do the projects that accept the badge hold anything like
+that position?
+
+Proxy used, because a *vision* is not directly measurable: the presence of an
+agent-context artifact (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `GEMINI.md`,
+`CONVENTIONS.md`) or a vision/manifesto/principles document, in the repository
+root.
+
+| group | sampled | with agent-context file | with a vision document |
+| --- | --- | --- | --- |
+| accepted the badge | 9 of ~15 | **1** | **0** |
+| declined the badge | 14 of 52 | **1** | **0** |
+
+**The answer is no, and the more useful form is: there is no detectable
+difference.** 1 in 9 against 1 in 14 is noise at these sizes, and **not one
+repository in either group carries a vision, manifesto, principles or charter
+document at all.** The projects accepting are ordinary infrastructure libraries
+— a CLI, a linter, a rate limiter, a load tester, a WASM toolchain — with no
+stated position on the axis they are being scored on.
+
+### What that does to the argument it was tested against
+
+The concern it tests is a real one raised elsewhere in this ecosystem: that an
+outside index approaching members one at a time is how a standard gets adopted
+without anybody deciding to adopt it, and that publishing a number against the
+axis a vision is about **creates a gradient toward that axis**.
+
+**The gradient is not visible in the data, and the mechanism is.** Nobody is
+being pulled toward agent-readiness by this — accepters and decliners are
+indistinguishable on it, and the axis carries 4% weight by design. But 15
+projects did adopt a third party's rendering of themselves from one day's
+outreach, and **38 more are sitting undecided**, which is neither acceptance nor
+refusal and is how most of these will end. cvc5's is one of the 38.
+
+So the honest revision is: **the worry was about the wrong mechanism at the right
+scale.** What spreads is not a vision. It is a badge, into projects with no
+position on what it measures, at roughly one in five of those who answer.
+
+*Falsified by:* a larger sample separating the groups — 9 and 14 cannot detect a
+modest effect and this table should not be cited as though they could; or a
+second campaign whose accepters do cluster on agent tooling. **Wrong with it
+today:** the proxy is crude (a project can hold a position without a file), the
+"open" third is unresolved and may break either way, and one of the two
+agent-context hits is `moby`, which **declined** — the single most agent-equipped
+repository in the sample said no.
+
 ## What is wrong
 
 ### W1 — The system diagnoses precisely and does not treat
