@@ -1,0 +1,104 @@
+{
+  "date_field": "committer date, --date=short, as git reports it",
+  "detectors_implemented": [
+    "ai-attribution",
+    "message-join",
+    "reversal",
+    "listed",
+    "joined",
+    "status-change",
+    "delisted",
+    "transplant",
+    "birth",
+    "death",
+    "rewrite",
+    "release",
+    "governance",
+    "apparatus",
+    "quiet",
+    "repo-added",
+    "relation"
+  ],
+  "detectors_not_implemented": {
+    "dependency": "needs per-manifest parsing; the demo would only be able to say that a manifest changed, which `governance` already says",
+    "hands": "deleted 2026-09-02, not unwritten. It counted distinct committers per window; `questions.md` asks nothing about people or rates of work, so every candidate it ever produced was dropped. Removing a detector whose output no question can use is what this project says to do before raising a limit"
+  },
+  "exclude": [
+    "deps/",
+    "checkers/",
+    ".lake/"
+  ],
+  "kind": "ecosystem",
+  "not_in_corpus": [
+    "ethos, which holds the proof checker and the compiler, is not read here: it is somebody else's tree, a run over one is internal by default, and this run's evidence is committed. Its footing in the ecosystem's own inventory is candidate, not member -- a fact this subject was written without checking. The effect is that the ecosystem's history as this run sees it is missing one of the two trees holding its executable artifacts.",
+    "issue trackers, pull requests and discussion threads, for every source, by design",
+    "anything unpublished, absolutely",
+    "the source list here is hand-written and the inventory is the authority: this run reads logos, whose footing is candidate rather than member, and does not read ethos, also a candidate. The set is therefore not the ecosystem's own set, which is the `repo-added` failure mode occurring in the run that states it."
+  ],
+  "pinned": "2026-09-02-census",
+  "questions_digest": "39075bf556d8885fa355332ae4203fc1d5b6ef588734ef51112d6bf0f5b75a55",
+  "self": true,
+  "sources": [
+    {
+      "commit": "7ff136bb6174f28a66bf3fd940573cc407e96ca9",
+      "commits": 709,
+      "first_commit": "2026-03-03",
+      "id": "logos",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/logos"
+    },
+    {
+      "commit": "f2f5c8effb51993255497d26434506cddfebdc54",
+      "commits": 186,
+      "first_commit": "2026-08-29",
+      "id": "anoieu",
+      "last_commit": "2026-09-02",
+      "origin": "https://github.com/ajreynol/anoieu"
+    },
+    {
+      "commit": "986899cd344afb7d8c6d2877bafd5c6e867514cb",
+      "commits": 68,
+      "first_commit": "2026-08-29",
+      "id": "eudaimonia",
+      "last_commit": "2026-09-02",
+      "origin": "https://github.com/ajreynol/eudaimonia"
+    },
+    {
+      "commit": "f9a5bd70a0620190d0574c4ea5b63017fd179cf8",
+      "commits": 43,
+      "first_commit": "2026-08-30",
+      "id": "dokimasia",
+      "last_commit": "2026-09-02",
+      "origin": "https://github.com/ajreynol/dokimasia"
+    },
+    {
+      "commit": "b927aac9e8b402e58f6b1ccdc6f4c5056c868015",
+      "commits": 13,
+      "first_commit": "2026-08-31",
+      "id": "koine",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/koine"
+    }
+  ],
+  "subject": "eunoia-ecosystem",
+  "thresholds": {
+    "ai_min_commits_month": 10,
+    "ai_share_threshold": 0.25,
+    "delta_lag_days": 7,
+    "governance_lines": 40,
+    "join_min_commits_month": 10,
+    "join_none_threshold": 0.5,
+    "min_commits_prefix": 3,
+    "prefix_depth": 1,
+    "quiet_median_multiple": 6.0,
+    "quiet_min_days": 3,
+    "reversal_min_lines": 40,
+    "reversal_window_hours": 24,
+    "rewrite_churn_ratio": 1.0,
+    "rewrite_window_days": 7,
+    "session_gap_minutes": 90,
+    "transplant_min_files": 3
+  },
+  "thresholds_changed_after_events": false,
+  "tool_version": "0.1.0-demo"
+}

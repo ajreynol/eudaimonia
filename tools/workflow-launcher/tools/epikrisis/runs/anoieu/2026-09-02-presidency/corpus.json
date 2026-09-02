@@ -1,16 +1,32 @@
 {
-  "subject": "anoieu",
-  "kind": "tool",
-  "self": true,
-  "sources": [
-    {
-      "id": "anoieu",
-      "origin": "https://github.com/ajreynol/anoieu"
-    }
+  "date_field": "committer date, --date=short, as git reports it",
+  "detectors_implemented": [
+    "ai-attribution",
+    "message-join",
+    "reversal",
+    "listed",
+    "joined",
+    "status-change",
+    "delisted",
+    "transplant",
+    "birth",
+    "death",
+    "rewrite",
+    "release",
+    "governance",
+    "apparatus",
+    "quiet",
+    "repo-added",
+    "relation"
   ],
+  "detectors_not_implemented": {
+    "dependency": "needs per-manifest parsing; the demo would only be able to say that a manifest changed, which `governance` already says",
+    "hands": "deleted 2026-09-02, not unwritten. It counted distinct committers per window; `questions.md` asks nothing about people or rates of work, so every candidate it ever produced was dropped. Removing a detector whose output no question can use is what this project says to do before raising a limit"
+  },
   "exclude": [
     "deps/"
   ],
+  "kind": "tool",
   "not_in_corpus": [
     "issue trackers, pull requests and discussion threads, by design",
     "anything unpublished, absolutely",
@@ -19,24 +35,38 @@
     "**the CI run history**, and this is the exclusion the subject most needs to know about: its own presidency laws let a figure rest on *the repository and the public run history*, and only the first half is in this corpus. Runs, green share and red streaks are platform data, this tool has zero network imports by budget, and the scope was narrowed to git histories on 2026-09-01. A request for the build colour is answered `cannot be established`",
     "**the documents that constitute the presidency**: `docs/history.md` and `docs/laws.md` matched no detector at the 2026-09-02 pin -- 8 commits and 609 lines of churn, 0 candidates -- because `governance` reads a filename list compiled into the tool. Declared here because the repair this project named for that defect is to declare what governs in the subject file, and it is not built yet; until it is, this line is the record and not the fix"
   ],
-  "thresholds": {
-    "prefix_depth": 2,
-    "quiet_min_days": 3,
-    "rewrite_window_days": 7
-  },
-  "inventory": {
-    "source": "anoieu",
-    "path": "tools/ecosystem.json",
-    "track": [
-      "status",
-      "proposed",
-      "parent"
-    ],
-    "note": "the ecosystem keeps one footing per tool in this file and its git history is the status-transition record; for a single-tree run it is also the only place a cross-tree event leaves a dated trace"
-  },
-  "prose_is_product": [
-    "anoieu"
+  "pinned": "2026-09-02-presidency",
+  "questions_digest": "39075bf556d8885fa355332ae4203fc1d5b6ef588734ef51112d6bf0f5b75a55",
+  "self": true,
+  "sources": [
+    {
+      "commit": "f2f5c8effb51993255497d26434506cddfebdc54",
+      "commits": 186,
+      "first_commit": "2026-08-29",
+      "id": "anoieu",
+      "last_commit": "2026-09-02",
+      "origin": "https://github.com/ajreynol/anoieu"
+    }
   ],
-  "_prose_is_product_note": "anoieu ships the shared repository policy and the checker that enforces it; other repositories' CI depends on documents in this tree, so a prose line here is a tool line and the ratio is not comparable with other subjects. A declared judgement, not a derived fact.",
-  "_prefix_depth_note": "set to 2 before any event for this subject existed, not tuned afterwards. The prior run reported at depth 1 that child projects were invisible because they collapse into `tools`; this subject is a single tree whose child projects are the unit of interest, so depth 2 is the correction to a recall miss the tool published about itself."
+  "subject": "anoieu",
+  "thresholds": {
+    "ai_min_commits_month": 10,
+    "ai_share_threshold": 0.25,
+    "delta_lag_days": 7,
+    "governance_lines": 40,
+    "join_min_commits_month": 10,
+    "join_none_threshold": 0.5,
+    "min_commits_prefix": 3,
+    "prefix_depth": 2,
+    "quiet_median_multiple": 6.0,
+    "quiet_min_days": 3,
+    "reversal_min_lines": 40,
+    "reversal_window_hours": 24,
+    "rewrite_churn_ratio": 1.0,
+    "rewrite_window_days": 7,
+    "session_gap_minutes": 90,
+    "transplant_min_files": 3
+  },
+  "thresholds_changed_after_events": false,
+  "tool_version": "0.1.0-demo"
 }

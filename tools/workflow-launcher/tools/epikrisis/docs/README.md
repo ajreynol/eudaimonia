@@ -14,6 +14,14 @@ question or an hour of somebody's reading, because writing another page is the
 comfortable alternative to doing the work. If a fourth is ever proposed, it
 displaces one of these.
 
+**[`presidency.md`](presidency.md) is a fourth and displaced none of them**, and
+that is recorded rather than argued away. The three above describe how this tool
+works and are its three goals. That one is addressed to an office outside this
+family — what the ecosystem's president is bound to ask here, what is answerable,
+and the two things that are not — which is the category the rule was not written
+for. **If a reader thinks that is a dodge, deleting it costs nothing**: no
+program reads it and nothing here depends on it.
+
 Nothing here describes a run. Evidence and reports live beside the subject that
 produced them, under `runs/`: documentation says how the tool works, and a
 report is the tool's output.

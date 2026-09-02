@@ -402,6 +402,12 @@ cheaper to say before the first one exists than after:
 The last two are carried upstream in `D4`, and raising them before the format
 exists is the cheap moment.
 
+**An office now holds that role, and it names this tool in its own law.**
+[docs/presidency.md](docs/presidency.md) is what the president is bound to ask
+here, what can be answered, and the two things that cannot — the CI run history,
+which is outside the corpus permanently, and the presidency's own documents,
+which no detector saw.
+
 **Until an announcement arrives, nothing here waits on it.** A tool that cannot
 work without a thing that does not exist yet has made itself somebody's
 dependency: this one reports per month today and gains a better window when
