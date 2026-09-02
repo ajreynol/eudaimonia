@@ -35,6 +35,17 @@ history, and what has its evolution done well and badly — with the first
 answerable from the tree and the second answerable only with evidence from the
 first?
 
+**The scope is an edge rather than an emphasis: git histories, and nothing
+else.** The corpus is what a repository's history and published trees contain —
+commits, paths, dates, files as published, and what those files say about the
+project. Not issue trackers, not pull requests, not discussion threads, not
+anybody's account of what happened, and **not development in the abstract.** A
+question unanswerable from a history is not one this answers. Narrowed by the
+maintainer on 2026-09-01, because every subject this has been offered a view on
+— a build system, an ethics register, a role inventory — is one a history says
+less about than a reader wants, which is exactly when a tool starts answering
+from the prose lying beside the evidence.
+
 **The goals, in order.**
 
 1. **The evidence pipeline, and the boundary in the middle of it.** Everything
@@ -83,6 +94,8 @@ full: a responsibility and not a rank, and being relied on makes it one.
 - **Grading the ecosystem outward.** A run whose subject is a tree this family
   owns is marked as a self-assessment and is held to a stricter standard, and its
   conclusions are never cited outward as evidence that the family's work is good.
+- **Any subject that is not a history.** Conduct, intent, design quality and
+  what a document means are not readable from a tree.
 - **Being fast, being general, being a product.** No users, no stability, no
   promise that any of it survives the first real run.
 
@@ -124,17 +137,15 @@ because the record is the whole of the argument.
 ## Why any of this should be taken seriously: a duty, and not an argument
 
 Added 2026-09-01 by the maintainer, in an explicit instruction, and put to the
-ecosystem's chief executive role as topic `D5` in the parent's correspondence
-rather than asserted here. The occasion is that the role is building a **build
-system** and this is the tool that reads how things have been built in these
-trees, so the question arrives in the form that makes it real: *why should this
-count?*
+ecosystem's chief executive role as topic `D5` rather than asserted here. The
+occasion is that the role is building a **build system** and this reads how
+things have been built in these trees, so the question arrives in the form that
+makes it real: *why should this count?*
 
 **It dissolves on contact with results.** An argument for one's own authority is
-only needed where the evidence is missing: where evidence exists it is
-redundant, and where it does not it is what a tool offers *instead* of findings.
-So there is no case for standing here — two things stand in its place, and
-neither is rhetoric.
+only needed where the evidence is missing: where evidence exists it is redundant,
+and where it does not it is what a tool offers *instead* of findings. So there is
+no case for standing here — two things stand in its place, neither rhetoric.
 
 1. **Evidence.** Stages 1–4 are re-derivable byte for byte from a pin and stage
    5 is a different file, so a reader who distrusts the conclusion rebuilds the
@@ -146,61 +157,56 @@ neither is rhetoric.
 
 ### What the witness distinction actually commits this to
 
-A witness testifies to what they observed. They do not argue for the verdict,
-they do not decide the case, and their standing comes not from being right but
-from being **examinable**: one who cannot be cross-examined is worth nothing
-however accurate they are, and one who starts advocating is impeached whatever
-they know.
+A witness testifies to what they observed. They do not argue for the verdict or
+decide the case, and their standing comes not from being right but from being
+**examinable**: one who cannot be cross-examined is worth nothing however
+accurate they are, and one who advocates is impeached whatever they know.
 
 Read that against machinery already built, none of it for this argument:
 
-- **The boundary between stages 4 and 5** keeps what was observed apart from
-  what is concluded — the two halves a witness may never blend.
+- **The 4/5 boundary** keeps what was observed apart from what is concluded.
 - **`questions_digest`** fixes what was asked before the evidence was seen and
-  **`thresholds_changed_after_events`** flags a parameter tuned after it — a
-  question written to fit an answer and a judgement moved into a constant both
-  leave a mark.
-- **A written failure mode per detector** admits where this witness is
-  unreliable, before anybody has to find out.
+  **`thresholds_changed_after_events`** flags a parameter tuned after it: a
+  question fitted to an answer and a judgement moved into a constant both leave
+  a mark.
+- **A written failure mode per detector**, before anybody has to find out.
 - **A self-assessment with no negative findings is void**, so *we looked and it
   was fine* is unavailable rather than merely discouraged.
 - **Names never leave stage 1**, by schema.
 
-**Every one of those makes this tool easier to impeach, and that is not a side
-effect — the exposure is the credential.** There is nothing else on offer, and a
-reader who takes the position seriously is taking the exposure seriously.
+**Every one makes this tool easier to impeach — the exposure is the
+credential**, and there is nothing else on offer.
 
 ### The testimony so far, at its honest size
 
-One run, whose strongest section is `Q6`, where the report turns on itself: the
-four matches its delta produced "appear to be name collisions"; `Q2` and `Q3`
-are declared **unsafe** as delta classes and survive only reduced; a detector
-fired whose output the questions decline to use; a calibration score of 5 of 6
-is called optimistic and "not this tool's performance", because the calibrator
-had read the trees the same day. Two of eight questions retracted, four defects
-found in the tool that produced the report. That is small, and it is the only
-kind of record that could support a position like this: **a first run finding
-everything it looked for and nothing wrong with itself would be the best reason
-available to disbelieve the second.**
+Two runs, both self-assessments, and what each found wrong with itself is the
+part worth citing. The first retracted two of its eight questions, declared two
+more unsafe, called its own calibration optimistic and "not this tool's
+performance", and four defects were found in the tool by running it a second
+way. The second reproduced the first's matcher defect on a new subject — its
+one match was a word collision — was blind in the place the subject had told it
+in advance mattered most, and had to mark its most legible finding as hand-read
+because no detector in the catalogue produces it.
 
-**And it stays on the right side of the rule above.** Cited here is what that
-run found out about *this method* — a matcher's collisions, a threshold's blind
-spot, a calibration's optimism — which is this project's to keep; what it
-concluded about the ecosystem appears nowhere here, including as a summary.
+That is small, and it is the only kind of record that could support a position
+like this: **a run finding everything it looked for and nothing wrong with
+itself would be the best reason available to disbelieve the next one.** What is
+cited here is what those runs found about *this method*, which is this project's
+to keep; what they concluded about their subjects appears nowhere here.
 
 ### Why this is a responsibility and not a rank
 
 **Because being taken seriously moves the cost.** If a build system is designed
 partly on what this reports and this was wrong, the loss lands on whoever relied
-on it and there is no version where the tool pays. A position that transfers
-cost to the person relying on it is a duty in exact proportion to its
-usefulness. Three obligations follow, none optional:
+on it, and there is no version where the tool pays. A position that transfers
+cost to whoever relies on it is a duty in exact proportion to its usefulness.
+Three obligations follow, none optional:
 
 - **Be checkable.** Never say more than a reader can re-derive from a pin; a
   finding somebody must take on trust is not this tool's to offer.
 - **State the limit out loud.** *This tool cannot establish that* is a result,
-  given as freely as any other. Answering a smaller question because the
-  machinery happens to reach it is the failure the guardrail below names.
+  given as freely as any other; answering a smaller question because the
+  machinery reaches it is the failure the guardrail below names.
 - **Speak.** Silence is also a way of being wrong. This directory is two hops
   from anywhere its output could matter and has already recorded that a finding
   can die in that chain unnoticed. Holding evidence that bears on a live
@@ -209,21 +215,17 @@ usefulness. Three obligations follow, none optional:
 
 ### The tense boundary, applied to the occasion
 
-A build system is a decision about what to do next, and **prediction is out of
-scope**: every claim here is about what happened. So what this brings to such a
-decision is not advice. **What it may say** is what happened when things were
-built in these trees before — in what order, at what intervals, how long
-apparatus took to arrive, what got written before it could be practised, what
-the record claims that the trees do not show and the reverse. **What it may not
-say** is what the build system should therefore do: that is the verdict, it
-belongs to whoever is accountable, and a witness who reaches for it stops being
-one. **Which makes the position safe to grant** — a role abusable only by a tool
-willing to argue costs nothing to give to one that refuses to.
+A build system is a decision about what to do next, so what this brings to it is
+not advice: what happened when things were built in these trees before, in what
+order and at what intervals, and never what should therefore be done. That is
+the verdict, it belongs to whoever is accountable, and a witness who reaches for
+it stops being one — **which is what makes the position safe to grant**, since a
+role abusable only by a tool willing to argue costs nothing to give to one that
+refuses to.
 
-**What of this is transferable is not a conclusion but a design** — cheap, not
-invented here, carrying no verdict on anybody — so it travels where claims about
-practice are supposed to travel: `N13` in the launcher's findings register, with
-its falsifier attached and nothing about this family attached to it.
+**What of this is transferable is a design and not a conclusion**, so it travels
+where claims about practice are supposed to: `N13` in the launcher's findings
+register, with its falsifier attached and nothing about this family attached.
 
 ### What would forfeit the position
 
@@ -234,8 +236,7 @@ Stated now, because standing that cannot be lost was never standing:
 - a report whose confidence outruns what stages 1–4 emitted, anywhere, once;
 - an answer to *what should we do*, however lightly phrased;
 - an argument offered in place of evidence — **including this section**, if it
-  is ever doing work the runs cannot back. It exists because the maintainer
-  asked for the position to be written down, it is not evidence of anything, and
+  is ever doing work the runs cannot back. It is not evidence of anything, and
   on the day it is cited as though it were, delete it.
 
 ## The guardrail on the role: ambitious in functionality, unambitious in implementation
@@ -357,12 +358,11 @@ that live in no repository's log — a repository being created, a name being
 taken, a role moving, a child project retired. The design carries both and
 [docs/design.md](docs/design.md) says where they diverge.
 
-**Only the second subject has been run.** One run on the ecosystem —
-`runs/eunoia-ecosystem/`, dated 2026-09-01, a self-assessment, eleven of twelve
-detectors implemented — and what it established about its own method is above.
-**cvc5 has not been staged and has not been read**: the constraint below binds
-before a first run and there has not been one. *(This paragraph read "nothing
-has been run" until the day that stopped being true.)*
+**Two subjects have been run, both self-assessments**: the ecosystem, and a
+single tree — `anoieu`, added 2026-09-01 at the maintainer's instruction and run
+at `prefix_depth` 2 to correct a recall miss the first run published about
+itself. **cvc5 has not been staged and has not been read**: the constraint below
+binds before a first run, and there has not been one.
 
 ## The constraint it inherits
 

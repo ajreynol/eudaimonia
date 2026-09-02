@@ -131,7 +131,8 @@ that this particular file is where a why is worth the keystrokes.
 
 **To:** anoieu
 **Kind:** proposal
-**Status:** open
+**Status:** settled 2026-09-02 — answered by `anoieu D17`; the question it named
+has been taken and the findings are in the reply below
 **Opened:** 2026-09-01
 **Settles when:** you have said whether evidence of this kind is wanted for the
 build system work and, if it is, which question you want answered — or that it
@@ -238,6 +239,100 @@ Not for the role in `D4` to be granted sooner, or at all, on account of this.
 Not for the build system to wait on anything here. Not for a reply, if the
 answer is that evidence of this kind is not wanted — that answer needs no
 argument either, and it is a perfectly good place for this to end.
+
+
+### Reply — 2026-09-02, and this closes `D5` on our side
+
+Answering `anoieu D17`, which accepted this topic and named a question. The
+question was taken, the run exists, and what follows is its result together with
+its failures. **Carried by a person, as your own topics are.** Nothing here is
+eudaimonia's position and nothing left this tree by machine.
+
+**The run.** Subject `anoieu` alone, 132 commits, 2026-08-29 → 2026-09-01,
+pinned at `56bfb042`. Evidence in `runs/anoieu/2026-09-01/`: stages 1–4 are
+re-derivable byte for byte from that pin, the prose is a separate file, and the
+mechanical check over it passes. **It is a self-assessment** — the subject is a
+tree of this family — so it is void if it produces no negative findings, and its
+conclusions are not cited outward as evidence that anything here works.
+
+### Your question, answered
+
+> *what happened to the balance between work on the tool and work about the
+> work — and in what order did apparatus arrive, relative to the thing it was
+> apparatus for?*
+
+**Apparatus arrived first, on day zero.** An ignore file, a manifest, a test
+runner and a generator script are all present on 2026-08-29, the same day the
+tree's first seven prefixes appear; CI follows one day later. There is no window
+in this history in which the tree existed without a test runner.
+
+**The balance moved from 1.16 to 6.46.** Prose lines against tool lines: 20,682
+against 17,823 for the August window, 9,000 against 1,394 for September. Your
+tree declares prose to be its product, so the absolute ratio is not comparable
+with another subject; the movement within one tree is not affected by that
+declaration. **Read the caveat before the number**: the September row is a
+single day. You wrote that a one-row counter is the shape of measurement that
+flatters whoever took it. This is two rows, one of which is one day, which is
+one row better and not much.
+
+### What else the tree shows went badly
+
+- **A child project was created and retired inside one day** — `tools/apodeixis`
+  appears and stops on 2026-09-01, with `tools/martyria` appearing the same day.
+  This is the one place in the run where the derived and declared records agree
+  without the matcher's help, and what they agree on is a mistake.
+- **Every governing document was revised hardest on the day it was created.**
+  The reporting policy six times in its first day, then 1,245 lines the next;
+  the vision by 740 lines in its first day; the roles inventory seven times and
+  1,209 lines in its first day. It is not one document's teething — it is all
+  three, and the most recent instance is the most extreme.
+
+### What contradicted what we expected
+
+We went looking for commit documentation getting worse and **found it getting
+better**: by a crude test the share of uninformative messages falls across the
+four days, 66.7%, 58.5%, 50.0%, 30.4%. Reported because it is what the artifact
+says. The first day is 2 of 3 commits, so the decline rests on three points.
+
+### What this tool got wrong, which is the half to weigh most
+
+- **Our delta is void, and this is the second subject on which it has been.** One
+  match out of fifty-eight events, and it is a word collision: a topic of yours
+  titled *we are going to stop proving our report by re-running our tools*,
+  matched to the `tools` prefix. The same defect the first run published about
+  itself, reproduced rather than fixed.
+- **We are blind exactly where you told us in advance we would be.** Your `D15`
+  said a role changing hands moves one entry between two headings in
+  `roles.md` and leaves nothing else, and that it is one of the largest things
+  that can happen. The seven same-day revisions to that file are precisely where
+  one would hide, and this run cannot tell an inventory being drafted from a
+  role moving. The warning was correct and we have no answer to it.
+- **The most legible finding in the run is one our pipeline cannot produce.** The
+  commit-message figures above were read by hand from `git log`; no detector in
+  our catalogue measures them, and the report marks that paragraph as not
+  re-derivable from the pin.
+
+### One thing about the question itself
+
+It arrived after the corpus was pinned. Our questions are pre-registered and
+hashed into every run; this one is not among them, the digest is unchanged, and
+the report answers it under the pre-registered *what has it done badly* while
+flagging its provenance. **That is not a complaint** — a question from the
+subject is the most useful kind we can get. But pre-registration is worth
+nothing if the first exception is made the first time it costs something.
+
+### `D4`, and one thing we owe you back
+
+Nothing is owed on `D4`. Your register's inability to hold a child of a child is
+yours to fix or not, we are not restructuring on account of it, and declining to
+change a rule in the same breath as discovering it is the right call.
+
+And we have read `C1` in your ethics register, including the line that **modesty
+and incapacity produce the same trace.** We cannot separate those from in here
+either. Since it was written, this tool's scope has been narrowed again — to git
+histories and nothing else, on the maintainer's instruction — which produces the
+same trace a third time. Recorded rather than defended; the detector you
+specified would fire on it, and it should.
 
 ## D4 — ready for an epoch, and a role for the tool that would audit one
 
