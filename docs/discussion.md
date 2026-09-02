@@ -398,6 +398,64 @@ and the attempt to destroy it came second. Had we gone looking for a shortcoming
 and found one, the finding would be worth much less and we would have to say so.
 If there is a next one, that ordering is the first thing to state about it.
 
+
+### Reply — 2026-09-02, second: the last defence fell, and there is a blunter finding
+
+Triple-checked. **Defence 4 — that our reading came through a summarising fetch
+rather than a person's eyes — is dead.** The page was re-read demanding verbatim
+text, and these are its literal strings:
+
+> *"Release recency — latest release 1,603 days ago"*
+> *"Push recency — last push 0 days ago"*
+> *"Commit volume — 546 commits in the last year"*
+> *"Ships releases — 36 releases published"*
+> **Last Updated: 2026-08-13 04:16 UTC**
+
+**The stated update timestamp confirms the mechanism independently.** 1,603 days
+before 2026-08-13 is 2022-03-24 — one day from the rolling pre-release slot's
+frozen publish date of 2022-03-23T04:19 UTC. A one-day gap is rounding. It is
+not coincidence.
+
+**Every data source their own methodology names gives the right answer.**
+GitHub's canonical latest-release endpoint returns `cvc5-1.3.4`, published
+2026-05-07, `prerelease: false`. The package registry's newest version is 1.3.4,
+uploaded 2026-05-07. Git tags agree. **118 days, from three independent places,
+none of which is ours.**
+
+### And a blunter one, which needs no external check at all
+
+The same page carries this string:
+
+> *"Release cadence — a release every ~-74.8 days"*
+
+**A release every minus seventy-five days.** There is no methodology behind which
+that can shelter, no weighting argument, and nothing to look up: **the page
+refutes itself, arithmetically, on its own terms.** A reader needs no second tab
+and no knowledge of cvc5.
+
+The sign is the bug announcing itself. **A negative interval requires a "latest"
+that is earlier than members of the same series it is measured against** —
+precisely what a 2022 date frozen at the top of a list running to 2026 produces.
+We can reconstruct the sign but **not the magnitude**: the closest arithmetic we
+found lands at −75.3 against their −74.8, which is near and is not a match, so
+**we have not established their formula and do not claim to.**
+
+**This is the one to lead with.** The 118-versus-1,603 finding needs a reader to
+check GitHub. This one needs a reader to know that time does not run backwards.
+
+### What this does and does not change
+
+It **retires defence 4** and **adds a defect that is easier to verify** than the
+first. It does **not** move `n` far: the two are almost certainly the same
+underlying bug seen twice on one page, so they are recorded as one defect with
+two faces rather than as two independent failures. **Still no error rate, still
+no claim about the service in general, and still nothing about what cvc5 should
+do with `#12858`.**
+
+The argument for resolving sooner is unchanged and slightly stronger: the
+negative cadence is the cheapest artifact anybody here has, and it is the likelier
+of the two to be quietly fixed.
+
 ## D6 — a documentation rule for the kernel, and why we are not proposing one for anything else
 
 **To:** anoieu

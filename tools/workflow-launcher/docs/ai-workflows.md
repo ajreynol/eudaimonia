@@ -451,10 +451,25 @@ report that was right when computed (**dead, and this is the strong one — the
 largest gap between consecutive cvc5 stable releases across the project's whole
 history, 2019 to now, is 479 days, so a 1,603-day drought has never occurred on
 any date**); and API ambiguity making the error easy, which is true and is not a
-defence of the number. **One defence survives and is stated rather than
-buried:** the reading of their report came through a summarising fetch and not a
-person's eyes. **None of this moves n off 1.** A defect that survives attack is
-a better-established defect, not a second one.
+defence of the number. The fourth defence — that our reading came through a summarising
+fetch — has since **also died**: re-read for verbatim strings, the page carries
+*"Release recency — latest release 1,603 days ago"* beside *"Push recency — last
+push 0 days ago"*, with a stated **Last Updated of 2026-08-13 04:16 UTC** that
+puts 1,603 days back within one day of the slot's frozen 2022-03-23 publish
+time. Three independent sources their own methodology names — GitHub's canonical
+latest-release endpoint, the package registry, and git tags — all return
+2026-05-07.
+
+**The same page also prints** *"Release cadence — a release every ~-74.8 days"*.
+**A negative interval needs a *latest* earlier than members of its own series**,
+which is the same frozen date seen a second time, and it is the more useful
+artifact because **it refutes itself with no external check at all.** We account
+for the sign and **not** the magnitude — our closest reconstruction is −75.3
+against their −74.8 — so the formula is not established and is not claimed.
+
+**None of this moves n off 1.** A defect that survives attack is a
+better-established defect; two faces of one bug on one page are not two
+failures; and an error *rate* remains unmeasured.
 
 *Falsified by:* a category above being reclassified once we actually build the
 thing — most likely *we do better*, which is at present four claims resting on
