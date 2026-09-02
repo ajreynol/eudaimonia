@@ -109,6 +109,28 @@ the ecosystem's own register — a Greek name would read as membership, and
 allocating one is not ours to do. (`D7` and `D8` predate the name and identify
 the service in full, so nothing there is ambiguous.)
 
+**The altitude, added 2026-09-02 after the tool failed on it.** The job is to
+**explain a history at the right level of abstraction** — not to list what
+changed. Two things follow, and only the second is a licence to build anything.
+
+- **The abstraction is stage 5 and stays there.** *A protocol register was
+  created* is a sentence a person writes; a program that produced it would be
+  summarising documents, which is refused. Nothing here changes that.
+- **But the evidence has to be assemblable at that altitude**, and twice it was
+  not. **Coverage:** ten commits creating this ecosystem's newest governing
+  documents produced **zero candidates**, because `governance` decides what
+  governs from a filename list baked into the code and neither file is on it.
+  **Aggregation:** where it does fire it emitted nine separate *revised*
+  candidates on one file in one day, leaving a reader to do the grouping by hand.
+  A tool that reports nine line-counts where the event was *a register was
+  written* has answered at the wrong altitude even when every number is right.
+
+**And the repair is not to add the two filenames.** A list edited after seeing
+what it missed is a threshold fitted to the answer, which this tool flags when it
+happens to a number and should not do quietly to a regex. The list belongs in the
+subject file, where what governs a tree is declared, pinned and arguable —
+which is the guardrail's own instruction on breach, applied to itself.
+
 **Three things to build.**
 
 1. **Release recency from tags.** The `release` detector reads tags and stops.

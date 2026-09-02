@@ -690,7 +690,10 @@ def detect_relations(corpus, frm, th):
 
 
 def cmd_events(a):
-    rd = run_dir(a.subject)
+    # `--run` is offered on every stage; honouring it in only some of them
+    # let a pin land in one directory and its events in another, silently,
+    # whenever a stamp did not sort last. Found 2026-09-02 by running it.
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
     corpus = load(rd, "corpus.json")
     th = dict(corpus["thresholds"])
     th["_exclude"] = corpus.get("exclude", [])
@@ -731,7 +734,7 @@ def cmd_events(a):
 # ---------------------------------------------------------------- stage 3
 
 def cmd_record(a):
-    rd = run_dir(a.subject)
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
     corpus = load(rd, "corpus.json")
     claims, k = [], 0
 
@@ -792,7 +795,7 @@ def cmd_record(a):
 # ---------------------------------------------------------------- stage 4
 
 def cmd_delta(a):
-    rd = run_dir(a.subject)
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
     corpus = load(rd, "corpus.json")
     events = load(rd, "events.jsonl")
     claims = load(rd, "claims.jsonl")
@@ -854,7 +857,7 @@ def cmd_delta(a):
 # ---------------------------------------------------------------- stage 5/6
 
 def cmd_prompt(a):
-    rd = run_dir(a.subject)
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
     corpus = load(rd, "corpus.json")
     events = load(rd, "events.jsonl")
     claims = load(rd, "claims.jsonl")
