@@ -1,0 +1,67 @@
+{
+  "date_field": "committer date, --date=short, as git reports it",
+  "detectors_implemented": [
+    "ai-attribution",
+    "message-join",
+    "listed",
+    "joined",
+    "status-change",
+    "delisted",
+    "transplant",
+    "birth",
+    "death",
+    "rewrite",
+    "release",
+    "governance",
+    "apparatus",
+    "quiet",
+    "hands",
+    "repo-added",
+    "relation"
+  ],
+  "detectors_not_implemented": {
+    "dependency": "needs per-manifest parsing; the demo would only be able to say that a manifest changed, which `governance` already says"
+  },
+  "exclude": [
+    "deps/"
+  ],
+  "kind": "tool",
+  "not_in_corpus": [
+    "issue trackers, pull requests and discussion threads, by design",
+    "anything unpublished, absolutely",
+    "the other trees in the ecosystem: this run reads one repository, so an event whose other half is in another tree -- a role moving, a name being taken, a reply landing -- appears here as a documentation edit and nothing more",
+    "two event classes the subject has told us its own tree cannot show, in anoieu D15 to eudaimonia, before this run existed: a **stretch boundary**, which is the span between two global announcements and looks from outside like an ordinary commit touching a documentation file; and **a role changing hands**, which moves one entry between two headings in docs/roles.md with no rename, no file created and no prefix going quiet. The subject states the second is one of the largest things that can happen here. Both are therefore expected to be absent from the derived record and their absence is not evidence they did not occur."
+  ],
+  "pinned": "2026-09-02b",
+  "questions_digest": "39075bf556d8885fa355332ae4203fc1d5b6ef588734ef51112d6bf0f5b75a55",
+  "self": true,
+  "sources": [
+    {
+      "commit": "256e8e13a3d82438161eeea78359c322acc01096",
+      "commits": 155,
+      "first_commit": "2026-08-29",
+      "id": "anoieu",
+      "last_commit": "2026-09-01",
+      "origin": "https://github.com/ajreynol/anoieu"
+    }
+  ],
+  "subject": "anoieu",
+  "thresholds": {
+    "ai_min_commits_month": 10,
+    "ai_share_threshold": 0.25,
+    "delta_lag_days": 7,
+    "governance_lines": 40,
+    "hands_window_days": 14,
+    "join_min_commits_month": 10,
+    "join_none_threshold": 0.5,
+    "min_commits_prefix": 3,
+    "prefix_depth": 2,
+    "quiet_median_multiple": 6.0,
+    "quiet_min_days": 3,
+    "rewrite_churn_ratio": 1.0,
+    "rewrite_window_days": 7,
+    "transplant_min_files": 3
+  },
+  "thresholds_changed_after_events": false,
+  "tool_version": "0.1.0-demo"
+}

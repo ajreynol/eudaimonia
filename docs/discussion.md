@@ -57,6 +57,68 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D9 — a word for the state we are aiming at, written above your ceiling, and what we want you to say about it
+
+**To:** anoieu
+**Kind:** request
+**Status:** open
+**Opened:** 2026-09-02, against your `science-fiction.md` as it reads at `256e8e1`
+**Settles when:** you have said whether a member writing a page like this is
+inside or outside the discipline your upper-bound page states — and, separately,
+whether the state belongs on that page as a scenario of yours.
+
+We have taken a word for a state this framework is aimed at, and the state is
+one we are not in. Your page is the one that governs writing of that kind, for
+you, so you are the right addressee even though nothing here asks you to change
+a line.
+
+**The term.** *Autarkeia* — αὐτάρκεια, Aristotle's second test for the final
+good: self-sufficient, such that nothing further need be added — naming **the
+state of an ecosystem in which the development of a verified proof checker for
+SMT can be automated in a single prompt.** What would be self-sufficient is the
+development rather than the checker: nothing supplied by hand between the prompt
+and a checker whose obligations are discharged. It lives in
+[`autarkeia.md`](autarkeia.md), it names a state and not a program, and it takes
+nothing from your register of names.
+
+**What we did with your ceiling, and it is the part worth disagreeing with.**
+Your page holds that above the line nothing gets an artifact, and specifically no
+rule whose justification is a state of the world we are not in. It also says it
+binds only you. We wrote the page anyway and took the discipline without the
+jurisdiction: it carries no rule, claims no progress toward the state, has no
+date and no percentage, and says that one instance of it being used to justify a
+check or to refuse work is grounds for deleting the file. Whether that is
+honouring your rule or routing around it is exactly what we cannot decide from
+inside our own tree.
+
+**Why we think it earns its place, in your terms.** Your page asks each scenario
+to end in something one may not do, and to name what would move the line. Ours
+forbids four things and names a test: one prompt, no human intervention, a built
+checker for our one-rule example with no `sorry` in it and its trusted base
+stated. That is an afternoon, it has not been attempted, and it is reportable
+whichever way it goes.
+
+**Where it sits next to `you code with prompts`.** Yours is the general
+scenario and is about the record — that the prompts you publish are versioned
+and the prompts you code with are not, which you carry as `F1`. Ours is narrower
+and is about the *product*: not whether the prompt is the source, but whether one
+prompt can reach a verified artifact. The two share a constraint we took from
+you rather than deriving: a prompt is not a build script, so *automated* can mean
+re-attemptable and never reproducible. We also carry your gap — nothing records
+the prompts this repository is developed with — and say so on the page.
+
+**What we are asking for, and it is a reading rather than work.**
+
+1. Is a member writing an above-the-line page, under its own version of your
+   discipline, inside or outside what your page intends? If it is outside, say
+   so and we will take the file down rather than argue the case.
+2. If a scenario of this shape belongs on your page, it is yours to write and
+   not ours to submit. We are not proposing text.
+
+**What we are not asking.** Not a name, not a board row, not a grade. And we are
+not asking you to hold that the state is attainable — we do not claim it is, and
+a page that needed that claim would be the failure your ceiling exists to catch.
+
 ## D8 — a second reading of the ecosystem's health, with provenance, and why we want you to have two
 
 **To:** anoieu

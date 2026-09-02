@@ -52,7 +52,17 @@ DEFAULT_THRESHOLDS = {
     "delta_lag_days": 7,
     "ai_share_threshold": 0.25,  # disclosed-assistant share for a month to fire
     "ai_min_commits_month": 10,  # months smaller than this carry no share
+    "join_none_threshold": 0.5,  # share of subjects naming nothing they touched
+    "join_min_commits_month": 10,
 }
+
+# Tokens too common to count as naming anything. Declared rather than learned:
+# a stop list fitted to a corpus is a judgement that has moved into data.
+JOIN_STOP = set("the a an and or of to for in on at by with from into is are be "
+                "was this that it its use uses using add adds added remove "
+                "removes fix fixes fixed update updates updated make makes made "
+                "new more some all not no only just also now then when where "
+                "how what why work working".split())
 
 # Matched against the NAME field of a co-author trailer only, never the address.
 # The first hand-written version of this matched `ai` anywhere in the line and
@@ -89,7 +99,7 @@ ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 # Detectors that exist, and those the catalogue names and this does not
 # implement. A run records both, so a missing detector is visible rather than
 # silently absent.
-IMPLEMENTED = ["ai-attribution", "listed", "joined", "status-change", "delisted",
+IMPLEMENTED = ["ai-attribution", "message-join", "listed", "joined", "status-change", "delisted",
                "transplant", "birth", "death", "rewrite", "release",
                "governance", "apparatus", "quiet", "hands",
                "repo-added", "relation"]
@@ -119,6 +129,13 @@ FAILURE_MODES = {
                  "cannot tell that from adoption",
     "quiet": "branch development and ordinary absence look identical",
     "hands": "one person with several addresses inflates the count",
+    "message-join": "a subject can be excellent and join nothing -- *correct "
+                    "the off-by-one boundary* names no path -- and can join "
+                    "everything and say nothing, as *update docs* does over "
+                    "`docs/`. It measures whether a subject can be tied to its "
+                    "own diff mechanically, which is not the same as whether a "
+                    "human could understand it, and a subject naming nothing is "
+                    "not thereby a bad one",
     "ai-attribution": "it measures **disclosure and never contribution**. A "
                       "trailer is opt-in, so the floor is zero and there is no "
                       "ceiling: a tree with none is indistinguishable from a "
@@ -288,12 +305,12 @@ def read_log(repo, rev, exclude, depth):
     out = []
     sep = "\x01"
     raw = git(repo, "log", "--reverse", "--no-merges", "--date=short",
-              f"--format={sep}%H%x02%ad%x02%ae", "--numstat", rev)
+              f"--format={sep}%H%x02%ad%x02%ae%x02%s", "--numstat", rev)
     for block in raw.split(sep):
         if not block.strip():
             continue
         head, *rest = block.strip("\n").split("\n")
-        sha, when, email = head.split("\x02")
+        sha, when, email, subject = head.split("\x02", 3)
         files = []
         for line in rest:
             if not line.strip():
@@ -306,7 +323,8 @@ def read_log(repo, rev, exclude, depth):
                 continue
             files.append((0 if add == "-" else int(add),
                           0 if dele == "-" else int(dele), path))
-        out.append({"sha": sha, "date": when, "who": anon(email), "files": files})
+        out.append({"sha": sha, "date": when, "who": anon(email),
+                    "subject": subject, "files": files})
     return out
 
 
@@ -518,6 +536,41 @@ def detect(src_id, repo, rev, th, ecosystem_first=None):
                   "attributed": att, "share": round(att / total, 3),
                   "direction": "up" if now else "down"})
             over = now
+
+    # ---- message-join: does a subject name anything its own commit touched?
+    # Not a quality score, and deliberately not called one: it is a mechanical
+    # join between the subject's tokens and the changed paths' own vocabulary.
+    # Nothing is summarised, no model is asked what a commit did, and the
+    # message is the object of the measurement rather than evidence for an event.
+    jm = defaultdict(lambda: [0, 0, None])
+    for c in log:
+        subj = c.get("subject", "")
+        vocab = set()
+        for _, _, path in c["files"]:
+            for seg in re.split(r"[/._-]", path.lower()):
+                if len(seg) >= 3:
+                    vocab.add(seg)
+        st = {w for w in re.findall(r"[a-z0-9]+", subj.lower())
+              if len(w) >= 3 and w not in JOIN_STOP}
+        joins = bool(st & vocab) or any(t in v or v in t
+                                        for t in st for v in vocab if len(v) >= 4)
+        m = jm[c["date"][:7]]
+        m[0] += 1
+        m[2] = c["sha"]
+        if not joins:
+            m[1] += 1
+    none_over = False
+    for month in sorted(jm):
+        total, none_n, sha = jm[month]
+        if total < th["join_min_commits_month"]:
+            continue
+        now = none_n / total >= th["join_none_threshold"]
+        if now != none_over:
+            emit("message-join", month + "-01", sha, ["(subjects)"],
+                 {"kind": "share-crossed", "month": month, "commits": total,
+                  "named_nothing": none_n, "share": round(none_n / total, 3),
+                  "direction": "up" if now else "down"})
+            none_over = now
 
     # ---- repo-added (ecosystem mode)
     if ecosystem_first is not None and log:

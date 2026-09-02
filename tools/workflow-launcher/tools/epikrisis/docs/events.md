@@ -137,6 +137,7 @@ source:
 | `release` | a tag matching the subject's version pattern | tag, commit, date | projects that do not tag; tags moved after the fact; pre-release noise swamping real ones |
 | `governance` | a governing document added or substantially revised — policy, charter, contribution guide, vision, roles, a register | path, commit, size delta | platform-provided templates count as governance and are not; the *fact* of the document is the event, and this detector cannot see whether anybody followed it |
 | `apparatus` | the first of each kind of self-checking: CI configuration, a test directory, a dependency manifest, a formatter or linter, a release script | which kind, commit, date | apparatus added and never used looks identical to apparatus adopted; apparatus inherited at creation from a template is not an event at all |
+| `message-join` | each month whose share of subjects naming nothing their own commit touched crosses `join_none_threshold` | month, commits, count naming nothing, share, direction | a subject can be excellent and join nothing — *correct the off-by-one boundary* names no path — and can join everything and say nothing, as *update docs* over `docs/` does. **A subject naming nothing is not thereby a bad one** |
 | `ai-attribution` | the first commit carrying a disclosed assistant co-author, and each month whose disclosed share crosses `ai_share_threshold` | month, commits, attributed count, share, model families — **never a name** | it measures **disclosure and never contribution**: the trailer is opt-in, so the floor is zero and there is no ceiling, and a tree with none is indistinguishable from a tree where none was recorded |
 | `dependency` | a manifest gaining, losing or repinning a dependency | manifest, name, from, to | lockfile churn drowns the manifest; transitive changes are invisible; vendored dependencies are invisible by construction |
 | `quiet` | a gap between commits exceeding a multiple of the subject's own trailing median | gap length, bounding commits | development in branches; a single-maintainer project, whose median is close to meaningless; ordinary absence |
@@ -162,6 +163,37 @@ happens to notice. A detector makes it checkable — over any subject, including
 the trees that wrote the rule. It will be noisy. It is worth carrying anyway,
 because a rule the family enforces on others and cannot see in itself is exactly
 the kind of thing this project exists to find.
+
+## `message-join`, and the two words it is careful not to use
+
+The question it came from is *how descriptive are the commit messages*, and
+**neither "descriptive" nor a score for it appears in the output**, because both
+would break a refusal below.
+
+**What it measures instead is a join.** Do any tokens of a commit's subject
+appear in the vocabulary of the paths that commit changed? That is mechanical,
+re-derivable, and settles nothing about quality. The stop list is **declared in
+the source rather than learned from a corpus**, because a stop list fitted to
+the trees it is run on is a judgement that has moved into data.
+
+**It is not a quality metric**, which is refused below. *Names nothing it
+touched* is a fact about a join and is **not** a synonym for a poor message; the
+failure mode in the catalogue is that excellent subjects routinely score as
+naming nothing, and empty ones routinely score as naming something.
+
+**It does not read messages to classify what happened**, also refused below. The
+subject is the **object** of the measurement, never evidence for an event. No
+model is asked what a commit did, nothing is summarised, and no event elsewhere
+in the catalogue changes because of anything a message says.
+
+**Where it is weakest: across subjects rather than within one.** A repository
+whose work sits in one directory will score worse by construction. The one
+obvious confound was tested before this shipped — that repositories with deeper
+paths have more vocabulary to match against — and it did not hold: median
+vocabulary per commit was 8, 7 and 8 across three subjects whose *named nothing*
+shares were 58%, 35% and 22%. **That is one check on one triple and is not
+enough to license cross-subject comparison.** Within one tree over time is the
+safe reading.
 
 ## `ai-attribution`, and why it is not the two refusals below
 

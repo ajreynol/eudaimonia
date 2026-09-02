@@ -11,3 +11,4 @@ assume it has been read.
 | [`eoc-requests.md`](eoc-requests.md) | What a template for Logos-like checkers needs from the Eunoia compiler, each item with the evidence that produced it. |
 | [`logos-experience-report.md`](logos-experience-report.md) | Every `sorry` a freshly generated checker contains, and what the same obligation cost Logos. |
 | [`discussion.md`](discussion.md) | The standing channel to the other tools in the Eunoia ecosystem: questions, proposals and notices that are not defect reports. |
+| [`autarkeia.md`](autarkeia.md) | The term for the state this framework is aimed at — a verified checker developed from a single prompt — what is measured between here and it, and what the word may not be used for. |
