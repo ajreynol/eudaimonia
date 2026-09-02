@@ -99,6 +99,52 @@ full: a responsibility and not a rank, and being relied on makes it one.
 - **Being fast, being general, being a product.** No users, no stability, no
   promise that any of it survives the first real run.
 
+## The agenda, revised against EXT-1
+
+Revised 2026-09-02, after scanning the only worked example of this kind of tool
+we have access to: **`EXT-1`**, the external repository index that approached
+cvc5 with a badge. It is named, linked and scanned feature by feature as `N14`
+in the launcher's findings register, and the code name is deliberately not from
+the ecosystem's own register — a Greek name would read as membership, and
+allocating one is not ours to do. (`D7` and `D8` predate the name and identify
+the service in full, so nothing there is ambiguous.)
+
+**Three things to build.**
+
+1. **Release recency from tags.** The `release` detector reads tags and stops.
+   Days since the newest tag matching a subject's version pattern is cheap, in
+   scope, and is the exact reading `EXT-1` got wrong by a factor of 13.6 — by
+   taking it from a platform release object instead of from the history.
+2. **Agent-context arrival.** When agent-guidance files first appeared, and
+   whether they have moved with the code since. Presence is a snapshot anybody
+   can take; arrival and drift are history, and this is the one place our
+   subject and `EXT-1`'s genuinely overlap.
+3. **A second subject for `panel`.** Four of the scan's *we do better* claims
+   rest on a single run inside this family. **An instrument that has only been
+   pointed at its owner has not yet earned a comparative claim**, and the scan
+   says so about itself.
+
+**Five things not to build, and the reasons are not the same reason.**
+
+- **Security posture and dependency advisories.** Useful, and somebody else's
+  reviewed instruments. Citing beats reproducing, which this ecosystem already
+  argues elsewhere.
+- **Popularity, ecosystem adoption, issue responsiveness.** Platform data, not
+  reproducible from a pin — the scope edge, not a preference.
+- **Maintainer resilience.** Out by the schema. *Does this project have one
+  maintainer* is a fair question from a consumer and we will not answer it, and
+  that is a cost rather than a virtue.
+- **Code legibility, or any quality score.** Already refused in the catalogue.
+- **A composite.** The deepest defect in `EXT-1` is that a weighted average made
+  a contradiction vanish — Development Activity 99 beside release recency 0/36,
+  reported as Vitality 81. **This tool will not acquire one**, and if a reader
+  ever wants a single number out of it, the answer is that there is not one.
+
+**The question that stays open, recorded so it is not mistaken for settled:**
+what `EXT-1`'s error rate actually is. We have reproduced one defect. **One is
+not a rate**, and the party most tempted to treat it as one is the party that
+found it.
+
 ## The role it is asking to hold
 
 Added 2026-09-01 by the maintainer, in an explicit instruction, which is the

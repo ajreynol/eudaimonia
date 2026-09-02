@@ -392,6 +392,64 @@ on a tool with one run — and the prose budget from `N12` refused it twice and
 forced it back under. The safeguard worked. What it caught was this entry's own
 subject arguing at length that argument is unnecessary.
 
+### N14 — EXT-1: a feature-by-feature scan of an external repository index
+
+**The code name, and why it is deliberately not Greek.** `EXT-1` is
+[inspect.software](https://inspect.software), methodology
+[v2.10.0](https://inspect.software/methodology), which approached cvc5 in
+[`cvc5/cvc5#12858`](https://github.com/cvc5/cvc5/pull/12858) offering a health
+badge; its report on that project is
+[here](https://inspect.software/software/cvc5/cvc5). It needs a stable referent
+because it is now cited across several documents, and it must **not** get a name
+from this ecosystem's register: those describe what a member does to its
+subject, allocating one is anoieu's to do, and a Greek name would read as
+membership. `EXT` numbers external parties in the order they found us, which is
+the only fact about it we are certain of.
+
+**Why scan it at all.** It is the only worked example available of the thing
+several projects here are building — an automated assessment of a repository —
+and its features are a menu somebody has already paid to discover. Reading the
+menu is cheaper than deriving it.
+
+| `EXT-1` feature | weight | our reading |
+| --- | --- | --- |
+| Development activity | 21x60% | **we do better.** `panel` measures each prefix against **its own** median gap; a population-calibrated activity score cannot separate a project that always committed monthly from one that just stopped |
+| Release discipline | 21x40% | **useful check, wrong implementation, half ours.** Signing and provenance are real and are platform-only. *Recency* is readable from tags, is in our scope, and we would not have produced the 1,603-day error |
+| Popularity & adoption | 17x40% | **not a check.** Attention is not health, and it is the most gameable input in the set |
+| Community health | 17x35% | **we do better, barely.** File presence is derivable, and our `governance` detector already publishes why it is weak: the fact of a document is not evidence anybody followed it |
+| Ecosystem adoption | 17x25% | **out of scope, and legitimately useful.** Registry data answers a real question for a library. We cannot and should not |
+| Maintainer resilience | 23x30% | **refused by us, and the refusal costs something.** Bus factor is per-person and out by our schema. *Does this project have one maintainer* is a fair question from a consumer, and we will not answer it |
+| Issue & PR responsiveness | 23x25% | **out of scope by design.** Tracker data is not reproducible from a pin. cvc5 scores 97 here; we would report nothing at all |
+| Stewardship, package maintenance | 23x45% | **we could not determine what it reads.** Recorded as unknown rather than guessed |
+| Engineering practices | 19x60% | **we do better on one axis only.** Presence is a snapshot; `apparatus` gives *when* CI, tests and manifests arrived relative to the code they check, which no snapshot can |
+| Documentation | 19x40% | **we do better and differently.** `ratio` measures prose against tool per month and can be wrong in a stated way; a documentation score cannot |
+| Security posture (OpenSSF Scorecard) | 16x80% | **useful, and do not rebuild.** Somebody else's reviewed instrument. Citing it is the compiler optimisation this ecosystem already argues for |
+| Dependency advisories (OSV) | 16x20% | **useful, and do not rebuild.** Same argument |
+| Agent context | 4x30% | **we could do better, and this is the overlap that matters.** Whether agent-guidance files exist is a snapshot; when they appeared and whether they moved with the code is history |
+| Verify loop | 4x40% | **overlaps `apparatus`**, at lower resolution |
+| Code legibility | 4x15% | **not a check we will make.** A quality metric wearing a 1–100 face. Our catalogue refuses these because a number that looks like a grade is read as one |
+| Machine-readable interfaces | 4x15% | **shallow.** cvc5 scores 100/100, which tells a reader nothing they could act on |
+| Composite over 7 bands | — | **not a check.** This is the machinery in which Development Activity 99 and release recency 0/36 became Vitality 81 |
+| Missing-data renormalisation | — | **not a check, and actively harmful.** *"When a component's underlying data is unavailable, it is excluded and the remaining weights renormalized"*: absence never costs and can raise a score, and two repositories showing the same number may have been scored on different category sets |
+| Calibration against the public distribution | — | **unknown magnitude.** It makes the number a rank, so it moves when other repositories move. We cannot say how much |
+| Red flags as multipliers | — | **unknown, and the largest lever.** *"A finding that does not score into a value but adjusts one"*, with no stated bound |
+| Versioning (v2.10.0) | — | **useful, and better than we first credited.** Any formula, weight or band change bumps the version. It is still not a thing a README can pin |
+
+**The honest limit on all of the above, stated because it is the thing most
+likely to be dropped: n = 1.** We have reproduced exactly one defect in `EXT-1`
+— release recency read from a rolling pre-release slot frozen at 2022, giving
+1,603 days where the truth is 118. One verified error does **not** establish that
+an index is generally unreliable, and we have measured no error rate. Treating a
+single reproduced bug as a character assessment is the move this register exists
+to catch, and it would be especially cheap here because the bug is ours to
+enjoy.
+
+*Falsified by:* a category above being reclassified once we actually build the
+thing — most likely *we do better*, which is at present four claims resting on
+one run each. **Wrong with it today:** the scan is of a competitor by a party
+that has just built a rival, three of whose four *we do better* entries have
+never been run against a subject outside this family.
+
 ## What is wrong
 
 ### W1 — The system diagnoses precisely and does not treat
