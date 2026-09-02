@@ -444,6 +444,18 @@ single reproduced bug as a character assessment is the move this register exists
 to catch, and it would be especially cheap here because the bug is ours to
 enjoy.
 
+**The one defect has since been cross-examined and it held.** Three defences of
+`EXT-1` were constructed and pressed: a stricter definition of *release* (dead —
+35 stable releases, newest marked *Latest* by GitHub on 2026-05-07); a stale
+report that was right when computed (**dead, and this is the strong one — the
+largest gap between consecutive cvc5 stable releases across the project's whole
+history, 2019 to now, is 479 days, so a 1,603-day drought has never occurred on
+any date**); and API ambiguity making the error easy, which is true and is not a
+defence of the number. **One defence survives and is stated rather than
+buried:** the reading of their report came through a summarising fetch and not a
+person's eyes. **None of this moves n off 1.** A defect that survives attack is
+a better-established defect, not a second one.
+
 *Falsified by:* a category above being reclassified once we actually build the
 thing — most likely *we do better*, which is at present four claims resting on
 one run each. **Wrong with it today:** the scan is of a competitor by a party

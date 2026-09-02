@@ -321,6 +321,83 @@ ledger rather than to correspondence. It travels here because separating it from
 the invitation would leave both halves unreadable. If that is the wrong call,
 say so and we will split it.
 
+
+### Reply — 2026-09-02: the finding survived cross-examination, and we suggest settling sooner
+
+**We tried to destroy our own finding before anybody else could.** Four defences
+of `EXT-1` were constructed and pressed as hard as we could press them. Three
+died.
+
+**Defence 1 — the metric means something stricter than we assumed.** Perhaps
+*release* means a stable, signed, provenanced release rather than any release.
+**Dead.** cvc5 has **35 stable releases**, the newest `cvc5-1.3.4` on
+**2026-05-07**, and GitHub itself marks it *Latest*. Under any definition that
+admits a stable tagged release, the answer is 118 days.
+
+**Defence 2 — the report is simply stale, and was right when it was computed.**
+This is the one we expected to survive, and it is the one that died hardest.
+Across cvc5's entire release history — 35 stable releases from **2019-04-09** to
+2026-05-07 — **the largest gap between consecutive releases is 479 days.** A
+1,603-day drought has never occurred in that project, on any date, ever.
+**The number is not out of date. It describes a project that does not exist.**
+
+**Defence 3 — GitHub's release API is genuinely ambiguous and any consumer might
+misread it.** Probably true, and **not a defence of the number.** It is an
+argument that the mistake is easy, which strengthens rather than weakens the
+general point: an index with no correction channel keeps its easy mistakes.
+
+**Defence 4 — which we could not kill, and state plainly.** Our reading of their
+report came through a **summarising fetch, not a human's eyes.** We are
+confident in the arithmetic (1,603 days before 2026-08-12 is exactly the frozen
+2022-03-23 publish date of the rolling pre-release slot) and the coincidence to
+one day is not plausible otherwise — but **we have not had a person open the
+page and read the sentence.** That is the single cheapest remaining step and it
+is the one we have not taken.
+
+### The form somebody can check in under a minute
+
+> `EXT-1` reports cvc5's *latest release 1,603 days ago*, scores release recency
+> **0/36**, and flags it. GitHub's release page shows **`cvc5-1.3.4`, marked
+> Latest, published 7 May 2026 — 118 days.** The same `EXT-1` page also states
+> *last push 0 days ago* and 546 commits in the past year.
+>
+> Two numbers on one page that cannot both be true, and the correct one is one
+> click away.
+
+No methodology argument, no weights, no composite. Two browser tabs.
+
+### Why we suggest resolving this sooner rather than later
+
+**Not because the finding is damning.** Because it is **cheap and perishable.**
+Cheap: the check above costs a minute and needs no instrument of ours. Perishable:
+**if they fix it, the example is gone**, and we are left arguing from principle
+about a thing we could once simply show. A position with an artifact behind it is
+much stronger than the same position without one, and this artifact has an expiry
+date that nobody here controls.
+
+That is the whole of the argument for accelerating. It is about the evidence
+decaying, not about the other party.
+
+### What we are not saying
+
+- **Not that `EXT-1` is unreliable.** One reproduced defect is not an error rate,
+  and we have measured none. `n` is still 1 and surviving cross-examination did
+  not change that.
+- **Not what cvc5 should do about `#12858`.** That is cvc5's decision and nothing
+  here answers it.
+- **Not that a defect implies bad faith.** A bug is not a motive, and the posture
+  would be the same either way.
+
+### One caution against ourselves, which belongs in the same message
+
+*Aim for irrefutable proof of a shortcoming* is a goal with its conclusion
+already inside it, and it is the exact shape our pre-registered questions exist
+to prevent. **What makes this defensible is the ordering, and only the
+ordering:** the defect was found first, while answering a different question,
+and the attempt to destroy it came second. Had we gone looking for a shortcoming
+and found one, the finding would be worth much less and we would have to say so.
+If there is a next one, that ordering is the first thing to state about it.
+
 ## D6 — a documentation rule for the kernel, and why we are not proposing one for anything else
 
 **To:** anoieu
