@@ -1,0 +1,40 @@
+{
+  "subject": "anoieu",
+  "kind": "tool",
+  "self": true,
+  "sources": [
+    {
+      "id": "anoieu",
+      "origin": "https://github.com/ajreynol/anoieu"
+    }
+  ],
+  "exclude": [
+    "deps/"
+  ],
+  "not_in_corpus": [
+    "issue trackers, pull requests and discussion threads, by design",
+    "anything unpublished, absolutely",
+    "the other trees in the ecosystem: this run reads one repository, so an event whose other half is in another tree -- a role moving, a name being taken, a reply landing -- appears here as a documentation edit and nothing more",
+    "two event classes the subject has told us its own tree cannot show, in anoieu D15 to eudaimonia, before this run existed: a **stretch boundary**, which is the span between two global announcements and looks from outside like an ordinary commit touching a documentation file; and **a role changing hands**, which moves one entry between two headings in docs/roles.md with no rename, no file created and no prefix going quiet. The subject states the second is one of the largest things that can happen here. Both are therefore expected to be absent from the derived record and their absence is not evidence they did not occur."
+  ],
+  "thresholds": {
+    "prefix_depth": 2,
+    "quiet_min_days": 3,
+    "rewrite_window_days": 7
+  },
+  "inventory": {
+    "source": "anoieu",
+    "path": "tools/ecosystem.json",
+    "track": [
+      "status",
+      "proposed",
+      "parent"
+    ],
+    "note": "the ecosystem keeps one footing per tool in this file and its git history is the status-transition record; for a single-tree run it is also the only place a cross-tree event leaves a dated trace"
+  },
+  "prose_is_product": [
+    "anoieu"
+  ],
+  "_prose_is_product_note": "anoieu ships the shared repository policy and the checker that enforces it; other repositories' CI depends on documents in this tree, so a prose line here is a tool line and the ratio is not comparable with other subjects. A declared judgement, not a derived fact.",
+  "_prefix_depth_note": "set to 2 before any event for this subject existed, not tuned afterwards. The prior run reported at depth 1 that child projects were invisible because they collapse into `tools`; this subject is a single tree whose child projects are the unit of interest, so depth 2 is the correction to a recall miss the tool published about itself."
+}

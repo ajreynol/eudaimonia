@@ -1,0 +1,70 @@
+{
+  "_note": "Lines of tool against lines about tools, per repository, per month.",
+  "classifier": {
+    "everything else": "other, reported and not counted into either side",
+    "prose": [
+      ".md",
+      ".org",
+      ".rst",
+      ".txt"
+    ],
+    "tool": [
+      ".bzl",
+      ".c",
+      ".cc",
+      ".cmake",
+      ".cpp",
+      ".eo",
+      ".eos",
+      ".expected",
+      ".h",
+      ".hpp",
+      ".lean",
+      ".mk",
+      ".proof",
+      ".py",
+      ".rs",
+      ".sh",
+      ".smt2",
+      ".toml",
+      ".yaml",
+      ".yml"
+    ],
+    "tool_names": [
+      "CMakeLists.txt",
+      "Dockerfile",
+      "Makefile",
+      "lakefile.lean",
+      "lakefile.toml",
+      "lean-toolchain"
+    ]
+  },
+  "prose_is_product": [
+    "anoieu"
+  ],
+  "sources": {
+    "anoieu": {
+      "months": {
+        "2026-08": {
+          "other": 2659,
+          "prose": 20682,
+          "prose_per_tool": 1.16,
+          "tool": 17823
+        },
+        "2026-09": {
+          "other": 198,
+          "prose": 9000,
+          "prose_per_tool": 6.46,
+          "tool": 1394
+        }
+      },
+      "prose_is_product": true,
+      "total": {
+        "other": 2857,
+        "prose": 29682,
+        "prose_per_tool": 1.54,
+        "tool": 19217
+      }
+    }
+  }
+}
