@@ -429,7 +429,7 @@ taken, a role moving, a child project retired. The design carries both and
 **Two subjects have been run, both self-assessments**: the ecosystem, and a
 single tree — `anoieu`, added 2026-09-01 at the maintainer's instruction and run
 at `prefix_depth` 2 to correct a recall miss the first run published about
-itself. **cvc5 has not been staged and has not been read**: the constraint below
+itself. **cvc5 has not been checked out and has not been read**: the constraint below
 binds before a first run, and there has not been one.
 
 ## The constraint it inherits

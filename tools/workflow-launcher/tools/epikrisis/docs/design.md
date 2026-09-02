@@ -166,7 +166,7 @@ that fails first and silently when this kind of document is written quickly.
 record, the questions and the report. All of it is small, and it is what any
 later reader needs to argue with a conclusion.
 
-**Not committed:** the staged trees. They are large and re-fetchable from the
+**Not committed:** the checkouts. They are large and re-fetchable from the
 pins, and a tool that vendors somebody's repository to prove it read it has
 misunderstood what the pin is for. They live in `work/`, which is ignored.
 
@@ -178,7 +178,7 @@ what a run *derived* is the evidence; what it *read* is reproducible.
 
 ```
 epikrisis subjects              # what is defined, and what each reads
-epikrisis pin      <subject>    # stage the trees; write corpus.json
+epikrisis pin      <subject>    # check out the trees; write corpus.json
 epikrisis events   <subject>    # run the detectors
 epikrisis record   <subject>    # extract the declared record
 epikrisis delta    <subject>    # join; classify

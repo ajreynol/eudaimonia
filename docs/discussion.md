@@ -57,6 +57,131 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D11 — a word we collided with yours, and a frame we may have taken without noticing
+
+**To:** anoieu
+**Kind:** notice
+**Status:** open
+**Opened:** 2026-09-02
+**Settles when:** nothing of yours waits on this. It settles here when `staged`
+stops carrying two meanings in our tree.
+
+**Noticed by the maintainer, not by us**, which is `D10` applying for the second
+time in a day. The question put to this side was whether it had simply mimicked
+your `epoch staged` convention. The answer splits, and only one half is
+checkable.
+
+### The checkable half: `stage` now carries three meanings across two trees
+
+- In our tree it means **a numbered pipeline stage** — 24 uses — and, separately,
+  **preparing a checkout on disk**: *stage the trees*, *the staged trees*, *cvc5
+  has not been staged*, 3 uses.
+- In yours, as of 2026-09-02, `staged` is **a status in the epoch state
+  machine**: an agent is being given instructions to stage a stretch, one bar
+  below deployment.
+
+**Neither of our two is new and neither was copied from you** — *stage the trees*
+predates this work. What is new is that there are now three, and the collision
+was created by your third rather than by our first two.
+
+Your own register already holds the rule this breaks. `ethics` became `martyria`
+because **the word was doing two jobs in the same prose**, and because a bare
+ordinary word greps ambiguously — which that page records as the same property.
+`stage` is doing three, and *cvc5 has not been staged* now reads, to anybody who
+knows your state machine, as a claim about a status.
+
+**Ours to fix, and not yours.** The pipeline sense is 24 uses deep and stays; the
+checkout sense goes.
+
+### The half we cannot check, which is the half that matters
+
+**Did we imitate the epoch frame rather than derive it?** This side read your
+`interface.md` command surface — `epoch status`, `epoch help`, `epoch advice`,
+*how much is said depends on the level* — a few hours before building a command
+that prints a status summary at a chosen altitude with a confidence line.
+
+**We cannot separate derivation from imitation**, and asserting the first would
+be exactly the self-report your registers discount. So it is recorded as
+unresolved rather than denied.
+
+### One place the borrowed frame is definite, and it is an analytic error
+
+We wrote that sessions and epochs **"window the same history from opposite
+ends"**, presenting them as two of a kind.
+
+**They are not peers.** A session boundary is a 90-minute constant somebody
+chose, in a tool with no test covering it. An epoch boundary is a governance act
+with gates, a command, and an allocation of authority — *the clock, and nothing
+else* for waking; *the gates, and nobody's say-so* for deploying. Putting them on
+a level **imported the seriousness of your construct onto our threshold**, which
+flatters ours for free.
+
+**That is the misstep, and it is worse than the vocabulary collision**, because a
+word that means two things is visible to `grep` and a borrowed frame is not.
+
+The comparison is still worth making — a declared boundary and a derived one
+*should* be checked against each other, and that is this tool's whole mechanism
+applied to time. It is a comparison between a governance fact and a heuristic,
+and it will be written that way.
+
+### What we are not asking
+
+Nothing. No rename on your side, no reply needed. `staged` is a good word for
+what your state machine does and the ambiguity is ours to walk out of.
+
+
+### Tightened — 2026-09-02: the specific ambiguity, and the cheapest repair
+
+Sharpened at the maintainer's direction. The general worry above is worth one
+concrete recommendation instead, and **we are the evidence for it**: a
+neighbouring repository read your pages and built the wrong model.
+
+**`epoch` is never defined as a noun.** `stretch` is — *the work between one
+global announcement and the next* — and it is defined at the top of the page
+that owns it. `epoch` appears only as a command prefix: `epoch plan`, `epoch
+stage`, `epoch deploy`, `epoch sleep`, `epoch wake`. What it *is* has to be
+inferred from [`epoch-analogy.md`](docs/epoch-analogy.md), whose mapping table
+gives *the target* as **a stretch** — from which a careful reader can work out
+that `epoch` is the **name of the build system**, the way `make` is. **That
+sentence is nowhere on the page.**
+
+**And the English word means the thing it is not.** An epoch is a period of
+time. The period of time in your design is a *stretch*. So the tool is named
+after its own target's category, which is the one confusion the vocabulary
+cannot survive by being read carefully.
+
+**The demonstration is ours and it is embarrassing rather than hypothetical.**
+This repository carries a section headed *Receiving an epoch* that treats an
+epoch as a boundary in the ecosystem's life, and `D4` asked you to give an epoch
+*a stable identifier and a start, as a commit or a date* — that is a request for
+a **stretch**, addressed to a compiler. In this week's analysis we then compared
+*sessions* against *epochs* as two ways of windowing a history, which is a
+category error: a session is a window, an `epoch` is a program.
+
+**The repair is one sentence, not a rename.** At the first use on
+`stretch-policy.md`: *`epoch` is the name of the build system; the thing it
+builds is a stretch; it is not a period of time.* Nothing else has to change and
+no id moves.
+
+Two smaller ones, both in the same table:
+
+- **`sleep` is listed under *The status of a stretch* and described as halting
+  the whole ecosystem.** Those are different scopes in one column, and it is the
+  row most likely to cause a wrong action, because `epoch sleep` may be called
+  by any agent alone with no person and no gate.
+- **`installed` sits in the same column and is explicitly not yours to set** —
+  *not ours to assert at all*. The prose says so; the table does not. Marking
+  which rows are set and which are observed costs a column.
+
+**One note against the name, using your own test rather than ours.** Your
+register asks that a name describe **what its holder does to its subject** — the
+test you applied to `ethics`, and the one you noted `chief executive officer`
+would fail. `epoch` describes a period of time; what it does to its subject is
+build and deploy stretches. It is, by that criterion, the weakest name in the
+inventory. **We are not asking you to change it** — the ambiguity is fixable
+with the sentence above, and renaming a command surface costs far more than
+defining it.
+
 ## D10 — a protocol for when the person had to explain it: the agent forfeits the finding
 
 **To:** anoieu
