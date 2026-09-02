@@ -13,17 +13,16 @@ what has the way this thing evolved done well and badly?**
 
 The host asks a question it has no instrument for. Its findings register is
 described on its own front page as *what is captured across the ecosystem, what
-is retyped, and what is not in the record at all* — which is a question about the
-gap between what a project's history **says** happened and what its tree
-**shows** happened, answered by hand, once, by reading. That gap is the central
-mechanism designed here.
+is retyped, and what is not in the record at all* — the gap between what a
+project's history **says** happened and what its tree **shows** happened,
+answered by hand, once, by reading. That gap is the central mechanism here.
 
-Its stretch goal needs the same instrument. That goal is that somebody starts a
-real repository through the launcher and the result is better than what they
-would have typed, *measured by what the first week of that repository needed
-corrected*. Nothing in this ecosystem can currently measure that, and the shape
-of the missing thing is: read a repository's history, say what happened, say what
-went badly. So this is the launcher's own unmeasured claim, given a tool.
+Its stretch goal needs the same instrument: that somebody starts a real
+repository through the launcher and the result is better than what they would
+have typed, *measured by what the first week of that repository needed
+corrected*. Nothing here can measure that, and the shape of the missing thing is
+to read a history and say what happened and what went badly. So this is the
+launcher's own unmeasured claim, given a tool.
 
 **That is an intellectual debt in one direction and nothing else.** If this
 directory is deleted the launcher's stretch goal is exactly as unmeasured as it
@@ -53,7 +52,9 @@ first?
    questions, the required negative findings, the per-assessment falsifier, and
    the mechanical checks that enforce all three.
    [docs/judgement.md](docs/judgement.md).
-4. **The two subjects**, below, run only once the three above are settled.
+4. **The two subjects**, below; one has been run and one has not.
+5. **Later**, and a scope change rather than an elaboration: the postmortem on
+   the commits themselves.
 
 **The stretch goal.** That a report produced this way tells somebody who knows
 the subject well something they did not already know — and that they say so.
@@ -127,21 +128,21 @@ ecosystem's chief executive role as topic `D5` in the parent's correspondence
 rather than asserted here. The occasion is that the role is building a **build
 system** and this is the tool that reads how things have been built in these
 trees, so the question arrives in the form that makes it real: *why should this
-count for anything?*
+count?*
 
 **It dissolves on contact with results.** An argument for one's own authority is
-only ever needed where the evidence is missing: where evidence exists it is
+only needed where the evidence is missing: where evidence exists it is
 redundant, and where it does not it is what a tool offers *instead* of findings.
-So there is no case for standing here, deliberately — two things stand in its
-place and neither is rhetoric.
+So there is no case for standing here — two things stand in its place, and
+neither is rhetoric.
 
 1. **Evidence.** Stages 1–4 are re-derivable byte for byte from a pin and stage
    5 is a different file, so a reader who distrusts the conclusion rebuilds the
    evidence and disagrees with the writing having established that the writing
-   is the only thing in dispute. That is a property of the file layout, not a
-   claim about quality: it holds whether this tool is good or bad.
-2. **The standing of an expert witness, never an advocate.** That is the whole
-   of the position, and the rest of this section is what it costs.
+   is the only thing in dispute — a property of the file layout, not a claim
+   about quality: it holds whether this tool is good or bad.
+2. **The standing of an expert witness, never an advocate**, which is the whole
+   of the position; the rest of this section is what it costs.
 
 ### What the witness distinction actually commits this to
 
@@ -151,8 +152,7 @@ from being **examinable**: one who cannot be cross-examined is worth nothing
 however accurate they are, and one who starts advocating is impeached whatever
 they know.
 
-Read that against machinery already built, none of it for this argument and all
-of it what the argument rests on:
+Read that against machinery already built, none of it for this argument:
 
 - **The boundary between stages 4 and 5** keeps what was observed apart from
   what is concluded — the two halves a witness may never blend.
@@ -160,12 +160,11 @@ of it what the argument rests on:
   **`thresholds_changed_after_events`** flags a parameter tuned after it — a
   question written to fit an answer and a judgement moved into a constant both
   leave a mark.
-- **A written failure mode per detector** is a standing admission of where this
-  witness is unreliable, published before anybody has to find out.
+- **A written failure mode per detector** admits where this witness is
+  unreliable, before anybody has to find out.
 - **A self-assessment with no negative findings is void**, so *we looked and it
-  was fine* is structurally unavailable rather than merely discouraged.
-- **Names never leave stage 1**, by schema: no testimony here becomes evidence
-  about a person.
+  was fine* is unavailable rather than merely discouraged.
+- **Names never leave stage 1**, by schema.
 
 **Every one of those makes this tool easier to impeach, and that is not a side
 effect — the exposure is the credential.** There is nothing else on offer, and a
@@ -179,15 +178,14 @@ are declared **unsafe** as delta classes and survive only reduced; a detector
 fired whose output the questions decline to use; a calibration score of 5 of 6
 is called optimistic and "not this tool's performance", because the calibrator
 had read the trees the same day. Two of eight questions retracted, four defects
-found in the tool that produced the report.
-
-That is small, and it is the only kind of record that could support a position
-like this one: **a first run finding everything it looked for and nothing wrong
-with itself would be the best available reason to disbelieve the second.**
+found in the tool that produced the report. That is small, and it is the only
+kind of record that could support a position like this: **a first run finding
+everything it looked for and nothing wrong with itself would be the best reason
+available to disbelieve the second.**
 
 **And it stays on the right side of the rule above.** Cited here is what that
 run found out about *this method* — a matcher's collisions, a threshold's blind
-spot, a calibration's optimism — which is this project's to keep. What it
+spot, a calibration's optimism — which is this project's to keep; what it
 concluded about the ecosystem appears nowhere here, including as a summary.
 
 ### Why this is a responsibility and not a rank
@@ -198,17 +196,16 @@ on it and there is no version where the tool pays. A position that transfers
 cost to the person relying on it is a duty in exact proportion to its
 usefulness. Three obligations follow, none optional:
 
-- **Be checkable.** Never say more than a reader can re-derive from a pin. A
-  finding somebody must take on trust is not this tool's to offer at any
-  confidence.
+- **Be checkable.** Never say more than a reader can re-derive from a pin; a
+  finding somebody must take on trust is not this tool's to offer.
 - **State the limit out loud.** *This tool cannot establish that* is a result,
   given as freely as any other. Answering a smaller question because the
   machinery happens to reach it is the failure the guardrail below names.
 - **Speak.** Silence is also a way of being wrong. This directory is two hops
   from anywhere its output could matter and has already recorded that a finding
   can die in that chain unnoticed. Holding evidence that bears on a live
-  decision and saying nothing is not modesty: the duty that forbids
-  overclaiming is the one that requires volunteering.
+  decision and saying nothing is not modesty: the duty forbidding overclaiming
+  is the one requiring volunteering.
 
 ### The tense boundary, applied to the occasion
 
@@ -219,36 +216,14 @@ built in these trees before — in what order, at what intervals, how long
 apparatus took to arrive, what got written before it could be practised, what
 the record claims that the trees do not show and the reverse. **What it may not
 say** is what the build system should therefore do: that is the verdict, it
-belongs to whoever is accountable for the system, and a witness who reaches for
-it stops being one. **Which is what makes the position safe to grant** — a role
-that could only be abused by a tool willing to argue costs nothing to give to
-one that refuses to.
+belongs to whoever is accountable, and a witness who reaches for it stops being
+one. **Which makes the position safe to grant** — a role abusable only by a tool
+willing to argue costs nothing to give to one that refuses to.
 
-### What of this is transferable, which is the only part worth propagating
-
-Anything a tool of this kind concludes about the family that built it is a
-self-assessment and stops at the boundary. **The arrangement is not a
-conclusion.** It is a design: cheap, not invented here, carrying no verdict on
-anybody — copyable by a project that thinks this one's output is worthless:
-
-1. **Separate what was observed from what was concluded, at the file level and
-   not the paragraph level.** Then a disagreement is about the writing, and
-   everybody can see that it is.
-2. **Fix the questions before the evidence is seen and hash them into the run**,
-   so a question written to fit an answer stops being invisible.
-3. **Publish each instrument's failure mode beside it.** An instrument trusted
-   uniformly is trusted exactly where it is wrong.
-4. **Make the flattering result structurally unavailable** — void without
-   negative findings — rather than trusting anybody to resist it.
-5. **Attach the falsifier to the position, not to a section at the end.**
-
-**The claim, with its falsifier, since a claim about safeguards without one
-would breach rule 5 in the act of stating it:** that a tool built this way can
-be relied on by somebody who does not trust it, which is the only kind of
-reliance worth having. What falsifies it is a report believed because of who
-wrote it rather than because its evidence was rebuilt, and the way to check is
-to ask a reader whether they ever reran stages 1–4. **If nobody ever does,
-every safeguard above was decoration** and this section was its dearest part.
+**What of this is transferable is not a conclusion but a design** — cheap, not
+invented here, carrying no verdict on anybody — so it travels where claims about
+practice are supposed to travel: `N13` in the launcher's findings register, with
+its falsifier attached and nothing about this family attached to it.
 
 ### What would forfeit the position
 
@@ -260,8 +235,8 @@ Stated now, because standing that cannot be lost was never standing:
 - an answer to *what should we do*, however lightly phrased;
 - an argument offered in place of evidence — **including this section**, if it
   is ever doing work the runs cannot back. It exists because the maintainer
-  asked for the position to be written down; it is not evidence of anything;
-  and on the day it is cited as though it were, delete it.
+  asked for the position to be written down, it is not evidence of anything, and
+  on the day it is cited as though it were, delete it.
 
 ## The guardrail on the role: ambitious in functionality, unambitious in implementation
 
@@ -355,14 +330,13 @@ cheaper to say before the first one exists than after:
 | **where it is recorded, as data** | the detectors here read status transitions out of an inventory file's own history. If an epoch is recorded that way it is readable on the day it lands; if it is recorded in prose, nothing here can see it and the audit reverts to months |
 | what it **declares** | an epoch that names nothing changed is a date, and this tool would have nothing to report about it |
 
-The last two are the ask carried upstream, and they are the same ask a topic
-from this repository already makes about the ecosystem's other status
-vocabularies. Raising it before the format exists is the cheap moment.
+The last two are carried upstream in `D4`, and raising them before the format
+exists is the cheap moment.
 
 **Until an announcement arrives, nothing here waits on it.** A tool that cannot
 work without a thing that does not exist yet has made itself somebody's
-dependency, and this one is deliberately not that: it reports per month today,
-and gains a better window when there is one.
+dependency: this one reports per month today and gains a better window when
+there is one.
 
 ## The two initial subjects
 
@@ -479,6 +453,39 @@ as a reason to refuse a child project elsewhere, not as a compliment. Nothing
 here disputes it. The honest response is that the count is visible, that each of
 the five states an ending, and that the ending most of them should reach is
 retirement rather than graduation.
+
+## Later: the postmortem on the commits themselves
+
+**Added 2026-09-01 by the maintainer, in an explicit instruction; a scope change
+and not an elaboration, since generating prose is out of scope above.**
+
+**The service.** For a commit: what it did, derived from the tree; what its
+message said; and where those differ, the message it should have carried. Truth
+first and clarity second — the name's own structure, at the smallest unit there
+is. A postmortem and not a correction: the original stands, and the pair is the
+finding.
+
+**A commit message is the declared record at its finest grain**, so this is the
+delta already designed, one level down — and the standing refusal to read
+messages to decide what happened is what qualifies this to grade one: a tool
+that inferred events from messages would be checking a message against itself.
+
+**The expensive decisions, taken now.** It **never rewrites** — a pin is a sha.
+**The corpus may not eat its own output** — an annotation is declared record,
+and extracting it collapses the delta into agreement with itself. **The boundary
+holds** — what it did is derived, what it should have said is judgement, stage 6
+checks the second against the first unmodified. **The unit stays the artifact** —
+never a fact about whoever wrote it, and per-author roll-ups are refused before
+anybody wants one.
+
+**The active version is refused here and proposed elsewhere.** A *why* demanded
+at write time puts this tool in the commit path and makes development depend on
+it, which is what it has refused to be. So it is a rule for people, on the one
+file worth the cost — `D6` puts it to the kernel's owner — and this stays
+retrospective and audits compliance afterwards. That rule also supplies the
+delta's missing control: a tree where every change carries its why is the only
+place a `derived_only` pile means absence rather than a record nobody kept.
+**What would kill the whole of it:** annotations that paraphrase `--stat`.
 
 ## How it ends
 

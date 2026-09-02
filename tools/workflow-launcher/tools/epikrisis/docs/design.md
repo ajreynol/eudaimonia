@@ -3,10 +3,10 @@
 **Goal 1.** How a history becomes evidence, where the program stops and
 judgement starts, and what each stage is obliged to produce.
 
-Nothing here has been built. This is the design, and the reason it exists before
-the code is that the boundary below is the only thing that makes the output worth
-reading — a tool of this kind that mixes computation and judgement in one file
-produces a document nobody can check, quickly, and at scale.
+Written before the code, because the boundary below is the only thing that makes
+the output worth reading: a tool of this kind that mixes computation and
+judgement in one file produces a document nobody can check, quickly and at
+scale.
 
 ## The shape
 

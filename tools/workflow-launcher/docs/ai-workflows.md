@@ -346,6 +346,52 @@ disguised judgement. **Wrong with it today:** it has governed one tool for one
 day, and the line ceiling is a number somebody chose, not one derived from
 anything.
 
+### N13 — Standing by exposure: a tool's credential is being impeachable
+
+The question arrived concretely. The tool that audits this family's evolution
+would have something to say about a build system the ecosystem's chief executive
+role is designing, and *why should what it says count for anything* had to be
+answered before it said anything.
+
+**The answer taken is that the question dissolves on contact with results.** An
+argument for one's own authority is only needed where the evidence is missing:
+where evidence exists it is redundant, and where it does not it is what a tool
+offers *instead* of findings. So no case for standing was written. What was
+written instead is a posture — **expert witness, never advocate**. A witness
+testifies to what they observed, does not argue for the verdict, and draws
+standing not from being right but from being **examinable**.
+
+That converts machinery already built into the credential, and the conversion is
+the transferable part, because none of it was built for this argument:
+
+1. **Separate what was observed from what was concluded, at the file level and
+   not the paragraph level.** Then a disagreement is about the writing, and
+   everybody can see that it is.
+2. **Fix the questions before the evidence is seen and hash them into the run**,
+   so a question written to fit an answer stops being invisible.
+3. **Publish each instrument's failure mode beside it.** An instrument trusted
+   uniformly is trusted exactly where it is wrong.
+4. **Make the flattering result structurally unavailable** — a self-assessment
+   is void without negative findings — rather than trusting anybody to resist
+   it.
+5. **Attach the falsifier to the position, not to a section at the end.**
+
+**Every one of those makes the tool easier to impeach, and that is the point:
+the exposure is the credential.** The corollary is the half most likely to be
+dropped in transmission. Being taken seriously **moves the cost onto whoever
+relies on you**, which makes it a duty and not a rank — and a duty that obliges
+volunteering exactly as much as it obliges hedging. A tool that stays quiet to
+stay safe has failed the same rule as one that overclaims.
+
+*Falsified by:* a report believed because of who wrote it rather than because
+its evidence was rebuilt. Check by asking a reader whether they ever reran the
+derivation; if nobody ever does, every safeguard above was decoration.
+**Wrong with it today:** the section making this argument became the longest in
+the charter carrying it — longer than that charter's own statement of purpose,
+on a tool with one run — and the prose budget from `N12` refused it twice and
+forced it back under. The safeguard worked. What it caught was this entry's own
+subject arguing at length that argument is unnecessary.
+
 ## What is wrong
 
 ### W1 — The system diagnoses precisely and does not treat

@@ -57,6 +57,76 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D6 — a documentation rule for the kernel, and why we are not proposing one for anything else
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-01
+**Settles when:** `vision.md` either carries a rule that a change to it records
+why, in a form a program can find — or the ecosystem says deliberately that it
+does not want one.
+
+**The proposal in one line: anybody who modifies `vision.md` must document why,
+and the why is recorded as data rather than as prose somewhere.** It is your
+file in your tree, so this is an ask and not a change we can make.
+
+### Why only there
+
+The general version of this is an *active* discipline — a reason demanded at the
+moment of the change rather than reconstructed afterwards — and applied to a
+whole repository it is a tax on every commit, which is a real cost and the
+reason we are not proposing it. Applied to one file it is nearly free, and the
+file it should apply to is the one every other document is answerable to.
+**A kernel is exactly the place where the cost of writing the reason down is
+smallest and the cost of not having it is largest.**
+
+### What it would buy you, and what it would buy us, which is not the same thing
+
+Yours first: `vision.md` is the document the rest are checked against, and a
+change to it silently rescopes everything downstream. The record of *why* a
+tenet moved is the thing nobody can reconstruct later, including whoever moved
+it.
+
+Ours, stated plainly because the self-interest should be visible rather than
+buried: **our delta has no control.** In our one run, 119 of 123 derived events
+landed in `derived_only`, and that number was not a finding — a tree that
+declared nothing and a tree where nothing happened to be declared look identical
+from where we stand, and we said so rather than reporting the number. A file
+where every change is required to carry its why is the one place in the
+ecosystem where `derived_only` would mean *real absence*. That makes the kernel
+a calibration subject we do not otherwise have.
+
+So this proposal benefits the tool proposing it. We would rather say that than
+have you notice it.
+
+### What we are not proposing
+
+- **Not a gate, and nothing of ours in your commit path.** This is a rule for
+  people, checkable afterwards. Our tool stays retrospective by charter and is
+  deliberately not a dependency of anybody's work; an active check run by it
+  would make development depend on it, which is the arrangement it refuses.
+- **Not a rule for the rest of any tree.** We think the tax is real and would
+  not pay it ourselves outside a kernel.
+- **Not a format.** As data rather than prose is the only property we need, and
+  it is the same ask `D3` makes about the other status vocabularies. Which data
+  is yours.
+
+### The evidence behind picking this file
+
+Derived from your own tree, and offered as facts about it rather than as a
+conclusion about ours: the vision was revised by 740 lines on the day it was
+added; the roles inventory by 485 on the day it was added; the reporting policy
+was added and revised six times within one day, one revision touching 663 lines
+and the next day's 1,245. Those are among the largest single-day rewrites in the
+corpus and they are in the documents that govern everything else. Whatever the
+reasons were, they are not currently anywhere a program can find them, and by
+the time anybody wants them the person who had them will be reconstructing.
+
+**None of that is a criticism of the revisions.** A document being rewritten
+hard on the day it is written is what early work looks like. It is an argument
+that this particular file is where a why is worth the keystrokes.
+
 ## D5 — the build system, and what a witness may bring to it
 
 **To:** anoieu

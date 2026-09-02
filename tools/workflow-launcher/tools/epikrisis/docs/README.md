@@ -1,8 +1,7 @@
 # Documentation
 
 Every document in this child project, and what each one is for. The charter,
-[`../README.md`](../README.md), is the entry point and everything here assumes
-it has been read.
+[`../README.md`](../README.md), is the entry point and assumes it has been read.
 
 | document | what it is for |
 | --- | --- |
@@ -10,15 +9,10 @@ it has been read.
 | [`events.md`](events.md) | The detector catalogue: what counts as a candidate event, how each is found, how each is known to be wrong, what was deliberately refused as a detector, and the rule for adding one. Goal 2. |
 | [`judgement.md`](judgement.md) | Everything standing in for the fact that the second half cannot be checked by a program: pre-registration, the shape of an assessment, required negative findings, the dropped-candidate record, the stricter rules when the subject is ours, and what calibration can and cannot establish. Goal 3. |
 
-Three documents, and the host one level up sets the standard they had to meet: a
-document there has to displace a question or an hour of somebody's reading, on
-the argument that writing another page is the comfortable alternative to doing
-the work. Applied here, each of these is the specification of one stage of a tool
-that does not exist, and the case for writing them first is that the boundary in
-`design.md` is not retrofittable — a pipeline that mixed computation and
-judgement in its first version would have to be rebuilt rather than corrected.
-
-If a fourth is ever proposed, it displaces one of these.
+The standard each had to meet is the host's, one level up: a document displaces a
+question or an hour of somebody's reading, because writing another page is the
+comfortable alternative to doing the work. If a fourth is ever proposed, it
+displaces one of these.
 
 Nothing here describes a run. Evidence and reports live beside the subject that
 produced them, under `runs/`: documentation says how the tool works, and a
