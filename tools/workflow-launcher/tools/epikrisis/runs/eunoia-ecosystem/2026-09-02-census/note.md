@@ -18,9 +18,15 @@ Pin `2026-09-02-census`: five sources, **1,019 commits, 2026-03-03 to
 and reports over everything up to the pin, which is the limitation `D4` is
 about.
 
-**`ai-attribution` emitted exactly one candidate across all five trees:**
-`anoieu`, 2026-08-30, `{"claude": 3}`. No other source discloses an agent
-co-author at any point in its history, not merely during the stretch.
+**`ai-attribution` emitted exactly one candidate across all five trees**, and it
+is quoted as emitted:
+
+```text
+anoieu  2026-08-30  {"claude": 3}
+```
+
+No other source discloses an agent co-author at any point in its history, not
+merely during the stretch.
 
 That **agrees with the census on the trees it covers** and is stronger than it
 in one respect: the census says three, this stretch; this says three, ever.

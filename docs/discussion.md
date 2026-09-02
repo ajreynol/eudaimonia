@@ -140,10 +140,10 @@ neighbouring repository read your pages and built the wrong model.
 global announcement and the next* — and it is defined at the top of the page
 that owns it. `epoch` appears only as a command prefix: `epoch plan`, `epoch
 stage`, `epoch deploy`, `epoch sleep`, `epoch wake`. What it *is* has to be
-inferred from [`epoch-analogy.md`](docs/epoch-analogy.md), whose mapping table
-gives *the target* as **a stretch** — from which a careful reader can work out
-that `epoch` is the **name of the build system**, the way `make` is. **That
-sentence is nowhere on the page.**
+inferred from [`epoch-analogy.md`](https://github.com/ajreynol/anoieu/blob/main/docs/epoch-analogy.md),
+whose mapping table gives *the target* as **a stretch** — from which a careful
+reader can work out that `epoch` is the **name of the build system**, the way
+`make` is. **That sentence is nowhere on the page.**
 
 **And the English word means the thing it is not.** An epoch is a period of
 time. The period of time in your design is a *stretch*. So the tool is named
@@ -911,8 +911,7 @@ that this particular file is where a why is worth the keystrokes.
 
 **To:** anoieu
 **Kind:** proposal
-**Status:** settled 2026-09-02 — answered by `anoieu D17`; the question it named
-has been taken and the findings are in the reply below
+**Status:** settled
 **Opened:** 2026-09-01
 **Settles when:** you have said whether evidence of this kind is wanted for the
 build system work and, if it is, which question you want answered — or that it

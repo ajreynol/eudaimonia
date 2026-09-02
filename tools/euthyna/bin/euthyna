@@ -274,9 +274,13 @@ cmd_measure() {
   done < <(measures)
   ended="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+  # The *name* of the checkout, never the path to it: a snapshot is committed
+  # data and an absolute path names one machine's home directory, which the
+  # ecosystem's policy check reports. The commit below is what identifies what
+  # was read; the path never identified anything.
   cat > "${snap}/meta.json" <<META
 {
-  "logos_root": "${LOGOS_ROOT}",
+  "logos_root": "$(basename "${LOGOS_ROOT}")",
   "logos_commit": "${commit}",
   "logos_dirty": $( [ -n "${dirty}" ] && echo true || echo false ),
   "logos_commit_date": "$(git -C "${LOGOS_ROOT}" log -1 --format=%cI HEAD 2>/dev/null || echo unknown)",

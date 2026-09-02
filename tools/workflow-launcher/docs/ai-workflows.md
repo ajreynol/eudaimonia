@@ -543,9 +543,12 @@ spends its time on. So: do the projects that accept the badge hold anything like
 that position?
 
 Proxy used, because a *vision* is not directly measurable: the presence of an
-agent-context artifact (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `GEMINI.md`,
-`CONVENTIONS.md`) or a vision/manifesto/principles document, in the repository
-root.
+agent-context artifact, or of a vision/manifesto/principles document, in the
+repository root. The filenames searched for, one per assistant convention:
+
+```text
+AGENTS.md   CLAUDE.md   .cursorrules   GEMINI.md   CONVENTIONS.md
+```
 
 | group | sampled | with agent-context file | with a vision document |
 | --- | --- | --- | --- |

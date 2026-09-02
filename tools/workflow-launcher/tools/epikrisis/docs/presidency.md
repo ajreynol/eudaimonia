@@ -38,8 +38,14 @@ asks for, and what had not happened before today. Evidence:
 
 **The commit totals are confirmed exactly** — 186, 68, 43, 13, 10, 3, summing to
 323. **The disclosure figure is confirmed and extended:** `ai-attribution` emits
-one candidate across five trees and 1,019 commits of *whole* history, anoieu
-`{"claude": 3}` — the entry says three this stretch, the pin says three ever.
+one candidate across five trees and 1,019 commits of *whole* history — the entry
+says three this stretch, the pin says three ever. The candidate as the detector
+emitted it, quoted rather than described because the spelling of a trailer is
+the evidence:
+
+```text
+anoieu  2026-08-30  {"claude": 3}
+```
 
 **The sentence beside it does not hold.** *All three in this repository* is
 wrong: `ethos` carries an agent trailer in the same window and **32 across its
