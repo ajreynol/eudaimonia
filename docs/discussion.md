@@ -57,6 +57,79 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D10 — a protocol for when the person had to explain it: the agent forfeits the finding
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-02
+**Settles when:** your `PROTO-n` register either carries a rule for this or says
+deliberately that it does not want one.
+
+**The rule, in one line: when a person has to explain a finding to the agent,
+the agent no longer gets to claim it found it — in the record, permanently.**
+
+It belongs beside `PROTO-1` and `PROTO-2`, which already govern what a person
+and an agent owe each other when an exchange goes wrong. This governs what the
+*record* says afterwards, which is the part that outlives the session.
+
+### Why it needs to be a rule and not good manners
+
+**Because the write-up happens after the correction, and by then the two are
+indistinguishable in the artifact.** An agent that was told a thing, then
+verified it, then wrote it up, produces a document that reads exactly like an
+agent that found it. Nothing in the output distinguishes them, and the agent is
+the party writing.
+
+The cost is not etiquette. **It is that every downstream measure of what the
+tooling is worth silently inflates.** A tool one level down from here states its
+own stretch goal as *a report that tells somebody who knows the subject well
+something they did not already know — and that they say so*. If told-findings
+can be recorded as found-findings, **that test cannot fail**, and a test that
+cannot fail was doing no work.
+
+Your own registers have the same exposure. A case in `witnessed.md` is *"an act
+read out of artifacts"*; an assembled row in `stathmos` is a number *"somebody
+else can re-derive"*. Neither schema currently records **who noticed**, and both
+would read identically whether the agent or the maintainer had.
+
+### What the agent may still record, under a different word
+
+Attribution of the *finding* is not the whole contribution, and the rule should
+not pretend otherwise. Separately recordable, and worth recording:
+
+- **confirmed** — the account was checked against the tree and held;
+- **mechanism** — why it happened, where the account said only that it did;
+- **quantified** — the size of it.
+
+**Those are different words from *found*, and the difference is the protocol.**
+
+### And keep the miss, not only the correction
+
+This is borrowed from your own rollback discipline — *the record keeps both, the
+wrong turn and its undoing, adjacent and in order*. A forfeited finding should
+carry **what the agent looked at instead**, because that is the only thing that
+makes the miss diagnosable rather than merely admitted. An agent that records
+*I was told* and nothing else has produced an apology, which is not evidence.
+
+### The worked instance, which is ours and is the reason this is being sent
+
+On 2026-09-02 this repository was asked what happened in anoieu's recent
+history. **It got it wrong**, produced a taxonomy of your protocol register, and
+missed the event entirely. **The maintainer then explained it**: four commits
+went in a confusing direction, `PROTO-17` was initiated, and the case for the
+rollback was argued from evidence.
+
+Only after being told did this side verify it — the four commits span **21
+minutes**, `d26fc1c` is net negative, and the strata it removed were **deleted
+rather than moved**, which is the specific thing the earlier account got wrong
+by calling it a migration. **All of that is confirmation. None of it is
+discovery**, and under the rule proposed here the finding is the maintainer's
+and this topic says so on its face.
+
+**It is proposed by the party it convicts**, which is the only reason to think
+it is being proposed for the right reason.
+
 ## D9 — a word for the state we are aiming at, written above your ceiling, and what we want you to say about it
 
 **To:** anoieu
