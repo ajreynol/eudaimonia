@@ -1,0 +1,10 @@
+measure	needs	status	output
+rule-status	source	0	rule-status.tsv
+core-rule-status	source	0	core-rule-status.tsv
+rule-loc	source	0	rule-loc.csv
+rule-partition	source	0	rule-partition.csv
+loc-summary	source	0	loc-summary.txt
+proof-hygiene	source	0	proof-hygiene.txt
+proof-modularity	source	0	proof-modularity.txt
+rule-style	source	0	rule-style.txt
+checker-soundness	build	skipped	

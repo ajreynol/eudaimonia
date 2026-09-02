@@ -277,3 +277,29 @@ Three things to carry into the next iteration.
    it, and the order's leading positions absorb the base by construction. The
    remaining step is to separate a rule file's own lines from the support it
    happens to claim first — see [measures.md](measures.md#gaps).
+
+## The baseline has been re-measured once, and it held
+
+`2026-09-02-7ff136bb6174` measures Logos five commits later, through the same
+scripts — `euthyna sync` reports **no script content changed** across those
+commits, so the ruler is identical and any movement below is the proof moving.
+
+Almost nothing moved. The proof lost 65 lines net of 691,993; the rule-proof
+layer lost 66 of 634,388, which is 0.01%; every one of the 591 rules is still
+proven and no `sorry`, `admit` or `axiom` has appeared. **`rule-partition.csv`
+is byte-identical** — the 66 lines came out of shared support that no rule
+claims, so not one rule's partitioned share changed and every number under
+[Cost, partitioned](#cost-partitioned) still stands. Reach shifted for
+essentially every rule, by one to a few lines each, which is what a change to
+shared support looks like from the reach side and is the clearest small
+demonstration of why the partition replaced it.
+
+What did move is in the checker layer. `Cpc.Proofs.CheckerState` fell from
+1,323 lines to 1,262, and the parser gained 25 — the visible part of Logos
+`43732cc5`, "Make core checker independent of definition of `and`". **The
+measure that watches that dependency did not move at all**, and why not is the
+most useful thing this second snapshot produced:
+[measures.md](measures.md#gaps).
+
+So the headline number is unchanged: 91.7% of the proof is rule correctness,
+and 8.3% is what a second calculus plausibly inherits.

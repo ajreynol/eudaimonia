@@ -1,0 +1,18 @@
+Checking that Cpc and CpcMini share one copy of each common file...
+  Proofs/Checker.lean
+  Proofs/CheckerState.lean
+  Proofs/TypePreservation/Datatypes.lean
+  Proofs/TypePreservation/Nonvacuity.lean
+  Proofs/TypePreservation/Predicates.lean
+  Proofs/Canonical/TypeDefaultBasic.lean
+Checking that Checker.lean is calculus-agnostic...
+  Checker.lean names no rule, no operator, no calculus-specific invariant.
+Checking that CheckerState.lean carries no invariant...
+Checking the checker layer's operator dependency...
+  Cpc: and
+  CpcMini: and
+Checking that the checker layer names no generated arm by number...
+  Cpc: no arm numbers
+  CpcMini: no arm numbers
+
+Checker modularity check passed.

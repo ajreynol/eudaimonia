@@ -58,6 +58,27 @@ Anything Euthyna wants that upstream does not provide goes in `analysis/`,
 alongside rather than inside. `derive.py` and `plot-rules.py` keep the seam
 strictly: they read the vendored scripts' *output* and never their internals.
 
+### The discipline has been broken once, and the check caught it
+
+On 2026-08-31 a commit here added three comment lines to the vendored
+`check-proof-modularity.sh`, and left `MANIFEST` alone. The lines were a claim
+about Logos — that `and` is no longer on the path a proof takes, because
+assumptions now arrive as a `CArgList` — written into a file whose header says
+every byte of it is Logos's.
+
+**That is the failure this rule is for, in its worst form.** The edit was
+comment-only, so no measurement moved and nothing in the baseline is wrong. But
+a reader of `analysis/upstream/` attributes what they find there to Logos's
+authors, and this was Euthyna talking. An observation about somebody else's
+proof is worth having; it is worth having *here*, signed, where a reader knows
+who is making it. It is [in `measures.md`](measures.md#gaps) now, and it turned
+out to be more interesting than the comment claimed.
+
+The file was restored to its upstream bytes on 2026-09-02. `bin/euthyna verify`
+reported it as `CHANGED` on the next run after the edit and on every run until
+the repair, which is the whole of what the digests are for: **the discipline is
+not that nobody edits these files, it is that an edit cannot go unnoticed.**
+
 `euthyna_lean.py` is the one exception, and it is worth naming as one. The
 partition has to agree with `cpc-loc-summary.py` about two things — what counts
 as a line, and which files belong to the rule-proof layer — and it cannot get

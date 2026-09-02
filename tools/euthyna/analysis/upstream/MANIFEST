@@ -10,8 +10,8 @@
 # re-copies from a Logos checkout and rewrites this file.
 
 origin  https://github.com/ajreynol/logos.git
-commit  373d56c5bb24821bdf7c9641223291906721166b
-date    2026-08-31T06:17:50-05:00
+commit  7ff136bb6174f28a66bf3fd940573cc407e96ca9
+date    2026-09-01T21:40:04-05:00
 prefix  scripts/
 
 sha256  ed64657a44e1975fae83d5e4a8fca5bc2820399ed3f7d555eb65aff00e6bbefb  build-all-cpc-rules.sh

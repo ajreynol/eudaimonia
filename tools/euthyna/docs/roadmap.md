@@ -48,6 +48,18 @@ different signature?
   seven hand-written checker files and finds exactly one operator dependency
   (`and`); the same question over all 820 proof files is a much larger and
   much more interesting answer.
+- **And then stop trusting it, because names are not dependence.** Logos
+  `43732cc5` made the core checker independent of the definition of `and` and
+  the name-counting measure reported the identical result either side of it —
+  the checker still writes `UserOp.and`, through `argListAssumes` and the state
+  folds, having stopped relying on what it means. Measured, not argued:
+  `proof-modularity.txt` is byte-identical between the 2026-08-31 and
+  2026-09-02 snapshots. So the classification above is an **upper bound** on
+  calculus dependence and should be reported as one. Narrowing it means asking
+  what a proof *uses* rather than what it writes — whether the definition is
+  unfolded, whether a lemma about the operator is applied — and that is a
+  question about elaborated terms, which is [iteration 3](#iteration-3--cost-that-is-not-lines)
+  arriving early and for a different reason.
 - Separate *generated* proof text from hand-written. The distinction matters
   more than volume: generated bulk is a compiler's output and moves with the
   compiler, hand-written argument moves only with a person.

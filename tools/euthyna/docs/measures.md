@@ -140,6 +140,26 @@ What is not measured yet, in roughly the order it matters. Each is a line in
   a CPC-specific operator and which would survive a different signature. That
   is the generality question stated as a measurement, and it is the one this
   project exists to answer.
+- **Naming an operator is not depending on it**, and the one measure that looks
+  at operators cannot tell the two apart. `check-proof-modularity.sh` reports
+  the checker layer's operator dependency by collecting `UserOp.<name>` out of
+  the core files and asserting the set is exactly `{and}`. It is counting
+  *names*.
+
+  Logos `43732cc5`, "Make core checker independent of definition of `and`",
+  landed between the 2026-08-31 and 2026-09-02 snapshots and changed thirteen
+  files across both packages. **The measure did not move**: `Cpc: and` and
+  `CpcMini: and`, byte-identical output either side of it. Both readings are
+  correct. The checker no longer relies on what `and` *means*, and it still
+  names `UserOp.and` — through `argListAssumes` and the state folds — so a
+  grep for the name still finds it.
+
+  This is a caution about the measurement iteration 2 proposes rather than a
+  defect in the vendored check, which asks its question honestly and answers it.
+  **A name-based classification of the proof will over-report calculus
+  dependence**, and the size of the gap is unknown: here it is the difference
+  between *changed* and *did not change* on the single most-watched dependency
+  in the development. See [roadmap.md](roadmap.md#iteration-2--calculus-independence).
 - **The order's leading positions.** By construction the earliest rules absorb
   the shared base, so their partitioned size says more about the order than
   about them. A measure that reports how much of a rule's claim is *unshared*
