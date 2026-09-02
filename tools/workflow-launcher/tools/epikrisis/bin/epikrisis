@@ -1049,6 +1049,87 @@ MUTATIONS = [
 ]
 
 
+def cmd_panel(a):
+    """Per-prefix dial readings as of the pin: activity, gap, disclosed share.
+
+    It reports positions and never a verdict. Whether a gap is too long or a
+    rate too fast needs a line drawn by somebody with the standing to draw it;
+    this says where each prefix sits, with the provenance to re-derive it, and
+    stops. Retirement is deliberately absent: a prefix with no recent commit is
+    a fact about a tree, and a tool being *dead* is a decision recorded by
+    whoever holds the ecosystem's governance, not read out of a log.
+    """
+    rd = run_dir(a.subject, a.run) if getattr(a, "run", None) else run_dir(a.subject)
+    corpus = load(rd, "corpus.json")
+    th = corpus["thresholds"]
+    depth, exclude = th["prefix_depth"], corpus.get("exclude", [])
+    pinned = date.fromisoformat(corpus["pinned"])
+    out = {"produced_by": "epikrisis " + TOOL_VERSION,
+           "provenance": {"subject": corpus["subject"], "pinned": corpus["pinned"],
+                          "sources": [{"id": x["id"], "commit": x["commit"]}
+                                      for x in corpus["sources"]],
+                          "prefix_depth": depth, "excluded": exclude,
+                          "questions_digest": corpus.get("questions_digest"),
+                          "self_assessment": bool(corpus.get("self")),
+                          "re_derive": "epikrisis pin && epikrisis panel, from "
+                                       "the same checkouts at these commits"},
+           "reports": "position, never a grade. No band, no score, no ranking",
+           "not_here": {"retirement": "a prefix with no recent commit is a fact; "
+                                      "a tool being dead is a governance "
+                                      "decision and is not this tool's to make",
+                        "ai_generation": "not derivable. `disclosed_share` is a "
+                                         "floor with no ceiling: a prefix at 0 "
+                                         "may be wholly assistant-written and "
+                                         "simply not record it"},
+           "prefixes": []}
+    for src in corpus["sources"]:
+        repo = os.path.join(a.frm, src["id"])
+        verify_pin(repo, src)
+        log = read_log(repo, src["commit"], exclude, depth)
+        attributed = set()
+        for rec in git(repo, "log", "--no-merges", "--format=%H%x01%B%x02",
+                       src["commit"]).split("\x02"):
+            if not rec.strip():
+                continue
+            sha, body = rec.strip().split("\x01", 1)
+            if any(rx.search(n) for n in AI_TRAILER.findall(body)
+                   for _, rx in AI_FAMILIES):
+                attributed.add(sha)
+        when, counts = defaultdict(list), defaultdict(lambda: [0, 0])
+        for c in log:
+            for pre in {prefix_of(f[2], depth) for f in c["files"]}:
+                when[pre].append(c["date"])
+                counts[pre][0] += 1
+                if c["sha"] in attributed:
+                    counts[pre][1] += 1
+        for pre in sorted(when):
+            ds = sorted(date.fromisoformat(d) for d in when[pre])
+            if len(ds) < th["min_commits_prefix"]:
+                continue
+            gaps = sorted((ds[i + 1] - ds[i]).days for i in range(len(ds) - 1))
+            med = gaps[len(gaps) // 2] if gaps else 0
+            since = (pinned - ds[-1]).days
+            n, att = counts[pre]
+            out["prefixes"].append(
+                {"source": src["id"], "prefix": pre, "commits": n,
+                 "first": ds[0].isoformat(), "last": ds[-1].isoformat(),
+                 "days_since_last": since, "median_gap_days": med,
+                 "gap_over_median": round(since / med, 1) if med else None,
+                 "disclosed_ai": att,
+                 "disclosed_share": round(att / n, 3) if n else 0.0})
+    write(rd, "panel.json", out)
+    print(f"  {'source':12} {'prefix':22} {'cmts':>5} {'last':>5} {'med':>4} "
+          f"{'x':>5} {'ai%':>6}")
+    for r in out["prefixes"]:
+        x = "-" if r["gap_over_median"] is None else f"{r['gap_over_median']:.1f}"
+        print(f"  {r['source']:12} {r['prefix'][:22]:22} {r['commits']:5d} "
+              f"{r['days_since_last']:5d} {r['median_gap_days']:4d} {x:>5} "
+              f"{100 * r['disclosed_share']:5.1f}%")
+    print("  last = days since last commit; med = median gap; x = last/med.")
+    print("  No row here is a verdict. Retirement is not reported: see not_here.")
+    return 0
+
+
 def cmd_selftest(a):
     """Prove that `check` can fail, one condition at a time.
 
@@ -1238,7 +1319,8 @@ def main():
                             ("pin", cmd_pin, True), ("events", cmd_events, True),
                             ("record", cmd_record, True), ("delta", cmd_delta, True),
                             ("prompt", cmd_prompt, True), ("check", cmd_check, True),
-                            ("ratio", cmd_ratio, True)):
+                            ("ratio", cmd_ratio, True),
+                            ("panel", cmd_panel, True)):
         q = sub.add_parser(name)
         q.set_defaults(fn=fn)
         if needs:
@@ -1250,7 +1332,8 @@ def main():
                            help="a run stamp, when the newest is not the one "
                                 "you mean")
     a = p.parse_args()
-    if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record", "ratio"):
+    if getattr(a, "frm", None) is None and a.cmd in ("pin", "events", "record",
+                                                     "ratio", "panel"):
         raise SystemExit("epikrisis: --from <dir> is required: this reads "
                          "mirrors somebody already has, and never fetches")
     sys.exit(a.fn(a) or 0)

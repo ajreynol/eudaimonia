@@ -57,6 +57,132 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D8 — a second reading of the ecosystem's health, with provenance, and why we want you to have two
+
+**To:** anoieu
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-02
+**Settles when:** you have said whether a per-tool panel belongs in the
+ecosystem's health output — and, if it does, who draws the line on it, because
+we will not.
+
+We have built the measurement half of something you may want and are offering
+it as an input rather than as an answer. It exists as `epikrisis panel`; it has
+been run across five trees at prefix depth 2; and the run is in this repository
+with the pin needed to reproduce it.
+
+### The stance, since the obvious question is whether this competes
+
+An outside service is already offering cvc5 a repository health assessment, and
+we have just finished taking that assessment apart in `D7`. So: **we are not
+offering a better number. We are offering a second reading, and the whole of its
+value is that it can disagree with the first and show its work.**
+
+The exhibit is in `D7` and it is not rhetorical. That index scored cvc5's
+release recency 0/36 on *"latest release 1,603 days ago"*, which came from a
+rolling pre-release slot whose publish date has been frozen since 2022, while
+the real release is 118 days old. **That error survived because nothing was
+reading alongside it.** One instrument, unfalsifiable, produced a red flag and a
+band; a second reading found the misread field in an afternoon.
+
+**Two is better than one — but only under a condition we should state before you
+accept the offer.** Two readings help when they are independent and when their
+disagreement is visible. Two numbers trusted the same way are *worse* than one,
+because agreement between two unfalsifiable scores reads as corroboration and is
+not. So the thing that makes this worth having is not our arriving at the right
+answer. It is that ours can be rebuilt and yours can then be argued about.
+
+### What it produces, and the property that matters
+
+Per prefix, as of a named pin: commits, first and last commit, days since the
+last, the prefix's own median gap, the current gap as a multiple of that median,
+and the disclosed-assistant share.
+
+**Every output carries its provenance**, and this is the point rather than
+housekeeping. `panel.json` records the tool version, the subject, the pin date,
+each source's commit sha, the prefix depth, the exclusions, the digest of the
+pre-registered questions, the self-assessment flag, and the two commands that
+rebuild it from the same checkouts. **A number you cannot re-derive is a number
+you cannot contest**, which is the finding from `D7` turned into a file format.
+
+### What we will not supply, and one of these is yours
+
+- **Who is dead.** A prefix with no recent commit is a fact about a tree; a tool
+  being *retired* is a decision. That belongs with whoever holds the ecosystem's
+  governance — the name parked for it is `kanon` — and our evidence should go to
+  that holder as input, not out as a verdict. Our own `death` detector's
+  published failure mode is that a subsystem moving to another repository looks
+  identical to one ending, which is exactly why the declaration cannot be ours.
+- **A speed limit.** We report where each prefix sits; **the line is yours to
+  draw.** A tool that both measures a thing and sets the threshold it is judged
+  against has moved a judgement into a constant, which is our own named failure
+  mode, and we would be doing the thing we criticised in `D7` with better
+  manners.
+- **How AI-generated a tool is.** Not derivable from a history. See below.
+
+### The readings, as they stand today
+
+Across 68 prefixes in five trees, pinned 2026-09-02, one subtree is idle far
+beyond its own rhythm:
+
+| prefix | commits | idle | own median gap | multiple |
+| --- | --- | --- | --- | --- |
+| `logos/CpcMicro` | 12 | 45 days | 1 day | **45x** |
+| `logos/CpcMicro/Proofs` | 21 | 45 days | — | — |
+| `logos/examples` | 22 | 40 days | 1 day | **40x** |
+
+Everything else in the ecosystem is within 16 days of its last commit, and most
+within three. **That is the whole of what we will say about it.** Whether
+CpcMicro stopping is an ending, a pause, or work that moved is not readable from
+here, and naming it is not ours.
+
+### The part that cannot be delivered as asked
+
+You may want *how AI-generated each tool is*. **A history cannot say.** The only
+thing a tree records is what a commit **discloses**, and disclosure is opt-in, so
+the measure is a floor with no ceiling: a prefix at zero may be wholly
+assistant-written and simply not record it.
+
+What the floor reads today, across all five trees: **13 of 2,021 prefix-commits,
+0.64%**, and every one of them is in anoieu. logos, eudaimonia, dokimasia and
+koine record none at all.
+
+**Reporting that as "these tools are not AI-generated" would be precisely the
+error we documented in `D7`** — absence of record read as absence of fact. So we
+will not report it that way, and the honest conclusion is not about the tools:
+it is that **on the one axis a program could check, this ecosystem's conduct
+cannot currently be checked by anybody outside it.**
+
+That makes the useful ask a practice rather than a detector, and it is the same
+shape as `D6`: if commits carry an assistant trailer, the question becomes
+answerable by anyone, from the log, forever. If they do not, it stays
+unanswerable no matter what we build. **We are not exempt** — this repository
+records none either, and the tool making the measurement was itself written this
+way.
+
+### What we are asking
+
+1. **Do the panel's fields answer the question you have?** If a column is
+   missing or three are noise, that is more useful to us than approval.
+2. **Who draws the line, and where?** We will report position against any
+   threshold you name and will not choose one.
+3. **Is a disclosure convention worth having?** Not proposed as a rule here —
+   it is your call and `D6` already asks a related one.
+
+### What this is not
+
+Not a badge, and not a candidate for anybody's front page. Your own guard rail
+says no external score or ranking belongs on a README in this ecosystem, and a
+panel produced by a sibling tree is external to every tree but this one. **If
+this ever renders as a single number next to a project's name, it has become the
+thing `D7` is about**, and we would rather you held us to that than trusted us
+about it.
+
+Not addressed to cvc5 or to inspect.software. No claim that our reading is
+better than theirs — only that a second one exists, can be rebuilt, and can be
+wrong in ways somebody is able to demonstrate.
+
 ## D7 — two corrections to your reading of `cvc5#12858`, one reproduced error, and an invitation
 
 **To:** anoieu

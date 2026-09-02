@@ -185,8 +185,22 @@ epikrisis delta    <subject>    # join; classify
 epikrisis prompt   <subject>    # the assembled evidence and questions; sends nothing
 epikrisis run      <subject>    # hand that prompt to an agent
 epikrisis check    <run>        # stage 6, over what came back
+epikrisis ratio    <subject>    # lines of tool against lines about tools
+epikrisis panel    <subject>    # per-prefix position as of the pin
 epikrisis detectors             # the catalogue, each with its failure mode
 ```
+
+**`ratio` and `panel` are measures, not stages.** They read the same pin and
+write beside the evidence, and neither feeds the delta. `panel` reports, per
+prefix, commits, days since the last one, the prefix's own median gap and the
+current gap as a multiple of it, and the disclosed-assistant share — **positions
+and never grades.** It emits no band, no score and no ranking, and it does not
+report retirement: a prefix with no recent commit is a fact about a tree, and a
+tool being *dead* is a decision belonging to whoever holds the ecosystem's
+governance. Its output carries the provenance needed to rebuild it — tool
+version, pin, every source commit, depth, exclusions, questions digest — because
+a number a reader cannot re-derive is one they cannot contest, and that property
+is the whole reason to publish a second reading beside somebody else's.
 
 **There is no `report` command, and the omission is the design.** The host one
 level up splits `prompt` from `run` for a stated reason — see exactly what would
