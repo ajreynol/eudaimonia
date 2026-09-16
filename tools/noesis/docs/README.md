@@ -12,6 +12,7 @@ that exists).
 | [`question-7.md`](question-7.md) | Where the invariant core stops and a signature begins, read from this tree's evidence — the three partial answers this repository already holds, the different line the compiler's tree draws under the same name, and why a compiler written before this is settled will hardcode one calculus. Goal 1. |
 | [`passes.md`](passes.md) | The pass ledger: every pass of the compiler, noesis's counterpart, the strength that counterpart can carry — proved, validated per run, or checked — and what remains in the trusted base when all of it works. Goal 2. |
 | [`prerequisites.md`](prerequisites.md) | What this work rests on: the audit's three prerequisites re-read as a trusted-base ledger, which one this project waits on and which it merely wants. |
+| [`eos-in-lean.md`](eos-in-lean.md) | What a Lean definition of `smt.eos` looks like: the half that is cheap, the four things that do not go through, and the finding that the meaning of a `.eos` file is not a function of the `.eos` file. Goal 4, first pass, with the code in [`../lean/`](../lean/Eos.lean). |
 
 The documents the charter promises and that do not exist yet, each waiting on
 something specific rather than on a schedule:
@@ -20,7 +21,11 @@ something specific rather than on a schedule:
   thing here that is code, and the first that can fail informatively;
 - **the preservation statements** (goal 4), one per pass, which are not writable
   before [`question-7.md`](question-7.md) has a second calculus in it, because a
-  statement written against one calculus is a statement about that calculus;
+  statement written against one calculus is a statement about that calculus.
+  [`eos-in-lean.md`](eos-in-lean.md) is the other half of that goal — the
+  definitions a statement would be written over — and it found a second reason
+  five of the six aggregates are not statable yet, which is nearer than the
+  second calculus and is this project's own to fix;
 - **the compiler and its theorem** (goal 5).
 
 None of these absences is a gap to be filled on a schedule. A document written

@@ -58,6 +58,8 @@ decomposition that makes that possible is not this project's invention either.
    carries to say what the backend is obliged to keep — one preservation
    statement per pass, written before the pass. Its most useful output is the
    statements that turn out not to be writable yet.
+   [docs/eos-in-lean.md](docs/eos-in-lean.md) is the first pass, over
+   `smt.eos`, with the code it checks in [lean/](lean/Eos.lean).
 5. **The compiler, and its theorem.** The Lean backend over abstract syntax, one
    fragment end to end before any breadth, each pass at the strongest strength it
    can hold, and the aggregate reported as what it is rather than as what the
@@ -266,10 +268,13 @@ and it would be worth more than most positive results here.
 Going quiet is not one of them. If this directory has not moved and nobody is
 standing behind it, the honest form of that is a retirement note.
 
-*Started 2026-09-01 by the maintainer, in an explicit instruction. Nothing here
-has been delivered yet, so nothing above is an exception the policy would ask
-this project to name, and the island is stated as fact rather than as
-intention.*
+*Started 2026-09-01 by the maintainer, in an explicit instruction. On
+2026-09-16 the first code was written — [lean/Eos.lean](lean/Eos.lean), a
+definition of the fragment of `smt.eos` the core symbols make up, checked
+against the generated Lean by 23 guards — and it delivered to nobody outside
+this directory, so nothing above is yet an exception the policy would ask this
+project to name. It is on no build path and in no CI job, and the island is
+still stated as fact rather than as intention.*
 
 [p3]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/proposals.md
 [why]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/why-eunoia.md
