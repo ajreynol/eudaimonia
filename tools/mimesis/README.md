@@ -13,13 +13,12 @@ not what this does now: a setup written before the case studies exist would be a
 guess about where authors struggle, and testing that guess is precisely what the
 case studies are for.
 
-**Where it is right now.** One entry, which is also the shape the others take:
-[`docs/case-study.md`](docs/case-study.md) follows a real CPC proof rule from a
+**Where it is right now.** Two documents. [`docs/case-study.md`](docs/case-study.md)
+is the first entry and the shape the others take: a real CPC proof rule from a
 published table of lemma schemes into a Eunoia signature, into Logos — where
 stating the proof obligation exposed it as unsound — and back into the signature
-twice. Launched 2026-09-16 by explicit maintainer instruction; nothing here has
-been written first-hand yet, and every claim below about what authoring costs is
-somebody else's, cited where it is used.
+twice. [`docs/tutorial.md`](docs/tutorial.md) is the other strand, below.
+Launched 2026-09-16 by explicit maintainer instruction.
 
 ## The charter
 
@@ -66,13 +65,14 @@ several of them evidence.
    the result this project is trying to have — and the fourth category is the
    one that decides whether it has one. If nearly everything lands there,
    authoring is hard because calculi are hard, and no authoring setup helps.
-4. **One episode of our own.** Propositional resolution — [why that
-   one](#the-calculus-we-write-ourselves) — from rule descriptions to
-   `scripts/new-checker.sh --spec`, an install, and a regression suite covering
-   every verdict the framework has, written up as an entry like any other. Its
-   one advantage over the read ones is decisive and is why it is on the list:
-   the stumbles are recorded **as they happen** rather than reconstructed from
-   what somebody committed afterwards.
+4. **Episodes of our own.** Partly discharged: propositional resolution has been
+   written and its proofs run, as [the tutorial](#the-tutorial-strand). What is
+   left of this goal is the two things that entry could not supply — the
+   framework end of it, `scripts/new-checker.sh --spec` through an install and a
+   regression suite covering every verdict, which was not run; and an
+   **uninformed** run on a calculus nobody here has looked up yet, since the
+   stumbles worth recording live are the ones a first reading produces and the
+   tutorial's author had the manual open.
 5. **Only then, the route and what could be mechanized.** Which ledger entries
    are a scaffold, a lint, a compiler diagnostic or a request in
    [`docs/eoc-requests.md`](../../docs/eoc-requests.md); which are a person's
@@ -129,6 +129,32 @@ than its author sitting beside them.
 - **Taking the name.** The register that reserves `mimesis` is in kanon's tree
   and nothing here edits it. See [the name](#the-name).
 
+## The tutorial strand
+
+**A case study reads an episode; a tutorial runs one.**
+[`docs/tutorial.md`](docs/tutorial.md) builds a signature for propositional
+resolution one decision at a time, and every step in it was executed: seven proof
+tests against two variants of the signature, on two `ethos` builds, with the
+files kept in [`examples/resolution/`](examples/resolution/README.md) and a
+`check.sh` that re-runs them.
+
+It earns its place here for two reasons and is honest about a third:
+
+- **It is the ecosystem's missing register.** The manual teaches the language
+  feature by feature and the framework documents its contract; neither walks an
+  author from a calculus to a checked signature, which is the gap
+  [ynoia's listing][work] named.
+- **It produced ledger entries of its own**, four of them, including one the
+  [case study](docs/case-study.md) predicted from the other side: the contract
+  requires an `and` that resolution never uses.
+- **It is not a clean experiment.** It was written with the manual open, so its
+  friction is an informed author's. What that costs the charter is stated where
+  the calculus is chosen, below.
+
+A tutorial also has an obligation a case study does not: **what it ships must
+work.** Anything in it that was not run says so, in the file and in the
+tutorial's [what was checked](docs/tutorial.md#what-was-checked-and-what-was-not).
+
 ## Where the case studies come from
 
 **What qualifies.** An episode in which a Eunoia signature, or a piece of one,
@@ -173,13 +199,13 @@ first thing this project does.
 | the semantics | `or` and `not` land pointwise on their SMT-LIB counterparts; `smt.eos` is untouched | as in `examples/hello`, deliberately: a first example that also replaces the SMT-LIB semantics would be measuring a different, much harder thing |
 | whose work it is | textbook, and older than everyone involved | the reason it is first. No permission question, no misreadable public record of somebody's calculus straining |
 
-**The first surprise is already visible**, and it is the kind of thing the
-ledger exists for: a resolution calculus is about `or`, and the contract still
-requires it to declare a binary `and` and to send it to `SmtTerm.and`, because
-what a checker concludes is about the conjunction of the proof's assumptions.
-Nothing in the calculus's own rules uses it. An author who has not read the
-contract meets this as an install-time failure, and where they meet it is a
-measurement rather than an anecdote.
+**The first surprise was predicted here and then met.** A resolution calculus is
+about `or`, and the contract still requires a binary `and` sent to
+`SmtTerm.and`, because what a checker concludes is about the conjunction of a
+proof's assumptions; nothing in the calculus's own rules uses it. The tutorial's
+signature declares it for that reason alone. `ethos` does not ask for it, so an
+author who skipped the contract would meet this at install time instead — which
+is where the framework checks it, and which was not run here.
 
 **The risk this choice carries, stated now.** CPC has resolution rules, and
 `examples/cpc` is in this tree. An author who reaches for them has stopped doing
@@ -192,9 +218,18 @@ worth nothing.
 
 **What "rule descriptions" means here.** The prose form a calculus arrives in —
 premises, conclusion, side conditions, in a paper's or a textbook's notation.
-Writing those down for resolution is the first task of goal 4, and it is done
+For resolution it is the three lines the tutorial opens with, written down
 before any Eunoia is written, so that the route has a real starting point rather
 than a remembered one.
+
+**Written, as a tutorial — and that spends it.** The calculus above now exists
+as [`docs/tutorial.md`](docs/tutorial.md) and
+[`examples/resolution/`](examples/resolution/README.md), with its proofs run. It
+was written with the manual open, which is right for a tutorial and disqualifies
+it as the uninformed experiment this section was arguing for: resolution can no
+longer be taken through a first reading by anybody here. A clean run of goal 4
+needs a calculus nobody here has looked up, chosen when somebody is ready to do
+it, and the case for one would be made the way this one was.
 
 ## What it builds on, and where
 
@@ -325,12 +360,13 @@ readers. Both failures are worth watching for.
 
 ## What is written down
 
-**The register of entries.** Each case study is one row; the ledger of
-[goal 3](#the-charter) will be another document once there is more than one
-entry to cross.
+**The register of entries.** Each case study is one row, the tutorial is the
+other strand, and the ledger of [goal 3](#the-charter) will be its own document
+once there is more than one entry to cross.
 
 | document | what it is for |
 | --- | --- |
+| [`docs/tutorial.md`](docs/tutorial.md) | **Tutorial: a signature for propositional resolution.** The calculus written one decision at a time, every step run, with the three mistakes a first draft makes and the errors they produce. Its worked files are [`examples/resolution/`](examples/resolution/README.md), which `check.sh` re-checks |
 | [`docs/case-study.md`](docs/case-study.md) | **Case study: BV abstraction.** One CPC rule from a paper's lemma schemes to a Eunoia signature, into Logos as 11,168 lines of Lean, the unsoundness the proof found there, and what seven lines of signature were worth in proof lines. Read from two development branches on 2026-09-16, and written so that it stands if they are rebased away |
 
 ## Endings
