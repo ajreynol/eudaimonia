@@ -6,10 +6,14 @@ hours before a generated checker exists — getting from rule descriptions to an
 `.eo` signature, an `.eos` semantics, and proof tests that accept and reject the
 right things.
 
-**Where it is right now.** This charter and nothing else. Launched 2026-09-16 by
-explicit maintainer instruction; no signature has been written here, no
-measurement has been taken, and every claim below about what authoring costs is
-somebody else's, cited where it is used.
+**Where it is right now.** The charter, and one worked example read from
+somebody else's history: [`docs/case-study.md`](docs/case-study.md) follows a
+real CPC proof rule from a published table of lemma schemes into a Eunoia
+signature, into a checked Lean proof that found it unsound, and back into the
+signature twice. Launched 2026-09-16 by explicit maintainer instruction; no
+signature has been written *here*, no measurement of this project's own has been
+taken, and every claim below about what authoring costs is somebody else's,
+cited where it is used.
 
 ## The charter
 
@@ -151,6 +155,7 @@ re-deriving it.
 | [`TODO.md` §4f](../../TODO.md#4f-starting-from-something-that-works) | that a second calculus paid for itself immediately — three bugs CPC could not expose, all invisible while CPC was the only test. The best evidence in this tree that writing a small calculus from scratch is worth somebody's time |
 | [`docs/eoc-requests.md`](../../docs/eoc-requests.md) | the standing list of what the compiler makes harder than it needs to be, written from the CPC side. Goal 5's output is the same kind of item written from an author's side |
 | the compiler tree's [challenge to the user][agility] | the prior art, and the one this project must not duplicate. It names what is hard before either file exists, on the `.eo` side, and on the `.eos` side — four things to hold in your head at once, and four unwritten levels that make the same three characters mean four things |
+| the `bv_abstraction` episode in the checker and solver trees, read in [`docs/case-study.md`](docs/case-study.md) | the only finished instance in reach of the whole loop — signature written, compiled, proved, corrected, simplified — and the measurements this project would otherwise have had to wait a year to take: where the dropped side condition came from, what the matching style cost, and what deleting three cases refunded |
 | the Eunoia [user manual][manual] | the reference: 2,362 lines organised by feature, with worked examples and two deliberately *incorrect* ones. It is the account that already exists, and it is the authority on what the language is |
 
 **Where the gap is, stated against those last two rather than around them.** The
@@ -233,6 +238,12 @@ disagreements are the point. But a route that resolved every disagreement in its
 own favour would be overstepping, and one that resolved every disagreement in
 the incumbent's favour would have become a paraphrase of the manual with fewer
 readers. Both failures are worth watching for.
+
+## What is written down
+
+| document | what it is for |
+| --- | --- |
+| [`docs/case-study.md`](docs/case-study.md) | One rule, both sides: `bv_abstraction` from a paper's lemma schemes to a Eunoia signature to 11,168 lines of Lean, the unsoundness the proof found, and what seven lines of signature were worth in proof lines. Read from two development branches on 2026-09-16, and written so that it stands if they are rebased away |
 
 ## Endings
 
