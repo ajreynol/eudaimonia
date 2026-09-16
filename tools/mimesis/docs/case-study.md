@@ -1,61 +1,39 @@
 # Case study: BV abstraction
 
-A worked example this project did not commission and could not have afforded to
-produce: a real proof rule carried from a published table of lemma schemes into
-a Eunoia signature, compiled into Logos's Lean development, found to be wrong
-there, fixed in the signature, proved, and then made more elegant —
-with the proof paying and being refunded at each step.
+One CPC proof rule, from a published table of lemma schemes into a Eunoia
+signature, into Logos — where stating its soundness obligation exposed it as
+unsound — then fixed at the source, proved, and finally simplified, with the
+Lean proof shrinking by twenty lines for every line the signature lost.
 
-**Why it is here.** [The charter](../README.md#the-charter) proposes to take one
-small calculus from rule descriptions to an exercised signature and to record
-where the author got stuck. This is the same loop at full scale, already run by
-somebody else, on a rule whose soundness argument is genuinely hard. It is the
-best evidence available anywhere in reach about what the loop costs and about
-which stage catches what — and, unlike anything this project will produce for
-itself in its first year, the Lean side of it is finished.
+**Why this one.** It is the episode in reach where a signature was written and
+something answered back in full: 373 lines of Eunoia, 11,168 lines of Lean, and
+seven days of history that say which authoring choices cost what.
 
-**What it is not.** Not a defect report: everything wrong in the episode was
-found and fixed by the people running it, within hours, on branches that never
-shipped. Not a judgement of anybody's work. Not a claim that this project would
-have done better. It is a reading of a public history, written to extract the
-authoring lessons that were incidental to the people who lived it.
+**How it was read.** On 2026-09-16, from the commits of two development branches
+— `bvAbstract` in Logos and `bvAbstract-pf` in a fork of cvc5 — neither linked
+here and both listed by commit in [the appendix](#appendix-the-commits-read). At
+that date the work had landed on neither project's `main`. One person authored
+both sides, which is why the loop turns in hours below.
 
-## How this was read
-
-The episode lives on two development branches: `bvAbstract` in the Logos proof
-checker, and `bvAbstract-pf` in a fork of cvc5. **Neither is linked from this
-document, and no claim here depends on either surviving.** A branch is not a
-citation: it gets rebased, merged, renamed or deleted, and a document that points
-at one rots without saying so. What is recorded instead is what was read — the
-commit identifiers, their own timestamps, and the file contents at each — so the
-account can be re-checked while the branches exist and still means something
-after they are gone.
-
-Everything below was read on **2026-09-16**, from the commit contents and their
-timestamps. At that date the work sat on both branches and had landed on neither
-project's `main`. The same person authored both sides, which is why the loop
-turns as fast as it does below and is worth keeping in mind when reading the
-elapsed times: this is one person's inner loop, not a handoff between teams.
-
-**Nothing here was built.** No Lean build, no solver run, and no regression suite
-was executed for this account. Sizes are line counts of committed files; claims
-about what compiles are claims about what the history says compiled. The two
-counterexamples in [movement 4](#4-the-unsoundness) were checked by hand
-arithmetic, which is the only thing in this document independently verified.
+**Nothing was built for this account.** Sizes are line counts of committed
+files; *compiles* means the history says it compiled. The two counterexamples in
+[movement 4](#4-the-unsoundness) were checked by hand, and are the only thing
+here verified independently of the trees.
 
 ## The rule
 
 `ProofRule::BV_ABSTRACTION` justifies the refinement lemmas of cvc5's bit-vector
 arithmetic abstraction: a CEGAR strategy that replaces `bvmul`, `bvudiv` and
-`bvurem` terms with fresh constants and constrains them with sound
-over-approximations instead of bit-blasting them. The schemes are a direct port
-of Bitwuzla's abstraction module, as described in *Scalable Bit-Blasting with
-Abstractions* (Niemetz, Preiner, Zohar, CAV 2024), Table 2 — 71 of them in the
-signature as it now stands: 19 for `bvmul`, 37 for `bvudiv`, 15 for `bvurem`.
+`bvurem` terms with fresh constants and constrains those constants with sound
+over-approximations instead of bit-blasting the originals. The schemes are a
+direct port of Bitwuzla's abstraction module, as described in *Scalable
+Bit-Blasting with Abstractions* (Niemetz, Preiner, Zohar, CAV 2024), Table 2 —
+71 of them in the signature as it now stands: 19 for `bvmul`, 37 for `bvudiv`,
+15 for `bvurem`.
 
 For an abstracted term `(op x s)` with abstraction `t`, each scheme `l[x,s,t]`
 satisfies `(=> (= (op x s) t) l)`. The Eunoia rule concludes exactly that
-formula, and its entire content is a side condition:
+formula:
 
 ```
 (declare-rule bv_abstraction ((F Bool))
@@ -65,11 +43,10 @@ formula, and its entire content is a side condition:
 )
 ```
 
-**This shape is worth noticing before anything else happens.** The rule has no
-premises and no structure; a 354-line Eunoia program decides membership in a set
-of formulas, and the rule says *this one is in it*. Everything hard about the
-rule is therefore inside a program, which is the part of Eunoia that a proof
-about the rule has to reason about case by case.
+No premises, no structure: a 354-line Eunoia program decides membership in a set
+of formulas and the rule says *this one is in it*. Everything hard about the rule
+sits inside that program — the part of Eunoia a proof has to take apart case by
+case.
 
 ## The movements
 
@@ -118,9 +95,8 @@ widths and the width each one needs: `MUL5`, `MUL6`, `MUL7`, `MUL11`, `MUL12`,
 width 2; `UDIV30` and `UREM13` invalid below 3.
 
 **So the side condition was never unknown.** It was written down twice, in the
-language the implementation is written in, by people who knew it mattered. What
-happened next is not a failure of knowledge; it is a failure of *transcription*,
-and that distinction is the single most useful thing in this document.
+language the implementation is written in. What happened next was not a failure
+of knowledge but a failure of transcription.
 
 ### 1. The signature proposed
 
@@ -164,10 +140,9 @@ checks:
     (eo::and ($bv_is_one cone) (eo::and ($bv_is_zero ln1) (eo::and ($bv_is_ones ln2) ($bv_is_zero ln3)))))
 ```
 
-**This is the authoring decision that dominates everything downstream**, and at
-the time it was made it looked like a matter of taste. Nobody had proved
-anything yet; there was no cost signal on it at all. [What it cost](#what-it-cost)
-is the answer that arrived two days later.
+Nobody had proved anything yet, so nothing priced this choice at the time it was
+made. It set 56% of the eventual proof; [what it cost](#what-it-cost) arrived two
+days later.
 
 At 08:01 the work is split into CPC's conventional layout: the programs into
 `programs/BvAbstraction.eo`, the nineteen-line rule into `rules/BitVectors.eo`.
@@ -184,9 +159,9 @@ public theorem cmd_step_bv_abstraction_properties ... := by
   sorry
 ```
 
-That file is 22 lines, and it is the whole of what Logos owes for this rule. The framework this repository generates puts the same obligation in the
-same place for a calculus of one rule — which is why an episode about CPC is
-legible here at all.
+That file is 22 lines, and it is the whole of what Logos owes for this rule. The
+framework this repository generates puts the same obligation in the same place
+for a calculus of one rule.
 
 ### 4. The unsoundness
 

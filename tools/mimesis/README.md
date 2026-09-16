@@ -1,69 +1,90 @@
 # Mimesis
 
-A **child project** of the Eudaimonia build framework: an authoring setup for
-somebody who has a calculus in mind and no Eunoia signature yet. It is about the
-hours before a generated checker exists — getting from rule descriptions to an
-`.eo` signature, an `.eos` semantics, and proof tests that accept and reject the
-right things.
+A **child project** of the Eudaimonia build framework: **a collection of case
+studies on writing Eunoia signatures.** Each entry follows one real episode — a
+calculus, or a single rule of one, going from whatever description its author
+started with into an `.eo` signature, an `.eos` semantics, and whatever answered
+back downstream — and records which decisions were made in what order, where the
+author was stuck, what was got wrong, and what caught it.
 
-**Where it is right now.** The charter, and one worked example read from
-somebody else's history: [`docs/case-study.md`](docs/case-study.md) follows a
-real CPC proof rule from a published table of lemma schemes into a Eunoia
-signature, into a checked Lean proof that found it unsound, and back into the
-signature twice. Launched 2026-09-16 by explicit maintainer instruction; no
-signature has been written *here*, no measurement of this project's own has been
-taken, and every claim below about what authoring costs is somebody else's,
-cited where it is used.
+**The authoring setup comes later, if it comes.** That is the artifact the
+ecosystem reserved this name for, and it may still be what this becomes. It is
+not what this does now: a setup written before the case studies exist would be a
+guess about where authors struggle, and testing that guess is precisely what the
+case studies are for.
+
+**Where it is right now.** One entry, which is also the shape the others take:
+[`docs/case-study.md`](docs/case-study.md) follows a real CPC proof rule from a
+published table of lemma schemes into a Eunoia signature, into Logos — where
+stating the proof obligation exposed it as unsound — and back into the signature
+twice. Launched 2026-09-16 by explicit maintainer instruction; nothing here has
+been written first-hand yet, and every claim below about what authoring costs is
+somebody else's, cited where it is used.
 
 ## The charter
 
-**The question.** Can somebody who has a calculus in mind, and has never written
-Eunoia, reach a signature that compiles, that accepts the proofs it should and
-rejects the proofs it should — without reading a large existing calculus first
-to reconstruct the conventions?
+**The question.** What does writing a Eunoia signature actually take — which
+decisions come in what order, which of them are load-bearing, and what catches a
+mistake when one is made? And, downstream of that: can somebody reach a working
+signature without first reading a large existing calculus to reconstruct the
+conventions?
 
-**The artifact.** A **route** and the **worked examples** that establish it: one
-small calculus taken from its author's rule descriptions to an installed,
-exercised checker, with every place the author was stuck written down at the
-moment it happened. The record of the stumbles is as much the deliverable as the
-signature; a signature by itself proves only that somebody who already knew how
-could do it again.
+**The method, and why this shape.** Read episodes where it really happened, one
+at a time, and write each one down in enough detail that the next one can be
+compared against it. Real history supplies the difficulties that actually occur
+in the proportion they actually occur, which is the one thing an invented
+exercise cannot — and the episodes worth reading have already been paid for by
+somebody else.
+
+**The artifact.** A growing set of case studies in a common shape, and the
+ledger they accumulate into. One case study is a story; the ledger is what makes
+several of them evidence.
 
 **The goals, in order.**
 
-1. **One calculus, end to end, with the friction recorded.** Propositional
-   resolution — [why that one](#why-propositional-resolution-is-first) — from
-   rule descriptions to `scripts/new-checker.sh --spec`, an install, and a
-   regression suite covering every verdict the framework has. The signature is
-   the easy half. The half that is the point is the log: what the author wanted
-   to say, what Eunoia wanted instead, and what unstuck them.
-2. **The friction ledger.** One entry per stumble, each classified by whose it
-   is to fix: the **compiler's** (a diagnostic that named the wrong thing, or
+1. **Accumulate case studies.** One document in `docs/` per episode, each
+   naming its sources precisely enough to be re-checked and written so that it
+   survives the branches it was read from. Entry one is
+   [BV abstraction](docs/case-study.md); [where the next ones come
+   from](#where-the-case-studies-come-from) says what qualifies and what the
+   supply looks like. **This is the work, and the pace is one good entry at a
+   time** — a case study that took a day to read and is wrong about somebody's
+   history costs more than the one that was never written.
+2. **Fix the shape, so that entries compare.** Every entry answers the same
+   questions: what its author was transcribing from, what the signature had to
+   say that the source did not, which authoring style was chosen and at what
+   point, what the artifacts cost in lines, what was got wrong, and what found
+   it. Entries that each answer a different set of questions are anecdotes, and
+   anecdotes do not add up. The shape is settled *from* entries rather than
+   before them, so the current draft of it is whatever the first one does.
+3. **The ledger across entries.** Each difficulty classified by whose it is to
+   fix: the **compiler's** (a diagnostic that named the wrong thing, or
    nothing), the **framework's** (a contract or profile fact an author had to
    discover by failing), the **documentation's** (the answer existed and was not
    findable from where the author stood), or **irreducible** (a judgement about
-   the calculus that no tool can make). The fourth category is the one that
-   decides whether this project has a result: if nearly everything lands there,
+   the calculus that no tool can make). Counts by category *across* episodes are
+   the result this project is trying to have — and the fourth category is the
+   one that decides whether it has one. If nearly everything lands there,
    authoring is hard because calculi are hard, and no authoring setup helps.
-3. **The route, written down.** The order the decisions actually come in —
-   contract, then profile, then rules, then semantics, then the tests that make
-   a verdict mean something — in a form a second author can follow without this
-   project's author sitting beside them. Written *after* goal 1, from what the
-   log says the order was, not from what it ought to have been.
-4. **A second author, which is the test that matters.** Somebody who did not
-   write goal 1 takes a *different* small calculus through the route, and the
-   ledger records where the route failed them. Goal 1 measures the framework;
-   only goal 4 measures the route, because the author of a route is the one
-   person it cannot be wrong for.
-5. **What could be mechanized.** Which ledger entries are a scaffold, a lint, a
-   compiler diagnostic or a request in
-   [`docs/eoc-requests.md`](../../docs/eoc-requests.md), and which are a
-   person's judgement. Requests leave through the parent, carried by a person;
-   nothing here files one.
+4. **One episode of our own.** Propositional resolution — [why that
+   one](#the-calculus-we-write-ourselves) — from rule descriptions to
+   `scripts/new-checker.sh --spec`, an install, and a regression suite covering
+   every verdict the framework has, written up as an entry like any other. Its
+   one advantage over the read ones is decisive and is why it is on the list:
+   the stumbles are recorded **as they happen** rather than reconstructed from
+   what somebody committed afterwards.
+5. **Only then, the route and what could be mechanized.** Which ledger entries
+   are a scaffold, a lint, a compiler diagnostic or a request in
+   [`docs/eoc-requests.md`](../../docs/eoc-requests.md); which are a person's
+   judgement; and what order the decisions come in for an author starting today.
+   A route generalized from one episode is an anecdote with numbered steps, so
+   this waits on goal 3 having something to say. Requests leave through the
+   parent, carried by a person; nothing here files one.
 
 **The wishue (stretch goal).** Somebody who has never read CPC takes a page of
 rule descriptions to a generated checker that passes its own regression suite in
-an afternoon, and what got them there is the route rather than its author.
+an afternoon, and what got them there is the route the ledger produced rather
+than its author sitting beside them.
 
 **What is out of scope.**
 
@@ -75,9 +96,15 @@ an afternoon, and what got them there is the route rather than its author.
   and this project repeats it rather than working around it. **Helping an author
   mistake acceptance for soundness is this project's characteristic way of doing
   harm**, and any output that reads that way is a defect in the output.
-- **Designing anybody's calculus.** The author brings the rules. Mimesis helps
-  express them, and a route that quietly steers authors toward the rules that
-  are easy to write in Eunoia has changed the subject.
+- **Designing anybody's calculus.** An author brings the rules. Mimesis reads
+  and eventually helps express them, and a route that quietly steers authors
+  toward the rules that are easy to write in Eunoia has changed the subject.
+- **Writing the history of anybody's project.** A case study follows one episode
+  of signature authoring and stops there. It is not a narrative of a repository,
+  not a survey of somebody's commits for its own sake, and not a verdict on how
+  anybody works. Where reading turns up something still wrong in a live tree,
+  that is a finding and leaves through the parent in a person's hands — never
+  through an entry here.
 - **Proving anything in Lean**, closing a generated checker's obligations, or
   saying what a checker establishes. That is the parent's, and
   [`tools/hermeneia`](../hermeneia/README.md) and
@@ -94,23 +121,55 @@ an afternoon, and what got them there is the route rather than its author.
   [`tools/apodeixis`](../apodeixis/README.md#the-gate) wrote for itself applies
   here with nothing removed: published material only, in the form its authors
   published it, and collaboration asked for by a person before a calculus that
-  belongs to somebody else is taken as a subject. Choosing a textbook calculus
-  for goal 1 is partly how this project stays clear of that.
+  belongs to somebody else is taken as a subject. Case studies are read from
+  public history, and choosing a textbook calculus for goal 4 is part of how
+  this project stays clear of the rest.
 - **Teaching SMT-LIB, or Lean.** The `.eos` side says how a symbol lands in a
   semantics that already exists. Explaining that semantics is not this.
 - **Taking the name.** The register that reserves `mimesis` is in kanon's tree
   and nothing here edits it. See [the name](#the-name).
 
-## Why propositional resolution is first
+## Where the case studies come from
+
+**What qualifies.** An episode in which a Eunoia signature, or a piece of one,
+was written *and something answered back* — a proof obligation somebody had to
+state, a generated checker, a producer's own checker, a test suite, a second
+implementation. The answering-back is what turns an anecdote into evidence: it is
+the moment a mistake stops being invisible, and an episode without one cannot say
+which of the author's choices were wrong. The first entry is the shape of that:
+what made it worth reading is not that a signature was written but that a Lean
+proof was later stated about it.
+
+**What the supply looks like.** Not the constraint. On cvc5's trunk, **75
+commits touched CPC's Eunoia signature in the twelve months to 2026-09-16**, 19
+of them in the last three; the Logos checkout read for the first entry carried
+**83 remote branches**, many of them per-rule proof efforts. How many of those
+pair a signature change with somebody stating an obligation about it is exactly
+what a survey would have to establish, and no entry here claims a proportion
+before one has been done.
+
+**Nearer sources, and first-hand ones.** This framework's own history is
+material too — [`TODO.md` §4f](../../TODO.md#4f-starting-from-something-that-works)
+records a second calculus exposing three bugs CPC could not — and
+[goal 4](#the-calculus-we-write-ourselves) is an episode written from the inside.
+
+**What does not qualify.** Unpublished work, on the terms
+[`tools/apodeixis`](../apodeixis/README.md#the-gate) set for itself. Episodes
+whose only record is somebody's memory, unless that person writes it down and it
+is theirs to give. And episodes read so thinly that the entry would be a
+paraphrase of a commit message: an entry earns its place by reading the diffs.
+
+## The calculus we write ourselves
 
 [Ynoia's listing][work] leaves the first example calculus to the launch charter,
-so this section is the decision rather than a preference.
+so this section is that decision — now attached to goal 4 rather than to the
+first thing this project does.
 
 | | what the author must do | covered before this? |
 | --- | --- | --- |
 | a side condition that computes | write a Eunoia **program** that removes the resolved literals and returns the resolvent | **no.** Neither starter has a program, and it is where authors are most likely to write something that compiles and means the wrong thing |
 | `:list` premises and a nil | `or` declared `:right-assoc-nil`, premises gathered through it | `examples/scoped` has this for `and`; nothing has it for the operator the calculus is *about* |
-| the refutation target | none — the empty clause **is** `false`, which is exactly what the checker tests for | nothing has needed an encoding, and this one still does not, which keeps goal 1 about authoring |
+| the refutation target | none — the empty clause **is** `false`, which is exactly what the checker tests for | nothing has needed an encoding, and this one still does not, which keeps goal 4 about authoring |
 | the semantics | `or` and `not` land pointwise on their SMT-LIB counterparts; `smt.eos` is untouched | as in `examples/hello`, deliberately: a first example that also replaces the SMT-LIB semantics would be measuring a different, much harder thing |
 | whose work it is | textbook, and older than everyone involved | the reason it is first. No permission question, no misreadable public record of somebody's calculus straining |
 
@@ -126,14 +185,14 @@ measurement rather than an anecdote.
 `examples/cpc` is in this tree. An author who reaches for them has stopped doing
 the experiment — the question is whether a signature can be written *from rule
 descriptions*, and an existing signature is the input the name of this project
-explicitly refuses. The working rule for goal 1: the reference calculus is the
+explicitly refuses. The working rule for goal 4: the reference calculus is the
 **reviewer's** oracle, consulted after a difficulty is logged and never before.
 An entry in the ledger that cannot say what the author tried before looking is
 worth nothing.
 
 **What "rule descriptions" means here.** The prose form a calculus arrives in —
 premises, conclusion, side conditions, in a paper's or a textbook's notation.
-Writing those down for resolution is the first task of goal 1, and it is done
+Writing those down for resolution is the first task of goal 4, and it is done
 before any Eunoia is written, so that the route has a real starting point rather
 than a remembered one.
 
@@ -173,25 +232,50 @@ does not weaken it.
 ## The measurement
 
 A project whose output is "authoring is hard" has measured nothing. What is
-written down instead, per stumble: what the author was trying to express, how
-long they were stuck, what they tried, what resolved it, and which of goal 2's
-four categories it falls in. Counts by category are the result — with the ledger
-under them, so a reader who disagrees with a classification can see the entry.
+written down instead, per difficulty: what the author was trying to express, what
+the language or the framework wanted instead, what resolved it, what it cost in
+lines downstream where that is visible, and which of
+[goal 3's](#the-charter) four categories it falls in. **Counts by category across
+episodes are the result** — with the entries under them, so that a reader who
+disagrees with a classification can go and read the case it came from.
+
+**One entry is not a measurement**, and this project's own numbers should be read
+that way until there are several. What the first entry supports is that the
+questions are answerable, not that any proportion holds.
 
 **What a negative result looks like**, so that it cannot be quietly avoided
-later: most entries land in *irreducible*, or the second author of goal 4 gets
-through on the manual and the starter alone. Either one retires this project
-with a note, and the note is more useful to the ecosystem than a route nobody
-needed.
+later: the difficulties keep landing in *irreducible*; or each episode's friction
+turns out to be about its own calculus and nothing transfers between entries; or
+an author working from the manual and `--dummy-rule` alone gets there anyway.
+Any of the three retires this project with a note, and the note is more useful to
+the ecosystem than a route nobody needed.
+
+## Is there a paper in this?
+
+**Not now, and saying so is cheaper than discovering it later.** The policy asks
+every child project to state whether a paper exists, what the plan is, or that
+there is nothing in it worth writing up, and today the honest answer is the
+third: one case study is a reading of two branches, and a reading is not a
+result.
+
+**What would change that** is stated so that it can be checked rather than
+hoped for: enough entries that counts by category mean something, drawn from
+episodes nobody chose to flatter the conclusion, with at least one written
+first-hand. That would be a claim about what authoring a calculus in a
+solver-facing language costs — which is the question ynoia's account leaves
+open, and which nobody has measured. Until then, the entries are worth reading
+and are not a paper.
 
 ## The name
 
 *Mimesis* (Greek **μίμησις**, "imitation") is Aristotle's word for learning by
 representing — the way a craft is picked up from worked instances before it can
 be stated as a rule. It names this project because the proposal is that somebody
-learns to express a calculus in Eunoia from examples worked in front of them,
+learns to express a calculus in Eunoia from instances worked in front of them,
 **not** by being handed an existing signature to copy: imitation of the *doing*,
-not of the artifact. If it turns out that the fastest route to a new signature
+not of the artifact. A case study is that word taken literally — the doing of
+somebody who has already done it, set down in enough detail to be imitated and
+argued with. If it turns out that the fastest route to a new signature
 is to open CPC and edit it, the name is wrong and so is the project.
 
 The etymology and the scope are the ecosystem's rather than this directory's:
@@ -241,6 +325,10 @@ readers. Both failures are worth watching for.
 
 ## What is written down
 
+**The register of entries.** Each case study is one row; the ledger of
+[goal 3](#the-charter) will be another document once there is more than one
+entry to cross.
+
 | document | what it is for |
 | --- | --- |
 | [`docs/case-study.md`](docs/case-study.md) | **Case study: BV abstraction.** One CPC rule from a paper's lemma schemes to a Eunoia signature, into Logos as 11,168 lines of Lean, the unsoundness the proof found there, and what seven lines of signature were worth in proof lines. Read from two development branches on 2026-09-16, and written so that it stands if they are rebased away |
@@ -249,15 +337,16 @@ readers. Both failures are worth watching for.
 
 Three endings, and a person picks.
 
-- **Folded** into the parent, which is the likeliest: the route becomes part of
-  what [Starting a new calculus](../../README.md#starting-a-new-calculus)
-  documents, the mechanisms goal 5 identifies become requests or flags somebody
-  else owns, and this directory goes away. A child project that succeeds at
-  making its parent easier to start with has no reason to survive the change.
-- **Graduates** into its own repository, if goal 4 shows the route is about
-  Eunoia rather than about this framework — in which case it belongs somewhere
-  an author who is not using eudaimonia can find it, and the register entry
-  changes to say so.
+- **Folded** into the parent, which is the likeliest: what the ledger establishes
+  becomes part of what [Starting a new
+  calculus](../../README.md#starting-a-new-calculus) documents, the mechanisms
+  goal 5 identifies become requests or flags somebody else owns, and this
+  directory goes away. A child project that succeeds at making its parent easier
+  to start with has no reason to survive the change.
+- **Graduates** into its own repository, if the entries show the subject is
+  Eunoia rather than this framework — a collection of case studies about writing
+  signatures belongs somewhere an author who is not using eudaimonia can find
+  it, and the register entry changes to say so.
 - **Retired in place**, with a line saying what was learned. [The
   measurement](#the-measurement) names the two results that lead here, and
   neither is a failure of the work.
@@ -266,11 +355,15 @@ Going quiet is not one of them. A directory that has not moved and that nobody
 is standing behind is a claim nobody is defending, and the honest form of that is
 a retirement note.
 
-*Started 2026-09-16 by the maintainer, in an explicit instruction, with the first
-example calculus chosen in the same conversation — which is the decision the
-policy reserves for a person, and the one ynoia's entry says a launch charter
-owes. Nothing has been delivered, so nothing above is an exception the policy
-would ask this project to name, and the island is stated as fact rather than as
+*Started 2026-09-16 by the maintainer, in an explicit instruction, with the
+example calculus of [goal 4](#the-calculus-we-write-ourselves) chosen in the same
+conversation — which is the decision the policy reserves for a person, and the
+one ynoia's entry says a launch charter owes. **The charter was reoriented the
+same day, by the same route:** it had led with writing one calculus ourselves,
+and the maintainer set accumulating case studies as the main goal for now. That
+is a scope decision, so it is recorded here rather than absorbed silently.
+Nothing has been delivered, so nothing above is an exception the policy would ask
+this project to name, and the island is stated as fact rather than as
 intention.*
 
 [policy]: https://github.com/ajreynol/kanon/blob/main/docs/policy.md#child-projects
