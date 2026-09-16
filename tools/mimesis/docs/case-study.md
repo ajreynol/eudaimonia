@@ -1,9 +1,9 @@
-# One rule, both sides
+# Case study: BV abstraction
 
 A worked example this project did not commission and could not have afforded to
 produce: a real proof rule carried from a published table of lemma schemes into
-a Eunoia signature, compiled into a verified checker's Lean development, found
-to be wrong there, fixed in the signature, proved, and then made more elegant —
+a Eunoia signature, compiled into Logos's Lean development, found to be wrong
+there, fixed in the signature, proved, and then made more elegant —
 with the proof paying and being refunded at each step.
 
 **Why it is here.** [The charter](../README.md#the-charter) proposes to take one
@@ -73,28 +73,33 @@ about the rule has to reason about case by case.
 
 ## The movements
 
-| when (commit's own timestamp) | where | what happened |
+**Three artifacts, not two repositories.** CPC's Eunoia signature lives in cvc5's
+own tree beside the C++, so the middle column below names *what changed* — the
+signature, cvc5's C++, or the Lean development in Logos — rather than which
+checkout it changed in.
+
+| when (commit's own timestamp) | what changed | what happened |
 | --- | --- | --- |
-| 2026-08-20 08:34 | solver | the C++ proof rule and its checker — **with** the bit-width guard |
-| 2026-08-20 09:08 | solver | the Eunoia proposed: schemes built and compared, no width guard |
-| 2026-08-21 06:53 | solver | rewritten toward syntactic matching |
-| 2026-08-21 07:47 | solver | rewritten again: matching only, no constructed terms |
-| 2026-08-21 08:01 | solver | split into CPC's layout — program file, rule file |
-| 2026-08-21 08:05 | checker | compiled in: 734 generated lines, obligation stubbed `sorry` |
-| 2026-08-21 10:43 | checker | **unsound** — the width guard hand-patched into the generated file |
-| 2026-08-21 11:08 | solver | the guard added to the Eunoia source |
-| 2026-08-21 11:32 | checker | regenerated from the fixed signature; the hand patch discarded |
-| 2026-08-21 14:38 → 08-22 17:12 | checker | the proof: about 11,300 lines added across 24 files, obligation closed |
-| 2026-08-24 09:46 | checker | Lean 4.33 fallout, 5 files, tactics only |
-| 2026-08-24 10:01 | solver | the signature simplified: six cases become three |
-| 2026-08-24 10:59 → 11:59 | checker | regenerated (−3 lines), proof follows (−139 lines) |
-| 2026-08-27 15:12 | solver | formatting |
+| 2026-08-20 08:34 | cvc5 (C++) | the proof rule and cvc5's own C++ checker for it — **with** the bit-width guard |
+| 2026-08-20 09:08 | Eunoia signature | proposed: schemes built and compared, no width guard |
+| 2026-08-21 06:53 | Eunoia signature | rewritten toward syntactic matching |
+| 2026-08-21 07:47 | Eunoia signature | rewritten again: matching only, no constructed terms |
+| 2026-08-21 08:01 | Eunoia signature | split into CPC's layout — program file, rule file |
+| 2026-08-21 08:05 | Logos | compiled in: 734 generated lines, obligation stubbed `sorry` |
+| 2026-08-21 10:43 | Logos | **unsound** — the width guard hand-patched into the generated file |
+| 2026-08-21 11:08 | Eunoia signature | the guard added at its source |
+| 2026-08-21 11:32 | Logos | regenerated from the fixed signature; the hand patch discarded |
+| 2026-08-21 14:38 → 08-22 17:12 | Logos | the proof: about 11,300 lines added across 24 files, obligation closed |
+| 2026-08-24 09:46 | Logos | Lean 4.33 fallout, 5 files, tactics only |
+| 2026-08-24 10:01 | Eunoia signature, cvc5 | simplified: six cases become three, and the C++ and its unit test follow |
+| 2026-08-24 10:59 → 11:59 | Logos | regenerated (−3 lines), proof follows (−139 lines) |
+| 2026-08-27 15:12 | cvc5 (C++) | formatting |
 
 ### 0. What the C++ already knew
 
-The first commit of the episode adds the proof rule to cvc5 and a C++ checker for
-it. That checker contains this, a day before any Lean proof and half an hour
-before the signature was written:
+The first commit of the episode adds the proof rule to cvc5 and, with it, cvc5's
+own C++ checker for the rule. That C++ checker contains this, a day before any
+Lean proof and half an hour before the signature was written:
 
 ```cpp
 // Some schemes are not valid for bit-width 1 or 2 (see e.g. MUL5 and MUL9),
@@ -133,8 +138,8 @@ pushing back:
 > bit-width. Such a terminator is not a legal subterm of a pattern.
 
 A scheme whose shape mentions `(bvand x s)` cannot simply be matched, because the
-term the solver produces carries a width-dependent nil the author cannot write in
-a pattern. The first answer was to stop matching altogether and build instead.
+term cvc5 produces carries a width-dependent nil the author cannot write in a
+pattern. The first answer was to stop matching altogether and build instead.
 
 There is no width condition anywhere in this draft.
 
@@ -169,8 +174,8 @@ At 08:01 the work is split into CPC's conventional layout: the programs into
 
 ### 3. Compiled, and stubbed
 
-Four minutes later the checker side begins: the signature is compiled and the
-generated Lean lands in the checker's compiled signature file — **734 lines**, or
+Four minutes later the Logos side begins: the signature is compiled and the
+generated Lean lands in Logos's compiled signature file — **734 lines**, or
 about one-fifteenth of the entire compiled CPC. The rule is registered, and the
 obligation it now owes is created as a stub:
 
@@ -179,15 +184,14 @@ public theorem cmd_step_bv_abstraction_properties ... := by
   sorry
 ```
 
-That file is 22 lines, and it is the whole of what the checker owes for this
-rule. The framework this repository generates puts the same obligation in the
+That file is 22 lines, and it is the whole of what Logos owes for this rule. The framework this repository generates puts the same obligation in the
 same place for a calculus of one rule — which is why an episode about CPC is
 legible here at all.
 
 ### 4. The unsoundness
 
 Two and a half hours later, before a single proof of a scheme exists, the
-generated file is **hand-patched** on the checker side:
+generated file is **hand-patched** inside Logos:
 
 ```lean
 -- Bitwuzla generates these schemas only for abstraction widths of at least 3.
@@ -196,8 +200,8 @@ def __bv_abstraction_width_ok (x : Term) : Term :=
 ```
 
 …and wrapped around every case of the matcher. The commit is called *AI soundness
-fix*; the commit that follows it on the solver side, twenty-five minutes later,
-is called *Fix unsound based on logos AI*. The signature gains
+fix*; the commit that follows it in cvc5's tree, twenty-five minutes later, is
+called *Fix unsound based on logos AI*. The signature gains
 `$bv_abstraction_width_ok`, a comment recording why, and the two counterexamples
 that show it is needed:
 
@@ -216,15 +220,15 @@ Both check by hand, and this account checked them:
 
 **What was actually at risk, stated precisely.** No cvc5 proof in the wild could
 have exercised this: the abstraction module never abstracts below width 3, and
-the C++ checker rejected such lemmas from the first commit. The defect was in the
-*rule* — a checker's rule must reject what any producer could hand it, not only
+cvc5's C++ checker rejected such lemmas from the first commit. The defect was in
+the *rule* — a proof rule must reject what any producer could hand it, not only
 what today's producer happens to emit — and it was in the rule for twenty-six
 hours, on a branch, and never reached anybody.
 
 Three things about how the fix travelled are worth more than the fix:
 
-1. **It was made in the generated file first.** The checker side patched the
-   compiled Lean by hand at 10:43, got the signature fixed upstream at 11:08, and
+1. **It was made in the generated file first.** Logos patched the compiled Lean
+   by hand at 10:43, got the signature fixed at its source at 11:08, and
    threw its patch away at 11:32 by regenerating. The hand patch was a diagnosis,
    not a repair, and the history says so: the regeneration commit *deletes* the
    hand-written `def`.
@@ -293,15 +297,15 @@ of proof — in a 61-line file that never mentions a bit-vector.
 
 ### 6. Elegance, and what it refunded
 
-Two days later, on the solver side, the signature is simplified. The guard
+Two days later, in cvc5's tree, the signature is simplified. The guard
 equality had been matched in both orientations — `(= (op x s) t)` and
 `(= t (op x s))` — giving six cases; the simplification keeps three and requires
 the abstracted term on the left. The C++ stops trying both orientations, and a
 unit test is flipped from asserting that the reversed form is accepted to
 asserting that it is rejected.
 
-The checker side follows within two hours, and this is the measurement the whole
-document exists for:
+Logos follows within two hours, and this is the measurement the whole document
+exists for:
 
 | artifact | change |
 | --- | --- |
@@ -345,7 +349,7 @@ semantic content of the proof was untouched by it.
 | elapsed, first commit to last | 2026-08-20 08:34 → 2026-08-27 15:12 |
 | elapsed, the proof itself | 2026-08-21 14:38 → 2026-08-22 17:12 |
 
-For scale: the checker's CPC proof development is 746,677 lines across 839 files
+For scale: Logos's CPC proof development is 746,677 lines across 839 files
 with **no `sorry`**, and 592 of those files are per-rule obligations — the 591
 rules of the trunk, plus this one. One rule here cost about 1.5% of that corpus
 — and the hand-written proof of this single rule is roughly the size of the
@@ -363,7 +367,7 @@ by whose it is to fix. This episode's entries, in that shape:
 | `(define …)` is a macro and does not survive into the generated Lean | **the framework's, to document** | the proof talks about the inlined expression. An author who names a helper for readability should know the obligation will not see the name |
 | every case of a Eunoia program is a case of the Lean proof, with negative hypotheses inherited from the cases above | **irreducible, and predictable** | case count is the proof's cost driver, and it is visible in the signature. Three deleted cases were 139 deleted lines |
 | the matching style chosen for readability set 56% of the proof burden | **irreducible** | constructive comparison and syntactic matching are both legitimate; they are not equally cheap to prove about, and the difference is invisible at the moment of choosing |
-| nothing runnable could have exposed the defect | **irreducible, and the reason the charter says what it says** | it was reachable only at bit-widths the abstraction module never produces and the solver's own checker already rejected, so no proof, test or fuzzer working from real solver output would have reached it. What found it was somebody having to *state* the obligation |
+| nothing runnable could have exposed the defect | **irreducible, and the reason the charter says what it says** | it was reachable only at bit-widths the abstraction module never produces and cvc5's own C++ checker already rejected, so no proof, test or fuzzer working from real cvc5 output would have reached it. What found it was somebody having to *state* the obligation |
 
 That last row is why [the charter](../README.md#the-charter) puts soundness out of
 scope in the words it does. A signature whose proof tests pass is a signature that
@@ -401,7 +405,7 @@ a person's hands, and this document opens no channel.
 
 - **How the unsoundness was found.** The tree records the order — the obligation
   created as a stub, then the guard, then the proof — and it records that both
-  commit messages credit the checker-side agent work. It does not record the
+  commit messages credit the Logos-side agent work. It does not record the
   method, and this account does not guess at one.
 - **Effort.** Commit timestamps are not working hours, and one person's inner
   loop is not a team's.
@@ -421,31 +425,31 @@ they do not. **Identifiers are data here, not links**: a rebase invalidates them
 without invalidating anything above, which is why every claim in this document is
 stated so that the file contents quoted are the evidence.
 
-| repository | commit | timestamp | subject |
-| --- | --- | --- | --- |
-| solver (module, upstream) | `36ceff91a0` | 2026-08-15 | bv abstract: Add abstraction lemmas for bvmul, bvudiv, bvurem. (#12782) |
-| solver | `b58752770f` | 2026-08-20 08:34 | Proofs for BV abstract |
-| solver | `820fe6a0b3` | 2026-08-20 09:08 | Draft |
-| solver | `63def358cb` | 2026-08-21 06:53 | Try |
-| solver | `92e5553edc` | 2026-08-21 07:47 | Refactor |
-| solver | `e7dac8f3de` | 2026-08-21 08:01 | Move |
-| checker | `ae6b3e1a` | 2026-08-21 08:05 | Draft of BV abstraction rule |
-| checker | `cb0e295c` | 2026-08-21 10:43 | AI soundness fix |
-| solver | `879246e0f6` | 2026-08-21 11:08 | Fix unsound based on logos AI |
-| checker | `6cf7559c` | 2026-08-21 11:32 | Fix from updated Eunoia, compiled |
-| checker | `349e75ba` | 2026-08-21 14:38 | In progress |
-| checker | `51d5d461` | 2026-08-21 16:15 | In progress, more |
-| checker | `619c4a77` | 2026-08-21 16:33 | More |
-| checker | `d38f92ca` | 2026-08-22 17:12 | Finish |
-| checker | `af242ff5` | 2026-08-24 09:46 | Updates for 4.33 |
-| solver | `c68eefe266` | 2026-08-24 10:01 | Simplify proof rule |
-| checker | `a413b4f6` | 2026-08-24 10:59 | Compile simplification |
-| checker | `fb7260a0` | 2026-08-24 11:59 | Fixes to proof from simplification |
-| solver | `bc3fbdc495` | 2026-08-27 15:12 | Format |
+| tree | what it changed | commit | timestamp | subject |
+| --- | --- | --- | --- | --- |
+| cvc5 (upstream) | C++ (the abstraction module) | `36ceff91a0` | 2026-08-15 | bv abstract: Add abstraction lemmas for bvmul, bvudiv, bvurem. (#12782) |
+| cvc5 fork | C++ | `b58752770f` | 2026-08-20 08:34 | Proofs for BV abstract |
+| cvc5 fork | Eunoia signature | `820fe6a0b3` | 2026-08-20 09:08 | Draft |
+| cvc5 fork | Eunoia signature, C++ | `63def358cb` | 2026-08-21 06:53 | Try |
+| cvc5 fork | Eunoia signature | `92e5553edc` | 2026-08-21 07:47 | Refactor |
+| cvc5 fork | Eunoia signature | `e7dac8f3de` | 2026-08-21 08:01 | Move |
+| Logos | generated Lean, obligation stub | `ae6b3e1a` | 2026-08-21 08:05 | Draft of BV abstraction rule |
+| Logos | generated Lean (hand-patched) | `cb0e295c` | 2026-08-21 10:43 | AI soundness fix |
+| cvc5 fork | Eunoia signature | `879246e0f6` | 2026-08-21 11:08 | Fix unsound based on logos AI |
+| Logos | generated Lean (regenerated) | `6cf7559c` | 2026-08-21 11:32 | Fix from updated Eunoia, compiled |
+| Logos | Lean proof | `349e75ba` | 2026-08-21 14:38 | In progress |
+| Logos | Lean proof | `51d5d461` | 2026-08-21 16:15 | In progress, more |
+| Logos | Lean proof | `619c4a77` | 2026-08-21 16:33 | More |
+| Logos | Lean proof | `d38f92ca` | 2026-08-22 17:12 | Finish |
+| Logos | Lean proof | `af242ff5` | 2026-08-24 09:46 | Updates for 4.33 |
+| cvc5 fork | Eunoia signature, C++, unit test | `c68eefe266` | 2026-08-24 10:01 | Simplify proof rule |
+| Logos | generated Lean (regenerated) | `a413b4f6` | 2026-08-24 10:59 | Compile simplification |
+| Logos | Lean proof | `fb7260a0` | 2026-08-24 11:59 | Fixes to proof from simplification |
+| cvc5 fork | C++ | `bc3fbdc495` | 2026-08-27 15:12 | Format |
 
-*Checker* is the Logos development on its `bvAbstract` branch; *solver* is the
-cvc5 fork on its `bvAbstract-pf` branch, except for the first row, which is
-upstream cvc5 and reached that branch through an ordinary merge.
+*Logos* is its `bvAbstract` branch; *cvc5 fork* is the `bvAbstract-pf` branch of
+a fork of cvc5, which carries both the C++ and CPC's Eunoia signature. The first
+row is upstream cvc5 and reached that branch through an ordinary merge.
 
 ## Standing
 
