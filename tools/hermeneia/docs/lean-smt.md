@@ -137,32 +137,43 @@ CPC rule; lean-smt's `Smt/Reconstruct/` is **95 files**, with several hundred
 top-level rule and rewrite cases between them (counted by pattern, so a proxy,
 not a rule count). The baseline makes that number irrelevant, not smaller.
 
-### The chain composes, with real soundness and no `sorry`
+### The chain composes, against full CPC
 
-[`Instances/CpcMini/Refutation.lean`](../Instances/CpcMini/Refutation.lean) runs
-the whole path on Logos's CpcMini calculus (5 rules, `lake build
-CpcMini.Proofs.Checker` in 34 s wall):
+[`Instances/HermeneiaCpc/`](../Instances/HermeneiaCpc) runs the whole path
+against `Cpc` — 591 rules, the calculus cvc5 emits — in three files split by
+build cost:
 
 1. `__eo_checker_is_refutation F cmds = true` — `native_decide`;
 2. the two translation side conditions — `native_decide` and `trivial`;
-3. `correct___eo_is_refutation` — CpcMini's actual soundness theorem;
+3. `correct___eo_is_refutation` — CPC's soundness theorem;
 4. a model realising each native assignment — `default_typed_model` overridden
-   at one key, with `model_wf` re-proved;
-5. the translation and evaluation of the checked conjunction;
+   at an arbitrary finite set of keys, with `model_wf` re-proved;
+5. one evaluation fact per assumption, from the symbol laws;
 6. `∀ b : Bool, ¬ (b = true ∧ (!b) = true)` — a proposition in Lean's own terms.
 
-Elaboration: 0.77 s. No report contains `sorryAx`. This is Hermeneia's H2/H3
-done for one configuration, and it is the first evidence that the conclusion
-`eo_satisfiability ... false` can actually be *spent*.
+Steps 1, 2, 4, 5, 6 need only the semantics and check in **10 s** on top of a
+one-minute Logos build; step 3 is three lines in a separate file and is the only
+thing that needs CPC's 691,928-line proof development. The seam theorem —
+`no_realizing_model`, which is steps 5 and 6's whole interface — reports
+**no `native_decide` axiom at all**: just `propext`, `Classical.choice`,
+`Quot.sound`.
 
-The single fact that made step 4 tractable is worth naming, because the plan
-budgeted it as the hard part: **Logos already proves models exist.**
-`CpcMini/Proofs/TypePreservation/Nonvacuity.lean` builds `default_typed_model`,
-total and canonical at every well-formed SMT type, and proves it `model_wf`.
-Realising a native assignment is then an *override* at finitely many keys, whose
-`model_wf` obligation reduces to the typing and canonicality of the values put
-in — which is exactly `SortBridge.typed`. `model_fun_wf` is untouched by an
-override and transfers for free.
+Two facts made this cheap, and both are worth naming because the plan budgeted
+neither:
+
+**Logos already proves models exist.**
+`Cpc/Proofs/TypePreservation/Nonvacuity.lean` builds `default_typed_model`,
+total and canonical at every well-formed SMT type, and proves it `model_wf` — in
+a 14-job, 32-second build that does not touch a single rule proof. Realising a
+native assignment is then an *override* at finitely many keys: `model_fun_wf`
+constrains only `nativeFuns`, which an override leaves alone, and the rest
+reduces to the typing and canonicality of the values put in.
+
+**The composition is rule-free, so it can be developed without the rule proofs.**
+`correct___eo_is_refutation` names no rule; `Proofs/Checker.lean` is
+byte-identical between `Cpc` and `CpcMini` modulo the package name. Stating the
+bridge with Logos's conclusion as a *hypothesis* keeps the entire development
+inside the one-minute build, and pays the hours-long one once at the end.
 
 ## 4. Kernel reduction
 
@@ -221,15 +232,31 @@ quantified or nonlinear reasoning. They are listed here because they are
 invisible from the checker side and decisive on the bridge side, and because
 `ℝ` in particular is a *coverage regression* against what lean-smt does today.
 
-### 5.2 Nothing of the bridge is proved for CPC
+### 5.2 The bridge grows with the semantics, not with the calculus
 
-The instance is CpcMini: one sort, one constant, `not` and `and`. CPC's bridge
-needs, at minimum, Boolean variables and literals, `Int` with its operations and
-order, `eq`, and then whatever the target fragment adds. Each is a separate
-claim per sort signature, as [`docs/contract.md`](contract.md#4-operators-and-formulas-require-more)
-says. The `realizes` construction generalises (§3), but the operation laws do
-not: one per symbol, and the model-dependent partial operations (`div`, `mod` at
-zero) need a decision before a lemma.
+This is the question [`generality.md`](generality.md) is about, and the answer
+is favourable but conditional.
+
+Hermeneia bridges at `SmtTerm`, not at `Eo.Term`: `eo_satisfiability` is
+*defined* as `smt_satisfiability` of the translation, so the calculus enters
+only as a computation on the concrete assumptions. That makes CPC's **591 rules
+and 189 operators free**. What is left is **148 `SmtTerm` constructors** needing
+one evaluation law each and **15 `SmtType` constructors** needing a carrier. The
+instance has 4 laws and 2 sorts.
+
+The conditional part is that none of the machinery that keeps this honest as CPC
+moves exists yet: no decidable supported-fragment predicate, no exhaustive
+classifier that fails the build when a constructor is added, no
+Hermeneia-side `incomplete` verdict, no generated obligations, no recorded
+semantics identity. `generality.md` §4 lists the five, and until they exist the
+instance is evidence that the layering works rather than a system that stays
+honest by itself.
+
+One consequence for sequencing: a *coverage* proof (needed for quantifiers) is
+not independent per sort. Proving that nothing but `SmtValue.Boolean` has type
+`Bool` required shape lemmas about maps, sets, sequences and datatype
+application chains. Adding a sort can reopen every existing coverage proof;
+adding one cannot break an existing *realisation* proof.
 
 ### 5.3 The middle of the chain is two unverified translations meeting
 
@@ -299,7 +326,7 @@ the next.
 | stage | deliverable | check |
 | --- | --- | --- |
 | **L0** | Run lean-smt's test-suite queries through cvc5 → CPC → `logos` and publish the table. `probes/cpc-coverage/run.sh` already does this for a directory of queries; L0 is pointing it at lean-smt's. | A pass rate per theory. Needs no Lean. This decides whether the rest is worth doing. |
-| **L1** | Hermeneia H1/H2 for **CPC**, not CpcMini: `Int` and `Bool` literals, variables, `not`/`and`/`eq`, and the `realizes` override against `Cpc/Proofs/TypePreservation/Nonvacuity.lean`. | The CpcMini instance's six steps, reproduced against `Cpc`. Axioms reported. |
+| **L1** | Widen layers 2 and 3 of the existing CPC bridge: the rest of the Boolean and `Int` symbol laws, `eq`, and a decidable supported-fragment classifier ([`generality.md`](generality.md#4-the-five-mechanisms-that-keep-it-honest-as-it-grows) M1–M2). | `check-cpc.sh` still passes; a symbol outside the fragment is *reported*, not silently admitted. Axioms reported. |
 | **L2** | A `Term`-level Lean denotation `denote : Env → Term → Prop` for that fragment, plus the transfer theorem from `eo_satisfiability (argListAssumes F) false` to `∀ ρ, ¬ (denote ρ A₁ ∧ … )`. | Instantiated on a cvc5-produced proof, not a hand-written one. |
 | **L3** | A tactic taking a CPC proof and a list of Lean `Prop`s, producing `¬ andN as` — the type lean-smt's `reconstructProof` already returns — including the `denote ρ Aᵢ ↔ Pᵢ` obligations of §5.3, failing when they cannot be discharged. | Closes goals lean-smt closes, with a matching axiom report. |
 | **L4** | The gap-filler integration: lean-smt's `addTrust` steps re-queried and closed by L3. | lean-smt tests that currently leave goals close. |
@@ -310,9 +337,11 @@ decided. L4 is the first thing lean-smt would actually want.
 
 ## 7. What this investigation does not establish
 
-- **No CPC instance exists.** The composing instance is CpcMini. The `Cpc`
-  soundness theorem was read, not built here; its cost is taken from Logos's
-  README and CI configuration.
+- **The CPC composition step is not yet checked here.** Layers 0–3 and the
+  conditional example are checked against `Cpc`;
+  [`Refutation.lean`](../Instances/HermeneiaCpc/Refutation.lean), which applies
+  `correct___eo_is_refutation`, needs the whole proof development, whose cost is
+  taken from Logos's README and CI configuration rather than measured.
 - **The lean-smt side was read, not run.** No lean-smt build, no `smt` tactic
   invocation, no measurement of the existing reconstruction path to compare
   against.

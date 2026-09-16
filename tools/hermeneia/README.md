@@ -147,22 +147,33 @@ lake build
 It has no external Lake dependencies, and it does not by itself certify any
 Logos fragment.
 
-Beside it, [`Instances/CpcMini/`](Instances/CpcMini/Refutation.lean) is the
-first configuration that does compose with checker soundness. A refutation in
-Logos's CpcMini calculus is checked by reflection, carried through CpcMini's
-proved `correct___eo_is_refutation`, and turned into a proposition about Lean
-`Bool`s — with no `sorry` and no open soundness hypothesis. It imports a
+Beside it, [`Instances/HermeneiaCpc/`](Instances/HermeneiaCpc) is the first
+configuration that composes with a real checker, and it is against **full CPC**.
+It is in three files split by what each costs to check: a reusable bridge that
+names no proof rule and no calculus operator, a checked refutation carried to a
+Lean proposition conditional on Logos's conclusion, and three lines discharging
+that condition. The first two check in ten seconds on top of a one-minute Logos
+build; only the third needs CPC's 691,928-line proof development. It imports a
 neighbouring Logos checkout, so it stays outside this package's build and is run
 by its own script:
 
 ```bash
-Instances/CpcMini/check.sh <path-to-logos-checkout>
+Instances/check-cpc.sh <path-to-logos-checkout>          # bridge + conditional example
+Instances/check-cpc.sh --full <path-to-logos-checkout>   # also discharges the hypothesis
 ```
 
-See [`Instances/README.md`](Instances/README.md) for what an instance is and
-why these are not in `lakefile.toml`. What it establishes and what it does not
-is in [the ledger](docs/ledger.md#what-the-instance-has-checked): one calculus,
-one constant, no `Int`, no operation law, no fragment reached by induction.
+See [`Instances/README.md`](Instances/README.md) for what an instance is and why
+these are not in `lakefile.toml`. What it establishes and what it does not is in
+[the ledger](docs/ledger.md#what-the-instance-has-checked).
+
+[`docs/generality.md`](docs/generality.md) answers the question that decides
+whether any of this survives: **what has to happen as sorts, symbols and proof
+rules are added?** Because the bridge is stated about the SMT-LIB semantics
+rather than about the calculus, CPC's 591 rules and 189 operators cost nothing;
+what grows is 148 `SmtTerm` constructors and 15 sorts. It also sets out the five
+mechanisms — an exhaustive classifier, a Hermeneia-side `incomplete`, generated
+obligations, statements naming actual declarations, and a recorded semantics
+identity — without which a widening fragment stops being checkable.
 
 [`docs/lean-smt.md`](docs/lean-smt.md) asks what this would have to reach to be
 useful to [lean-smt][lean-smt] as a **baseline proof reconstruction** — one
@@ -206,13 +217,14 @@ initial charter. The configurable-semantics contract, initial plan, source
 ledger and standalone Lean interface experiment are present. Generic transfer
 and synthetic rejection proofs compile.
 
-Since launch, on the same day: the first concrete instance composes with a real
-checker soundness theorem and yields a native Lean proposition, for CpcMini and
-one Boolean constant; and [`docs/lean-smt.md`](docs/lean-smt.md) records what a
-baseline reconstruction for lean-smt would take. A `Cpc` instance, `Int`, any
-operation law, and a refutation of a solver-produced proof remain open. No
-dependency on this project has been introduced, and the instance is outside this
-package's build.
+Since launch, on the same day: the first concrete instance is against full CPC,
+with the refutation seam, model existence, two sorts in both directions and four
+symbol laws proved; [`docs/generality.md`](docs/generality.md) sets out what
+growth costs; and [`docs/lean-smt.md`](docs/lean-smt.md) records what a baseline
+reconstruction for lean-smt would take. Open: any operation law, a decidable
+supported fragment, the composition step's build, and a refutation of a
+solver-produced proof. No dependency on this project has been introduced, and
+the instance is outside this package's build.
 
 A person decides whether the project **graduates** into its own repository,
 is **folded** into its parent, or is **retired in place** with a note recording
