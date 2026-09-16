@@ -332,8 +332,8 @@ entire compiled CPC signature it lives beside.
 
 ## What it teaches about authoring
 
-The charter's [friction ledger](../README.md#the-charter) classifies each stumble
-by whose it is to fix. This episode's entries, in that shape:
+The [ledger](../README.md#the-ledger) classifies each difficulty by whose it is
+to fix. This episode's entries, in that shape:
 
 | what happened | whose | what it says |
 | --- | --- | --- |
@@ -344,9 +344,9 @@ by whose it is to fix. This episode's entries, in that shape:
 | the matching style chosen for readability set 56% of the proof burden | **irreducible** | constructive comparison and syntactic matching are both legitimate; they are not equally cheap to prove about, and the difference is invisible at the moment of choosing |
 | nothing runnable could have exposed the defect | **irreducible, and the reason the charter says what it says** | it was reachable only at bit-widths the abstraction module never produces and cvc5's own C++ checker already rejected, so no proof, test or fuzzer working from real cvc5 output would have reached it. What found it was somebody having to *state* the obligation |
 
-That last row is why [the charter](../README.md#the-charter) puts soundness out of
-scope in the words it does. A signature whose proof tests pass is a signature that
-accepts and rejects the proofs it was shown. This episode is the strongest
+That last row is why the [ledger](../README.md#the-ledger) refuses soundness
+claims. A signature whose proof tests pass is a signature that accepts and
+rejects the proofs it was shown. This episode is the strongest
 available evidence that the gap between that and soundness is real, is reached by
 competent people working carefully, and closes only when somebody states the
 obligation in a proof assistant.

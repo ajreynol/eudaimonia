@@ -13,11 +13,10 @@ whole suite:
 tools/mimesis/examples/resolution/check.sh path/to/ethos
 ```
 
-**What this does not do** is establish that the calculus is sound. Proof tests
-show that a signature accepts and rejects the proofs you showed it. The
-[charter](../README.md#the-charter) says why that distinction is the one this
-project refuses to blur, and [what was checked](#what-was-checked-and-what-was-not)
-says exactly what was run here.
+**This does not establish that the calculus is sound.** Proof tests show that a
+signature accepts and rejects the proofs you showed it, which is a different
+thing — see the [ledger](../README.md#the-ledger), and
+[what was checked](#what-was-checked-and-what-was-not) for exactly what was run.
 
 ## The calculus
 
@@ -273,7 +272,7 @@ directory.
 ## What it cost, for the ledger
 
 This tutorial is also a first-hand entry for the
-[ledger](../README.md#the-charter), classified the way every entry is:
+[ledger](../README.md#the-ledger), classified the way every entry is:
 
 | what happened | whose |
 | --- | --- |
@@ -286,7 +285,6 @@ This tutorial is also a first-hand entry for the
 **And what it does not measure.** This was written with the manual open and with
 the framework's own examples at hand, by somebody who had just spent a day
 reading a CPC rule. It is a *tutorial* — the artifact is meant to be correct and
-idiomatic — not the charter's clean first-hand episode, and the friction above is
-the friction of an informed author rather than a new one. The charter's
-[goal 4](../README.md#the-calculus-we-write-ourselves) wanted resolution for the
-uninformed version of that experiment, and this file spends it.
+idiomatic — and the friction above is an informed author's rather than a new
+one's. An uninformed first-hand run would need a calculus nobody here has looked
+up: this file spends resolution.
