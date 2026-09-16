@@ -21,8 +21,8 @@ module
 -- formula a proof's assumptions stand for. Everything on the path from a proof
 -- file to a verdict is operator-free.
 --
--- Logos has two versions of this. `CpcMini`'s is generic, as here; `Cpc`'s is a
--- 257-line specialization that names 32 individual rules, because some rules
+-- What ships here is the generic version. Logos's `Cpc` carries a 257-line
+-- specialization of it instead, naming 32 individual rules, because some rules
 -- need a stronger condition than "the arguments translate" -- and which kind a
 -- rule needs is discovered while proving it, not derived from the signature.
 -- Expect to strengthen `cmdTranslationOk` per rule as the proofs are written.

@@ -17,6 +17,11 @@ same signature reduced to five rules). The gap between them is the single most
 useful thing in this document: it shows which costs follow the **signature and
 its theories** and which follow the **rule count**.
 
+`CpcMini` is a second package Logos keeps because CPC is big enough that its
+full one takes minutes to build. It is measurement apparatus here and nothing a
+checker needs — your calculus almost certainly wants no equivalent, and the
+`--mini` option that would generate one is off by default.
+
 ## The inventory
 
 A generated checker, immediately after `install/install-<calculus>.sh`:

@@ -20,8 +20,8 @@
 (declare-const not (-> Bool Bool))
 
 ; Implication. Not used by the rule below, and not required by the checker
-; either -- it is here because compiling a *subset* of the rules (which is what
-; `install-@CALCLOWER@.sh --mini` does) runs a trimming stage that expects the
+; either -- it is here because compiling a *subset* of the rules
+; (`install-@CALCLOWER@.sh --rules ...`) runs a trimming stage that expects the
 ; signature to have one. Without it that stage fails with
 ; `Could not find target definition "=>"`.
 (declare-const => (-> Bool Bool Bool) :right-assoc)

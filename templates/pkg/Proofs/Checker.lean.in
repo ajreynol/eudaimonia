@@ -4,12 +4,13 @@ module
 -- is not meant to be written per checker. It carries a `sorry` here only
 -- because the template cannot yet ship the proof.
 --
--- In Logos the corresponding file is byte-identical between `Cpc` (591 rules)
--- and `CpcMini` (5 rules) -- packages that differ in rule set, in signature and
--- in which invariants their rules need. It names no rule and no operator, and
--- uses three `Term` constructors. It is a proof about a stack machine that
--- pushes assumptions and proven facts, and about the invariants that machine
--- maintains.
+-- It belongs with the files Eudaimonia takes verbatim from Logos's CPC proof:
+-- it names no rule and no operator, it uses three `Term` constructors, and
+-- Logos's own copy of it is byte-identical across two packages that differ in
+-- rule set, in signature and in which invariants their rules need. It is a
+-- proof about a stack machine that pushes assumptions and proven facts, and
+-- about the invariants that machine maintains -- not about CPC, and not about
+-- your calculus either.
 --
 -- The machine takes its assumptions as a `CArgList`, so the statement below is
 -- about a list rather than about a formula of your calculus. `argListAssumes`

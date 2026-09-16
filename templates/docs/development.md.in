@@ -156,8 +156,10 @@ Run it before a release, or after a regeneration.
 
 ### The reduced package
 
-When this project was generated with `--mini` it also carries `@MINI@` — the
-same signature compiled with a handful of rules and no parser.
+If this project was generated with `--mini` it also carries `@MINI@` — the same
+signature compiled with a handful of rules and no parser. Most projects are not:
+it answers a build-time problem, so it is worth having only for a calculus large
+enough to have one. CPC, at 591 rules, is the case it was added for.
 
 ```bash
 install/install-@CALCLOWER@.sh --mini    # refresh it from the signature
@@ -165,16 +167,10 @@ scripts/build.sh @MINI@                  # seconds, not minutes
 ```
 
 Measured on the CPC example: **8 seconds against 83**, 2,130 lines against
-20,350, five rule files against 591. That ratio is the entire point. A proof
-about the *checker* — an invariant, a preservation lemma, the soundness
-argument — does not depend on how many rules the calculus has, so develop it
-here and move it over once it holds.
-
-It is not a different calculus. Same signature, same semantics, fewer rules,
-which is what makes a proof developed against it worth moving. Logos reports
-the payoff bluntly: its `Proofs/Checker.lean` is byte-identical between the full
-and reduced packages, and the two differ in rule set, signature *and* required
-invariants — so a proof holding for both did not quietly depend on the calculus.
+20,350, five rule files against 591. A proof about the *checker* — an invariant,
+a preservation lemma, the soundness argument — does not depend on how many rules
+the calculus has, so develop it here and move it over once it holds. It is not a
+different calculus: same signature, same semantics, fewer rules.
 
 Which rules it keeps is set by `MINI_RULES` near the top of
 `install/install-@CALCLOWER@.sh`. Pick ones that exercise the *checker* rather

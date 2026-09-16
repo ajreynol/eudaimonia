@@ -194,7 +194,7 @@ cd checkers/Demo && lake build
 ### Starting a new calculus
 
 ```bash
-scripts/new-checker.sh --checker Demo --calculus Logic --dummy-rule --mini
+scripts/new-checker.sh --checker Demo --calculus Logic --dummy-rule
 cd checkers/Demo
 install/get-eo-compiler.sh
 install/install-logic.sh
@@ -215,9 +215,7 @@ rather start from `--spec`.
 
 `--out` decides where a checker is written; the default is `checkers/` here,
 which is not kept in git. A checker you mean to develop belongs in a repository
-of its own. `--mini` generates a reduced package that builds in seconds rather
-than minutes, and `--hygiene-ci` decides whether CI rejects `sorry` from day
-one.
+of its own. `--hygiene-ci` decides whether CI rejects `sorry` from day one.
 
 [Anatomy of a generated checker](docs/generated-checker.md) has the full option
 table, what each one produces, and what regenerating over an existing checker
@@ -402,7 +400,6 @@ Logos's.
 ```text
 <Checker>/                 <- the generated project, standalone
   <Calculus>/                the calculus: 23 modules + one file per rule
-  <Calculus>Mini/            the reduced package        (--mini)
   <Format>/                  reading the proof format   (--format-name)
   install/                   signature, semantics, and the compiler
   scripts/ docs/ test/       build, check, document, regress
@@ -424,6 +421,14 @@ scripts/run-ci.sh
 `run-ci.sh` passes: the package builds, every module compiles, the regression
 proofs get the verdicts they should, ethos agrees with all of them, and
 reinstalling from the signature reproduces the package byte-for-byte.
+
+CPC is also where `--mini` earns its keep. 591 rules is minutes to build, which
+makes developing a proof about the checker painful, so adding `--mini` to that
+first command generates `CpcMini` alongside `Cpc` — the same signature cut to
+the five rules in `examples/cpc/mini-rules`, no parser, filled in by
+`install/install-cpc.sh --mini`. It is an answer to CPC's size and nothing more:
+no other example here asks for it, and a calculus that builds in seconds has no
+use for one.
 
 The result reports one of three verdicts, and a rejection says *where* —
 `incorrect` names the command that got stuck, `incomplete` names what the
@@ -507,8 +512,9 @@ as a signal at all: unfinished is the normal state of a checker under
 development, so it cannot be what failure means.
 
 The six configurations cover the option surface that changes what is written:
-signature source, `--mini`, `--dummy-rule`, `--theorems none`, a theorem subset,
-`--format-name` and `--no-parser`.
+signature source, `--dummy-rule`, `--theorems none`, a theorem subset,
+`--format-name` and `--no-parser`. `--mini` is covered by CPC, which is
+generated and installed with it after the six.
 
 ### What is incorporated from Logos
 

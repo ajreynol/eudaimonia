@@ -1,22 +1,15 @@
 module
 
--- The root of the `@MINI@` library: the same calculus as `@CALCULUS@`, reduced
+-- The root of the `@MINI@` library: the same calculus as `@CALCULUS@`, cut down
 -- to a handful of rules.
 --
--- Its whole purpose is build time. The full package takes minutes to elaborate
--- and its proofs take hours; this one takes seconds, so a proof about the
--- checker itself -- an invariant, a preservation lemma, the soundness argument
--- -- can be developed against it and moved over once it holds.
---
--- It is compiled from the same signature by
--- `install/install-@CALCLOWER@.sh --mini`, with `--rules` naming the subset and
--- no parser. So it is not a different calculus: it is the same one with fewer
--- rules, which is what makes a proof developed here worth moving.
---
--- Logos does exactly this with `CpcMini`, and reports the payoff bluntly: its
--- `Proofs/Checker.lean` is byte-identical to `Cpc`'s, and the two packages
--- differ in rule set, signature *and* required invariants. A proof that holds
--- for both is one that did not quietly depend on the calculus.
+-- Its whole purpose is build time, and it is worth having only for a calculus
+-- big enough to have a build-time problem. The full package takes minutes to
+-- elaborate; this one takes seconds, so a proof about the checker itself -- an
+-- invariant, a preservation lemma, the soundness argument -- can be developed
+-- against it and moved over once it holds. It is compiled from the same
+-- signature by `install/install-@CALCLOWER@.sh --mini`, with `--rules` naming
+-- the subset and no parser, so it is not a different calculus.
 --
 -- No executable and no parser: nothing here reads a proof file.
 public import @MINI@.@CHECKER@

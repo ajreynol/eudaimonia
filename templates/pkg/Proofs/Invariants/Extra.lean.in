@@ -8,12 +8,12 @@ module
 -- ###########################################################################
 --
 -- `Proofs/Checker.lean` -- the ~25 preservation theorems and the soundness
--- theorem -- is *not* calculus-specific. In Logos it is byte-identical between
--- `Cpc` (591 rules) and `CpcMini` (5 rules), two packages that differ in rule
--- set, in signature, *and* in which invariants their rules need. It names no
--- rule and no operator.
+-- theorem -- is *not* calculus-specific. It names no rule and no operator, and
+-- it is the kind of file Eudaimonia takes verbatim from Logos's CPC proof
+-- rather than asking each checker to write.
 --
--- What differs between those two packages is this file.
+-- Across Logos's own two packages -- one signature, different rule sets --
+-- this file is the one that differs. It is where the calculus gets its say.
 --
 -- The core checker maintains three invariants of the proof state on its own:
 -- everything on the stack is well typed, translatable, and locally true. If
@@ -22,7 +22,7 @@ module
 -- mentioning what they stand for.
 --
 -- **A calculus that needs nothing extra leaves this as it is** -- pointed at
--- `True` -- and pays nothing for it. That is what `CpcMini` does.
+-- `True` -- and pays nothing for it. That is the common case.
 --
 -- In CPC the slot holds *variable stability*: every assumption on the stack
 -- stays true when the model's variable assignment is varied. It exists so that

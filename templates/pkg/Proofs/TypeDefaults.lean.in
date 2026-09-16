@@ -3,14 +3,15 @@ module
 -- **PROVEN.** Compiles, with no `sorry` of its own. You will not need to edit
 -- it; a signature install leaves it alone.
 --
--- Ported verbatim from Logos, where `Cpc/Proofs/Canonical/TypeDefaultBasic.lean`
--- is one of six files measured to be **byte-identical between `Cpc` (591 rules)
--- and `CpcMini` (5)** -- packages differing in rule set, in signature and in
--- required invariants. Logos guards that property with
--- `scripts/check-proof-modularity.sh`, so it is checked rather than assumed.
+-- **Taken verbatim from Logos's CPC proof**, where it is
+-- `Cpc/Proofs/Canonical/TypeDefaultBasic.lean` -- not restated and not adapted,
+-- the same text. It can be, because it depends on nothing but the generated
+-- `SmtModel` and so says nothing about CPC in the first place.
 --
--- It depends on nothing but the generated `SmtModel`, which is why it transfers
--- unchanged. Verified against a signature that is not CPC.
+-- It is one of six files `scripts/check-proof-modularity.sh` holds identical
+-- across Logos's two packages, which are built from the same signature with
+-- different rule sets -- so the property is tested there rather than assumed.
+-- Verified here against a signature that is not CPC.
 
 public import @CALCULUS@.SmtModel
 import all @CALCULUS@.SmtModel

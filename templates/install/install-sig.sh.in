@@ -51,9 +51,7 @@ Options:
   --mini               install the reduced package @MINI@ instead: the same
                        signature compiled with only the rules named by
                        --rules (or MINI_RULES in this script), and no parser.
-                       Nothing about the calculus changes -- it is the same
-                       one with fewer rules, which is what makes a proof
-                       developed there worth moving to the full package
+                       Only meaningful if this project was generated with one
   --check              install nothing; report whether @CALCULUS@/ is up to
                        date with the signature, exiting 1 if it is not
   --no-record          do not copy a signature given by path into

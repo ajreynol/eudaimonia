@@ -85,12 +85,17 @@ PROFILE_PARSER="yes"
 # ---------------------------------------------------------------------------
 
 # Also generate <CALCULUS>Mini: the same signature compiled with a handful of
-# rules and no parser, so proofs about the checker build in seconds rather than
-# minutes. Off by default -- it is a second package to keep in step.
+# rules and no parser.
+#
+# This exists for one situation: a calculus large enough that its package takes
+# minutes to build, which makes developing a proof about the checker painful.
+# CPC, at 591 rules, is such a calculus and is the reason the option is here.
+# Most are not, and a second package to keep in step is a real cost, so this is
+# off by default and the small examples do not use it.
 MINI="no"
 
 # Which rules that reduced package keeps. Taken from <spec>/mini-rules when a
-# --spec directory has one, so this is usually left empty.
+# --spec directory has one, as examples/cpc does, so this is usually left empty.
 MINI_RULES=""
 
 # Whether CI rejects `sorry` from the first commit. Off by default: a checker

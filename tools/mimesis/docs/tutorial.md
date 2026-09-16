@@ -262,7 +262,7 @@ cp tools/mimesis/examples/resolution/Resolution.eo  /tmp/res-spec/
 cp tools/mimesis/examples/resolution/Resolution.eos /tmp/res-spec/
 cp tools/mimesis/examples/resolution/profile        /tmp/res-spec/
 cp examples/hello/smt.eos                           /tmp/res-spec/   # unchanged
-scripts/new-checker.sh --checker Demo --calculus Resolution --spec /tmp/res-spec --mini
+scripts/new-checker.sh --checker Demo --calculus Resolution --spec /tmp/res-spec
 ```
 
 Those commands were **not** run here, and the spec directory is assembled

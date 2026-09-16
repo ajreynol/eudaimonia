@@ -19,7 +19,9 @@ here automatically.
 
 Only the small examples are built. CPC is generated and installed but not built:
 that takes minutes and 591 rule files, and nothing about it exercises the
-generator that the small ones do not.
+generator that the small ones do not -- except `--mini`, which is CPC's alone,
+because CPC is the only calculus here whose full package is slow enough for a
+reduced one to earn its keep.
 
 Options:
   --jobs N     parallel compile jobs (default: all processors)
@@ -94,8 +96,8 @@ cd "${repo_root}"
 # because every one of these is a Lean build.
 CONFIGS=(
   "Basic:Hello:examples/hello:"
-  "Scoped:Scoped:examples/scoped:--mini"
-  "Starter:Logic::--dummy-rule --mini"
+  "Scoped:Scoped:examples/scoped:"
+  "Starter:Logic::--dummy-rule"
   "NoTheorems:Hello:examples/hello:--theorems none"
   "SomeTheorems:Hello:examples/hello:--theorems nonvacuity,modelwf"
   "Renamed:Hello:examples/hello:--format-name Fmt --no-parser"
@@ -139,12 +141,6 @@ for cfg in "${CONFIGS[@]}"; do
   if ! run_logged "${name}: install" "${OUT}/${name}" "./install/install-${lower}.sh" --jobs "${JOBS}"; then
     echo "  install: FAILED"; failed+=("${name}/install"); continue
   fi
-  case "${opts}" in *--mini*)
-    if ! run_logged "${name}: install --mini" "${OUT}/${name}" \
-           "./install/install-${lower}.sh" --mini --jobs "${JOBS}"; then
-      echo "  install --mini: FAILED"; failed+=("${name}/mini"); continue
-    fi ;;
-  esac
 
   # The deeper test: run the generated project's *own* CI, which is what a
   # user gets. It builds the default targets, compiles every module it ships,
@@ -176,15 +172,24 @@ fi
 
 # CPC is generated and installed but not built: minutes, and 591 rule files that
 # exercise the compiler rather than the generator.
+#
+# It is also the only configuration here that asks for --mini, because it is the
+# only calculus big enough for the reduced package to be worth having. Nothing
+# smaller needs one, so nothing smaller generates one.
 echo
 echo "############ Cpc (generate and install only) ############"
 start=$(date +%s)
 if ./scripts/new-checker.sh --checker Big --calculus Cpc --spec examples/cpc \
-     --out "${OUT}" >/dev/null; then
+     --mini --out "${OUT}" >/dev/null; then
   rm -rf "${OUT}/Big/install/deps"; ln -s "${SHARED_DEPS}" "${OUT}/Big/install/deps"
   if run_logged "Cpc: install" "${OUT}/Big" ./install/install-cpc.sh --jobs "${JOBS}"; then
     n=$(ls "${OUT}/Big/Cpc/Proofs/Rules"/*.lean 2>/dev/null | wc -l)
-    echo "  ok ($(( $(date +%s) - start ))s, ${n} rule files)"
+    if run_logged "Cpc: install --mini" "${OUT}/Big" \
+         ./install/install-cpc.sh --mini --jobs "${JOBS}"; then
+      echo "  ok ($(( $(date +%s) - start ))s, ${n} rule files, and CpcMini)"
+    else
+      echo "  install --mini: FAILED"; failed+=("Cpc/mini")
+    fi
   else
     echo "  install: FAILED"; failed+=("Cpc/install")
   fi

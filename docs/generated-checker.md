@@ -66,9 +66,6 @@ scripts/run-ci.sh hygiene   # what is still `sorry`
     Proofs/Rules/            one file per rule of the signature
     Proofs/RuleSupport/      what every rule statement is written against
 
-  <Calculus>Mini.lean        the reduced package: same signature, few rules
-  <Calculus>Mini/
-
   install/                   regenerating the calculus from its signature
     defs/<Calculus>.eo         the Eunoia signature
     defs/<Calculus>.eos        what its symbols mean
@@ -188,15 +185,15 @@ changing it means changing the templates rather than working around them.
   Proofs/Rules/                  G+H  statement generated, proof yours
 ```
 
-**F\*** — `Proofs/Checker.lean` is neither yours to write nor yet copied in. In
-Logos the corresponding file is **byte-identical** between `Cpc` (591 rules) and
-`CpcMini` (5 rules) — packages differing in rule set, in signature, *and* in
-which invariants their rules need. It names no rule and no operator, and uses
-three `Term` constructors: it is a proof about a stack machine that pushes
-assumptions and proven facts, not about a calculus. It should arrive complete,
-and does not only because upstream maintains it per package rather than seeding
-it (`docs/eoc-requests.md` item 5, the top of that list). It carries a `sorry`
-today; it is still not where the calculus-specific work is.
+**F\*** — `Proofs/Checker.lean` is neither yours to write nor yet copied in. It
+belongs with the files Eudaimonia takes **verbatim** from Logos's CPC proof: it
+names no rule and no operator, uses three `Term` constructors, and Logos's own
+copy is byte-identical across two packages that differ in rule set, in signature
+*and* in which invariants their rules need. It is a proof about a stack machine
+that pushes assumptions and proven facts, not about a calculus. It should arrive
+complete, and does not only because upstream maintains it per package rather
+than seeding it (`docs/eoc-requests.md` item 5, the top of that list). It
+carries a `sorry` today; it is still not where the calculus-specific work is.
 
 Everything *outside* `<Calculus>/` is **F** as well: the format library, the
 scripts, the installer, the CI workflow, `Main.lean`, the Lake files. All copied
@@ -329,7 +326,7 @@ that one theorem closes the gap with no other file changing.
 | `--signature` / `--semantics` / `--smt-semantics` | `install/defs/*` |
 | `--spec DIR` | all three of the above at once, plus `test/` → `test/regress/`, `mini-rules` → `MINI_RULES`, and `profile` → `install/defs/profile.conf` |
 | `--dummy-rule` | with no signature given, a **working** starter instead of commented stubs: a one-rule signature, its semantics, and five regression proofs covering every verdict |
-| `--mini` | `<Calculus>Mini.lean`, `<Calculus>Mini/`, and a second `lean_lib` |
+| `--mini` | `<Calculus>Mini.lean`, `<Calculus>Mini/`, and a second `lean_lib`. For a calculus large enough to have a build-time problem; see below |
 | `--mini-rules "A B"` | which rules that package keeps (`MINI_RULES` in the install script) |
 | `--hygiene-ci` | whether `hygiene` is among the default groups of `scripts/run-ci.sh` |
 | `--theorems LIST` | which front-end theorems are written: `all`, `none`, or from `translation`, `nonvacuity`, `canonicity`, `modelwf`. `Proofs/Invariants/Extra.lean` and `Proofs/TypePreservation.lean` are always generated |
@@ -346,15 +343,22 @@ the generator:
   generator options. `--tip` overrides for one run. Note that the commit and
   `install/defs/smt.eos` are pinned *together*; see `install/README.md`.
 
-### Two options worth more than a table row
+### `--mini` is for CPC-sized calculi
 
 **`--mini`** generates a second package: the same signature compiled with a
 handful of rules and no parser, refreshed by `install/install-<calc>.sh --mini`.
-On the CPC example it builds in **8 seconds against 83**, from 2,130 lines
-against 20,350. A proof about the checker does not depend on how many rules the
-calculus has, so it can be developed there and moved across. Which rules it
-keeps comes from `--mini-rules`, or from a `mini-rules` file in the
-specification directory, as `examples/cpc` has.
+Which rules it keeps comes from `--mini-rules`, or from a `mini-rules` file in
+the specification directory — `examples/cpc` is the only one here that has one.
+
+It answers a build-time problem, so it is worth having only for a calculus that
+has one. On the CPC example the reduced package builds in **8 seconds against
+83**, from 2,130 lines against 20,350, and a proof about the checker does not
+depend on how many rules the calculus has, so it can be developed there and
+moved across. On a calculus that already builds in seconds it buys nothing and
+costs a second package to keep in step, which is why it is off by default and
+why the small examples do not use it.
+
+### `--hygiene-ci`
 
 **`--hygiene-ci`** decides whether `scripts/check-proof-hygiene.sh` runs in CI
 from the first commit. It greps for `sorry`, `admit` and `axiom`, builds

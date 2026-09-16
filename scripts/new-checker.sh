@@ -54,11 +54,12 @@ Options:
  Development scaffolding -- what the generated project contains, rather than
  facts about the calculus:
 
-  --[no-]mini           also generate <CALCULUS>Mini: the same calculus reduced
-                        to a few rules, so proofs about the checker can be
-                        developed against something that builds in seconds
+  --[no-]mini           also generate <CALCULUS>Mini: the same calculus cut to
+                        a few rules. For a calculus large enough that its full
+                        package takes minutes to build; CPC is the one that is
   --mini-rules "A B"    the rules that reduced package keeps. Taken from
-                        <spec>/mini-rules when a --spec directory has one
+                        <spec>/mini-rules when a --spec directory has one, as
+                        examples/cpc does
   --[no-]hygiene-ci     whether CI rejects `sorry` from the first commit
   --theorems LIST       which front-end theorems to include, comma-separated
                         from: translation, nonvacuity, canonicity, modelwf.
@@ -232,14 +233,11 @@ if [ -n "${SPEC_DIR}" ]; then
 fi
 
 # Which rules a reduced package keeps is a fact about the calculus, so a
-# specification directory can name them, as it can carry its own tests.
+# specification directory can name them, as it can carry its own tests. Only a
+# calculus big enough to need one carries the file: examples/cpc has it and the
+# other two examples do not.
 if [ -z "${MINI_RULES}" ] && [ -n "${SPEC_DIR}" ] && [ -f "${SPEC_DIR}/mini-rules" ]; then
   MINI_RULES="$(tr '\n' ' ' < "${SPEC_DIR}/mini-rules" | tr -s ' ')"
-fi
-# The starter signature knows its own rule, so a starter project can have a
-# reduced package without being told anything.
-if [ -z "${MINI_RULES}" ] && [ "${DUMMY_RULE}" = "yes" ] && [ -z "${SIGNATURE}" ]; then
-  MINI_RULES="$(tr -d '\n' < "${script_dir}/../templates/starter/mini-rules.in")"
 fi
 
 for named in "${SIGNATURE}" "${SEMANTICS}" "${SMT_SEMANTICS}"; do
@@ -458,7 +456,8 @@ python3 - "${DEST}/lakefile.toml" "${MINI_LIB}" "${MINI_TARGET}" "${FORMAT}" <<'
 import sys, pathlib
 path, lib, target, fmt = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 p = pathlib.Path(path); t = p.read_text()
-t = t.replace("@MINI_LIB@", lib)
+# The blank line closing the stanza: command substitution eats it on the way in.
+t = t.replace("@MINI_LIB@", lib + "\n\n" if lib else lib)
 # Keyed on the format library's actual name, which --format-name can change.
 anchor = 'defaultTargets = ["%s", ' % fmt
 assert anchor in t, "lakefile default targets not found"
