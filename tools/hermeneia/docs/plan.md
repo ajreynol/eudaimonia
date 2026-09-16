@@ -16,18 +16,20 @@ extension proposals stay here until separately adopted by their owner.
 
 ## Growing the fragment comes before widening it
 
-[`generality.md`](generality.md) works out what each kind of addition to CPC
-costs this project. Two findings change the order of the table above.
+[`generality.md`](generality.md) draws the dependency boundary. Two findings
+change the order of the table above.
 
-**Rules and calculus operators cost nothing**, because the bridge is stated
-about `SmtTerm` rather than `Eo.Term`. The surface that grows is the semantics:
-148 `SmtTerm` constructors and 15 `SmtType` constructors, against CPC's 591
-rules and 189 operators. So H4's breadth is cheaper than it looks.
+**The calculus is not in Hermeneia's interface.** The bridge is stated about
+`SmtTerm` rather than `Eo.Term`, and names zero proof rules, zero operators and
+no Logos proof. Keeping Logos in step with CPC is Logos's responsibility; CPC
+growth reaches this project only when it makes Logos extend `smt.eos`. What
+Hermeneia tracks is 148 `SmtTerm` constructors and 15 sorts. So H4's breadth is
+cheaper than it looks.
 
 **But nothing yet keeps the fragment honest while the semantics moves.** There
 is no decidable supported-fragment predicate, no exhaustive classifier that
 fails the build when a constructor is added, no Hermeneia-side `incomplete`
-verdict, and no recorded semantics identity. Those are `generality.md` §4's five
+verdict, and no recorded semantics identity. Those are `generality.md` §5's five
 mechanisms, and they belong in H5 — which therefore should come **before** H4,
 not after it. Widening a fragment that cannot report its own edges produces
 coverage claims nobody can check.

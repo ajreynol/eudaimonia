@@ -5,6 +5,13 @@ the embedded SMT-LIB semantics and Lean's own logic, so that a theorem about an
 embedded formula can become a theorem about the values and propositions a Lean
 development uses.
 
+**Where it is right now.** An assessment with a working demonstration under it,
+not a usable component. [Status](#status) is the honest inventory — what is
+machine-checked, what is only measured, and what does not exist. The two
+questions it is currently being asked are
+[(A) what serving lean-smt would take](#a-what-serving-lean-smt-would-take) and
+[(B) what maintaining it would cost](#b-what-maintaining-it-would-cost).
+
 ## The charter
 
 **The question.** What must be proved to carry a checked refutation out of the
@@ -121,69 +128,134 @@ toolchain it uses. Noesis and Hermeneia answer different questions: preserving
 meaning through compilation, and relating that meaning to native Lean
 statements. Neither project's completion is assumed here.
 
-## Initial technical work
+## Status
 
-The [correspondence contract](docs/contract.md) accounts for the configurable
-calculus translation, SMT evaluation and native backend definitions. It spells
-out what it means for `Term.Numeral n` to denote Lean's `n : Int`, and proposes
-native-meaning and proof fields that could eventually accompany `.eos` entries.
-These are proposed fields; the existing compiler does not accept them.
+**This is an assessment, not a service.** Nothing here is usable by anyone yet.
+What exists is enough evidence to answer two questions — what serving
+[lean-smt][lean-smt] would take, and what maintaining it would cost — and the
+tables below say exactly which parts of that evidence are machine-checked.
 
-The [implementation plan](docs/plan.md) gives ordered deliverables and completion
-checks. The [ledger](docs/ledger.md) records inspected sources, semantic
-boundaries, and the distinction between source observations and proved coverage.
+Everything was checked on 2026-09-16 against the revisions in
+[the ledger](docs/ledger.md#evidence-baseline), with a scratch copy of Logos.
+There is no CI; every check is a script a person runs.
 
-A standalone [Lean contract experiment](Hermeneia/Contract.lean) checks literal
-and operation interfaces and proves generic refutation transfer. Its
-[synthetic checks](Hermeneia/Checks.lean) prove that changing literal meaning,
-translation or addition breaks the fixed correspondence, and that a vacuous
-model class cannot support every native assignment. Run it independently:
+### What is machine-checked
+
+| claim | where | status |
+| --- | --- | --- |
+| Generic contract interfaces and their refutation transfer | [`Hermeneia/Contract.lean`](Hermeneia/Contract.lean) | **compiles.** No Logos instance; parameters uninstantiated |
+| Changing a literal's meaning, its translation, or addition breaks a fixed correspondence; a vacuous model class cannot realise an inhabited assignment space | [`Hermeneia/Checks.lean`](Hermeneia/Checks.lean) | **compiles.** Synthetic fixtures, not generated from `.eos` |
+| The refutation seam: no well-formed model makes every assumption of a checked refutation true | `Bridge.lean`, `no_realizing_model` | **compiles against full CPC.** Axioms: `propext`, `Classical.choice`, `Quot.sound` — *no* `native_decide` |
+| Every finite native assignment reaches a globally well-formed model | `Bridge.lean`, `exists_model` | **compiles.** Inherits two `native_decide` axioms from Logos's canonicality proofs |
+| Sort carriers with their obligations | `Bridge.lean`, `boolSort`/`intSort`/`ratSort`, `boolCover`/`intCover` | **compiles.** `Bool` and `Int` in **both** directions (realise *and* cover); `Real` realises to `Rat` only. **2 of 15** sorts fully, a third partly |
+| Symbol laws for `and`, `not`, Bool literals, `UConst` | `Bridge.lean` | **compiles.** **4 of 148** `SmtTerm` constructors |
+| One refutation carried to a Lean proposition, conditional on Logos's conclusion | `Example.lean`, `native_refutation` | **compiles.** Two assumptions, one Boolean constant, hand-written |
+| The three lines that discharge that condition, against a *transcription* of `correct___eo_is_refutation` | `Example.lean`, `refutation_of_soundness` | **compiles.** The transcription is confirmed by reading, not by a build |
+| The same three lines against the *real* theorem | [`Refutation.lean`](Instances/HermeneiaCpc/Refutation.lean) | **never compiled.** Needs CPC's whole proof development — a build attempt ran out of disk; see [the ledger](docs/ledger.md#measurements-taken-2026-09-16) |
+
+### What is measured but not proved
+
+| measurement | result |
+| --- | --- |
+| Reflection cost: `native_decide` vs `#eval!` on a 2244-command, 1.6 MB CPC proof | 20.99 s vs 21.07 s — producing the proof term is free |
+| Kernel reduction of a checker run (`decide`, `rfl`) | **stuck**, not slow. 9 of 4784 generated `Eo` constants use well-founded recursion; `__eo_is_closed_rec` is on every run's path |
+| `native_decide` inside Logos's own proofs | 604 occurrences under `Cpc/` — the Lean compiler is already in the trusted base of the theorem this composes with |
+| cvc5 → CPC → `logos` under lean-smt's own solver options | 12 of 12 `correct` ([`probes/cpc-coverage/`](probes/cpc-coverage/README.md)). A granularity sanity check on small queries, **not** a coverage result |
+
+### What does not exist
+
+- **No solver-produced proof has ever gone through the bridge.** Everything
+  above is one hand-written refutation of `p` and `not p`. This is the largest
+  single gap.
+- No tactic, no `MetaM` code, no lean-smt integration, and nothing proposed to
+  lean-smt. `docs/lean-smt.md` is an assessment written here.
+- No decidable supported-fragment predicate, so the bridge cannot yet *say*
+  what it does and does not cover.
+- No operation law for any symbol — no arithmetic, no equality.
+- No generated obligations, and no recorded semantics digest.
+
+## (A) What serving lean-smt would take
+
+[`docs/lean-smt.md`](docs/lean-smt.md) is the assessment; its staged plan is
+L0–L5. The shape of the answer:
+
+**The deliverable is a term of a type lean-smt already consumes.** Its
+`reconstructProof` returns `¬ andN as`; Logos concludes the same shape in the
+embedded logic. So the baseline is a second justification for the same
+interface, not a new one — usable whole-proof, or as a gap-filler for the steps
+lean-smt today leaves as goals.
+
+**Four things make the seam short**, all of them already built by someone else:
+Logos states soundness about a *decidable function*; it has a second front end
+that skips the parser; lean-cvc5 already prints `ProofFormat.CPC` in-process;
+and all three projects pin `leanprover/lean4:v4.33.0`.
+
+**The hard parts are not the rules.** They are (i) the per-sort narrowings —
+`Real` is `Rat`, so there is no bridge to Mathlib's `ℝ`, which is a coverage
+*regression* against what lean-smt does today; (ii) the seam where two
+unverified translations meet, which must be closed by a *checked* obligation per
+assumption rather than by trust; and (iii) packaging a dependency an order of
+magnitude larger than lean-smt itself.
+
+**The cheapest next step is L0**, which needs no Lean: run lean-smt's own test
+suite through cvc5 → CPC → `logos` and publish the pass rate.
+`probes/cpc-coverage/run.sh` already does this for a directory of queries.
+
+## (B) What maintaining it would cost
+
+[`docs/generality.md`](docs/generality.md) draws the boundary. Measured, the
+reusable bridge names **45** declarations of the SMT-LIB semantics, **5** of the
+calculus, and **zero** proof rules, operators or Logos proofs.
+
+| if this changes | Hermeneia's cost |
+| --- | --- |
+| a CPC proof rule is added (591 today) | **none** — not in the interface |
+| a CPC operator is added (189 today) | **none**, unless it makes Logos add an `SmtTerm` constructor |
+| an `SmtTerm` constructor is added (148 today) | one evaluation law, or classify it unsupported |
+| an `SmtType` is added (15 today) | a carrier and a realisation proof; a coverage proof too if quantifiers are in scope — and coverage proofs are **not** independent per sort, so this can reopen existing ones |
+| an existing `smt.eos` symbol changes meaning | the affected law fails to prove — loud and local |
+| the checker theorem's statement changes | `Refutation.lean` stops compiling — three lines |
+
+So the maintenance burden scales with **how much has been certified**, not with
+how fast CPC moves. Today that is about 360 lines of bridge, and a semantics
+regeneration would break its proofs loudly. What is missing is the other half:
+nothing yet *reports* a newly added constructor, so coverage could rot silently
+while every existing proof still passes. `generality.md` §5 lists the five
+mechanisms that fix that — an exhaustive classifier, a Hermeneia-side
+`incomplete`, generated obligations, statements naming actual declarations, and
+a recorded semantics identity. **None is built.** Until they are, this is a
+demonstration that the layering works, not a system that stays honest by itself.
+
+## What is written down
+
+| document | what it is for |
+| --- | --- |
+| [`docs/contract.md`](docs/contract.md) | What is being related, per configuration; the proposed `.eos` annotation fields (not accepted by the compiler today) |
+| [`docs/plan.md`](docs/plan.md) | Ordered deliverables H0–H5 with completion checks, and why H5 now precedes H4 |
+| [`docs/generality.md`](docs/generality.md) | The dependency boundary and what growth costs — question (B) |
+| [`docs/lean-smt.md`](docs/lean-smt.md) | The baseline-reconstruction assessment and its L0–L5 plan — question (A) |
+| [`docs/ledger.md`](docs/ledger.md) | Per-sort and per-symbol status, semantic boundaries, inspected revisions, and every measurement above |
+| [`Instances/README.md`](Instances/README.md) | What an instance is, and why it is outside this package's build |
+
+## Running the checks
+
+The package itself has no external Lake dependencies:
 
 ```bash
 cd tools/hermeneia
 lake build
 ```
 
-It has no external Lake dependencies, and it does not by itself certify any
-Logos fragment.
-
-Beside it, [`Instances/HermeneiaCpc/`](Instances/HermeneiaCpc) is the first
-configuration that composes with a real checker, and it is against **full CPC**.
-It is in three files split by what each costs to check: a reusable bridge that
-names no proof rule and no calculus operator, a checked refutation carried to a
-Lean proposition conditional on Logos's conclusion, and three lines discharging
-that condition. The first two check in ten seconds on top of a one-minute Logos
-build; only the third needs CPC's 691,928-line proof development. It imports a
-neighbouring Logos checkout, so it stays outside this package's build and is run
-by its own script:
+The CPC instance imports a neighbouring Logos checkout, so it is outside that
+build and has its own script:
 
 ```bash
 Instances/check-cpc.sh <path-to-logos-checkout>          # bridge + conditional example
-Instances/check-cpc.sh --full <path-to-logos-checkout>   # also discharges the hypothesis
+Instances/check-cpc.sh --full <path-to-logos-checkout>   # also the real discharge
 ```
 
-See [`Instances/README.md`](Instances/README.md) for what an instance is and why
-these are not in `lakefile.toml`. What it establishes and what it does not is in
-[the ledger](docs/ledger.md#what-the-instance-has-checked).
-
-[`docs/generality.md`](docs/generality.md) answers the question that decides
-whether any of this survives: **what has to happen as sorts, symbols and proof
-rules are added?** Because the bridge is stated about the SMT-LIB semantics
-rather than about the calculus, CPC's 591 rules and 189 operators cost nothing;
-what grows is 148 `SmtTerm` constructors and 15 sorts. It also sets out the five
-mechanisms — an exhaustive classifier, a Hermeneia-side `incomplete`, generated
-obligations, statements naming actual declarations, and a recorded semantics
-identity — without which a widening fragment stops being checkable.
-
-[`docs/lean-smt.md`](docs/lean-smt.md) asks what this would have to reach to be
-useful to [lean-smt][lean-smt] as a **baseline proof reconstruction** — one
-uniform justification for any CPC proof, in place of its per-rule replay. It
-records what was measured — reflection on a 2244-command proof costs nothing
-over running the checker, and twelve solver-produced CPC proofs under lean-smt's
-own options all check ([`probes/cpc-coverage/`](probes/cpc-coverage/README.md),
-rerunnable) — what blocks kernel reduction, and where the difficulty actually
-is: not the 591 rules, but three narrowed sorts. It is a proposal to a project
-that has not been asked, and nothing depends on it.
+`--full` needs roughly 15 GB free in that checkout's `.lake/`; see
+[`Instances/README.md`](Instances/README.md).
 
 ## The name
 
@@ -210,21 +282,14 @@ can impose. Candidate feedback stays here until a person carries it through
 the parent's reporting process. Hermeneia has no separate correspondence
 channel and speaks on no other project's behalf.
 
-## Status and endings
+## Endings
 
-**Started 2026-09-16 by explicit maintainer instruction.** This README is the
-initial charter. The configurable-semantics contract, initial plan, source
-ledger and standalone Lean interface experiment are present. Generic transfer
-and synthetic rejection proofs compile.
+**Started 2026-09-16 by explicit maintainer instruction**, and everything above
+dates from that day. [Status](#status) is the current inventory; this section is
+only about how the project can end.
 
-Since launch, on the same day: the first concrete instance is against full CPC,
-with the refutation seam, model existence, two sorts in both directions and four
-symbol laws proved; [`docs/generality.md`](docs/generality.md) sets out what
-growth costs; and [`docs/lean-smt.md`](docs/lean-smt.md) records what a baseline
-reconstruction for lean-smt would take. Open: any operation law, a decidable
-supported fragment, the composition step's build, and a refutation of a
-solver-produced proof. No dependency on this project has been introduced, and
-the instance is outside this package's build.
+No dependency on this project has been introduced anywhere, and the instance is
+outside this package's build, so retiring it costs nothing.
 
 A person decides whether the project **graduates** into its own repository,
 is **folded** into its parent, or is **retired in place** with a note recording

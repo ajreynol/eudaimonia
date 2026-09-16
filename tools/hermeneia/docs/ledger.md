@@ -131,8 +131,8 @@ realises and does not cover, since negative numerals are no `Nat` — so an
 embedded `∀` over `Int` is not a Lean `∀ n : Nat` without a guard. lean-smt
 embeds `Nat` this way.
 
-[`generality.md`](generality.md) works this through for all four kinds of
-addition.
+[`generality.md`](generality.md) works this through, and draws the boundary it
+sits inside: Logos tracking CPC is assumed, not audited here.
 
 ## Where the semantics is narrower than Lean
 
@@ -171,6 +171,15 @@ These are facts about builds and runs, not about correspondence.
 | vocabulary that the bridge must cover | `SmtTerm` 148 constructors, `SmtType` 15, `SmtValue` 14 |
 | vocabulary that costs it nothing | `CRule` 591, `UserOp`+`UserOp1..3` 189 |
 | `Cpc/Proofs/Checker.lean` vs `CpcMini/Proofs/Checker.lean` | byte-identical modulo the package name; likewise `TypePreservation/Nonvacuity.lean` |
+| CPC rule proofs, partial build | 107 of 591 modules produced **1.6 GB** of oleans, so the full set needs roughly 9 GB and the whole `.lake` around 15 GB |
+
+The last row is why `check-cpc.sh --full` has not been run here: the attempt was
+made in a 7.8 GB scratch filesystem and was stopped for memory with 1.3 GB of
+disk left, which would not have been enough regardless. It is a capacity fact,
+not a result about the proof. `Instances/HermeneiaCpc/Example.lean`'s
+`refutation_of_soundness` checks the same three lines against a transcription of
+the theorem's statement, so what `--full` would add is confirmation that the
+transcription matches.
 
 The reflection and coverage measurements are read in full, with their
 consequences, in [`lean-smt.md`](lean-smt.md).
@@ -195,4 +204,4 @@ here, because it needs the whole proof development.
 
 These fixtures are still not generated from `.eos`, and there is no decidable
 supported-fragment predicate — see
-[`generality.md`](generality.md#4-the-five-mechanisms-that-keep-it-honest-as-it-grows).
+[`generality.md`](generality.md#5-the-five-mechanisms-that-keep-it-honest-as-the-semantics-grows).

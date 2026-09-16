@@ -94,7 +94,24 @@ theorem native_refutation
     rw [ht, eval_not, eval_uconst, M_lookup]
     simp [__smtx_model_eval_not, native_not, h2]
 
+/-! ## The shape of the discharge, checked without the proof development
+
+[`Refutation.lean`](Refutation.lean) applies CPC's `correct___eo_is_refutation`,
+and importing that theorem costs hours. This says the same three lines against
+its *statement*, taken as a hypothesis and transcribed from
+`Cpc/Proofs/Checker.lean`, so that everything except "the real theorem has this
+statement" is checked in the one-minute build. The transcription is the one
+thing a reader must confirm by eye.
+-/
+theorem refutation_of_soundness
+    (soundness : ∀ (F' : CArgList) (pf : CCmdList),
+      TranslatableAssumptionList F' -> CmdListTranslationOk pf ->
+      eo_is_refutation F' pf -> eo_satisfiability (argListAssumes F') false) :
+    ∀ b : Bool, ¬ (b = true ∧ (!b) = true) :=
+  native_refutation (soundness F cmds transOk cmdsOk (eo_is_refutation.intro F cmds checked))
+
 end Hermeneia.Cpc.Example
 
 #print axioms Hermeneia.Cpc.Example.M_wf
+#print axioms Hermeneia.Cpc.Example.refutation_of_soundness
 #print axioms Hermeneia.Cpc.Example.native_refutation

@@ -1,28 +1,78 @@
-# What has to happen as the calculus grows
+# What Hermeneia depends on, and what it therefore tracks
 
-**The question.** Hermeneia's first instance bridges one sort and two symbols.
-CPC has 591 rules and 189 operators today and will have more tomorrow. What of
-this project has to be redone each time something is added, and what does not?
+**The premise.** Hermeneia assumes Logos evolves as CPC does. Keeping the
+checker, its rule proofs and its semantics in step with the calculus is Logos's
+responsibility, and nothing here is a claim on it. This document is about the
+other side of that assumption: **given** a Logos that tracks CPC, what does
+Hermeneia have to redo, and when?
 
-**The answer, in one line.** Rules and calculus operators cost nothing. The
-cost is in the *semantics*: one law per `SmtTerm` constructor, and one carrier
-with two separate directions per `SmtType` constructor. Those are the numbers to
-watch, and they are much smaller and much slower-moving than the calculus.
+**The answer.** Hermeneia is not downstream of the calculus. It is downstream of
+the *semantics* and of one theorem's *statement*. CPC can gain rules and
+operators indefinitely without reaching this project; the channel by which CPC
+growth eventually does reach it is Logos extending `smt.eos`, and only then.
 
-## 1. The scaling law
+## 1. The dependency boundary, measured
 
-| what is added | today | what Hermeneia owes | why |
-| --- | --- | --- | --- |
-| a CPC **proof rule** | 591 | **nothing** | `correct___eo_is_refutation` names no rule. Measured: the file stating it is byte-identical between `Cpc` (591 rules) and `CpcMini` (5). |
-| a CPC **operator** (`UserOp`/`UserOp1..3`) | 189 | **nothing**, if it translates into `SmtTerm` constructors that already have laws | `eo_satisfiability t b` is *defined* as `smt_satisfiability (__eo_to_smt t) b`, so the calculus is discharged by *computing* `__eo_to_smt` on the concrete assumptions, never by reasoning about it |
-| an **`SmtTerm` constructor** | 148 | one evaluation law, or it is classified unsupported | layer 3 of [`Bridge.lean`](../Instances/HermeneiaCpc/Bridge.lean) |
-| an **`SmtType`** (a sort) | 15 | a carrier, a realisation proof, and — for quantifiers — a coverage proof | layer 2 |
-| a change to an **existing** `smt.eos` symbol | — | the affected law must *fail to prove*, not silently pass | §4 |
+`Instances/HermeneiaCpc/Bridge.lean` is the reusable layer — the refutation
+seam, model realisation, sorts and symbol laws. Counting the declarations it
+names from Logos:
 
-The shape of that table is the whole design. It is achieved by one decision,
-which is §2.
+| what it names | how many | examples |
+| --- | --- | --- |
+| the **SMT-LIB semantics** (`Smtm`) | **45** | `smt_satisfiability`, `model_wf`, `__smtx_model_eval`, `__smtx_typeof_value`, `default_typed_model`, the `SmtType`/`SmtValue`/`SmtTerm` constructors it classifies |
+| the **calculus**, in total | **5** | `eo_satisfiability`, `__eo_to_smt`, `argListAssumes`, `CArgList.nil`, `CArgList.cons` |
+| CPC **proof rules** (`CRule`) | **0** | — |
+| CPC **operators** (`UserOp`, `UserOp1..3`) | **0** | — |
+| Logos's **proof** of anything | **0** | the bridge imports no rule proof and rechecks none |
 
-## 2. Bridge at the semantics, not at the calculus
+The five calculus names are all type-level or fold-level: none of them is an
+operator, and the bridge never case-splits on `Eo.Term`. Two definitional facts
+about the fold are needed and are discharged by `rfl` — that `argListAssumes`
+builds an `and`-chain which `__eo_to_smt` sends to `SmtTerm.and`, and that the
+Bool literals translate. Those are exactly Eudaimonia's
+[signature contract](../../../README.md#the-signature-contract), which the
+framework already requires of any signature it will generate a checker for.
+They are not *named* anywhere; they are enforced by two `rfl`s that would fail.
+
+Separately, `Example.lean` and `Refutation.lean` name **five** declarations from
+the checker theorem's statement — `correct___eo_is_refutation`,
+`eo_is_refutation.intro`, `__eo_checker_is_refutation`,
+`TranslatableAssumptionList`, `CmdListTranslationOk` — and nothing from its
+proof. `Refutation.lean` is three lines for exactly that reason.
+
+So Hermeneia depends on three things, and the third is tiny:
+
+1. the SMT-LIB semantics `smt.eos`;
+2. the **statement** of the checker theorem and its two side conditions;
+3. the signature contract's `and` and Bool literals.
+
+**And on none of these:** CPC's rule set, CPC's operator set, or the
+correctness of any Logos proof. Hermeneia composes with the checker theorem and
+retains whatever hypotheses it carries; it does not re-establish it.
+
+## 2. What that buys, and what it does not
+
+Because the dependency runs through the semantics, the things that can be added
+to, or changed in, the ecosystem land very differently:
+
+| what is added | today | does Hermeneia react? |
+| --- | --- | --- |
+| a CPC **proof rule** | 591 | **no** — `correct___eo_is_refutation` names no rule. Measured: the file stating it is byte-identical between `Cpc` (591 rules) and `CpcMini` (5). |
+| a CPC **operator** (`UserOp`/`UserOp1..3`) | 189 | **no**, as long as Logos translates it into `SmtTerm` constructors that already have laws |
+| an **`SmtTerm` constructor** | 148 | **yes** — one evaluation law, or it is classified unsupported (layer 3) |
+| an **`SmtType`** (a sort) | 15 | **yes** — a carrier, a realisation proof, and, for quantifiers, a coverage proof (layer 2) |
+| a change to an **existing** `smt.eos` symbol | — | **yes, loudly** — the affected law must fail to prove, not silently pass (§5) |
+| a change to the checker theorem's **statement** | — | **yes, loudly** — `Refutation.lean` stops compiling |
+
+The rows that say "no" are not claims that the work is cheap. They are claims
+that the work is not Hermeneia's: when CPC gains an operator, someone extends
+`Cpc.eo` and someone extends the semantics, and Hermeneia is reached only if
+that second step introduced a constructor it has no law for.
+
+The rows that say "yes" are the real backlog, and they are bounded by numbers an
+order of magnitude smaller than the calculus's.
+
+## 3. Why the boundary sits there
 
 Hermeneia could have been written as an induction over `Eo.Term`, with a case
 per `UserOp`. It is not. Every theorem in [`Bridge.lean`](../Instances/HermeneiaCpc/Bridge.lean)
@@ -42,14 +92,14 @@ identifies `smt.eos` by digest in a checker's
 [profile](../../../docs/generated-checker.md); any two checkers agreeing on that
 digest can share this bridge unchanged. Retargeting it is an import change.
 
-Two calculus-level facts *are* needed, and they are exactly Eudaimonia's
-[signature contract](../../../README.md#the-signature-contract): a binary `and`
-sent to `SmtTerm.and`, and the Bool literals. Both hold by `rfl` here, and the
-contract already requires them of any signature the framework will generate a
-checker for. A signature that broke either would break `eval_argListAssumes`
-rather than pass silently.
+This was a choice, not an accident, and it is the choice everything else in this
+document rests on. Written the other way — an induction over `Eo.Term` with a
+case per `UserOp` — Hermeneia would have acquired a 189-case obligation that
+grows with every CPC release, for no gain: the cases would have been about
+translating into the same `SmtTerm` constructors the semantics layer already
+has laws for.
 
-## 3. Sorts have two directions, and they behave differently
+## 4. Sorts have two directions, and they behave differently
 
 | direction | what it says | who needs it | how it scales |
 | --- | --- | --- | --- |
@@ -85,7 +135,7 @@ decisions.
 
 [conf]: https://github.com/cvc5/logos/blob/main/docs/smt-lib-conformance.md
 
-## 4. The five mechanisms that keep it honest as it grows
+## 5. The five mechanisms that keep it honest as the semantics grows
 
 None of these is in place yet; they are what the plan has to build.
 
@@ -129,7 +179,7 @@ Eudaimonia already computes whether a checker's `smt.eos` is Logos's unmodified;
 a Hermeneia certification must record that identity, so that "this fragment is
 certified" is never read as a claim about a different semantics.
 
-## 5. What this instance does and does not establish
+## 6. What this instance does and does not establish
 
 [`Instances/HermeneiaCpc/`](../Instances/HermeneiaCpc) is against **full CPC**,
 not a cut-down calculus. Layers 0 and 1 are complete and general: the refutation

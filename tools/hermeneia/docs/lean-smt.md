@@ -207,6 +207,10 @@ far more code, on input a solver supplied. Logos's `scripts/check-proof-hygiene.
 rejects `sorry`, `admit` and `axiom` textually, which does not see these — the
 axiom report does, and this is why every theorem in the instance prints one.
 
+None of that is a finding against Logos's proof, which this project assumes and
+does not audit. It is a statement about what an axiom report *inherits*, and
+therefore about what a baseline built on it can claim.
+
 ## 5. The challenges, in the order they will actually hurt
 
 ### 5.1 The bridge is about sorts, not rules — and three sorts are narrowed
@@ -239,16 +243,19 @@ is favourable but conditional.
 
 Hermeneia bridges at `SmtTerm`, not at `Eo.Term`: `eo_satisfiability` is
 *defined* as `smt_satisfiability` of the translation, so the calculus enters
-only as a computation on the concrete assumptions. That makes CPC's **591 rules
-and 189 operators free**. What is left is **148 `SmtTerm` constructors** needing
-one evaluation law each and **15 `SmtType` constructors** needing a carrier. The
-instance has 4 laws and 2 sorts.
+only as a computation on the concrete assumptions. Measured, the reusable bridge
+names 45 declarations of the semantics, 5 of the calculus, and **zero** proof
+rules, operators or Logos proofs — so CPC's 591 rules and 189 operators are not
+in the interface, and keeping Logos in step with CPC is Logos's job rather than
+a cost this project carries. What is left is **148 `SmtTerm` constructors**
+needing one evaluation law each and **15 `SmtType` constructors** needing a
+carrier. The instance has 4 laws and 2 sorts.
 
 The conditional part is that none of the machinery that keeps this honest as CPC
 moves exists yet: no decidable supported-fragment predicate, no exhaustive
 classifier that fails the build when a constructor is added, no
 Hermeneia-side `incomplete` verdict, no generated obligations, no recorded
-semantics identity. `generality.md` §4 lists the five, and until they exist the
+semantics identity. `generality.md` §5 lists the five, and until they exist the
 instance is evidence that the layering works rather than a system that stays
 honest by itself.
 
@@ -325,8 +332,8 @@ the next.
 
 | stage | deliverable | check |
 | --- | --- | --- |
-| **L0** | Run lean-smt's test-suite queries through cvc5 → CPC → `logos` and publish the table. `probes/cpc-coverage/run.sh` already does this for a directory of queries; L0 is pointing it at lean-smt's. | A pass rate per theory. Needs no Lean. This decides whether the rest is worth doing. |
-| **L1** | Widen layers 2 and 3 of the existing CPC bridge: the rest of the Boolean and `Int` symbol laws, `eq`, and a decidable supported-fragment classifier ([`generality.md`](generality.md#4-the-five-mechanisms-that-keep-it-honest-as-it-grows) M1–M2). | `check-cpc.sh` still passes; a symbol outside the fragment is *reported*, not silently admitted. Axioms reported. |
+| **L0** | Run lean-smt's test-suite queries through cvc5 → CPC → `logos` and publish the table. `probes/cpc-coverage/run.sh` already does this for a directory of queries; L0 is pointing it at lean-smt's. | A pass rate per theory. Needs no Lean. This decides whether the rest is worth doing — it measures how far Logos currently tracks CPC, which is information for this decision and not a Hermeneia work item. |
+| **L1** | Widen layers 2 and 3 of the existing CPC bridge: the rest of the Boolean and `Int` symbol laws, `eq`, and a decidable supported-fragment classifier ([`generality.md`](generality.md#5-the-five-mechanisms-that-keep-it-honest-as-the-semantics-grows) M1–M2). | `check-cpc.sh` still passes; a symbol outside the fragment is *reported*, not silently admitted. Axioms reported. |
 | **L2** | A `Term`-level Lean denotation `denote : Env → Term → Prop` for that fragment, plus the transfer theorem from `eo_satisfiability (argListAssumes F) false` to `∀ ρ, ¬ (denote ρ A₁ ∧ … )`. | Instantiated on a cvc5-produced proof, not a hand-written one. |
 | **L3** | A tactic taking a CPC proof and a list of Lean `Prop`s, producing `¬ andN as` — the type lean-smt's `reconstructProof` already returns — including the `denote ρ Aᵢ ↔ Pᵢ` obligations of §5.3, failing when they cannot be discharged. | Closes goals lean-smt closes, with a matching axiom report. |
 | **L4** | The gap-filler integration: lean-smt's `addTrust` steps re-queried and closed by L3. | lean-smt tests that currently leave goals close. |
@@ -340,8 +347,12 @@ decided. L4 is the first thing lean-smt would actually want.
 - **The CPC composition step is not yet checked here.** Layers 0–3 and the
   conditional example are checked against `Cpc`;
   [`Refutation.lean`](../Instances/HermeneiaCpc/Refutation.lean), which applies
-  `correct___eo_is_refutation`, needs the whole proof development, whose cost is
-  taken from Logos's README and CI configuration rather than measured.
+  `correct___eo_is_refutation`, needs the whole proof development. A build was
+  attempted and ran out of room — see
+  [the ledger](ledger.md#measurements-taken-2026-09-16). What stands in its
+  place is `refutation_of_soundness`, which checks the same three lines against
+  a transcription of the theorem's statement; the transcription itself is
+  confirmed by reading `Cpc/Proofs/Checker.lean`, not by a build.
 - **The lean-smt side was read, not run.** No lean-smt build, no `smt` tactic
   invocation, no measurement of the existing reconstruction path to compare
   against.
