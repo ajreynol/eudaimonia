@@ -1,5 +1,7 @@
 # Workflow Launcher
 
+**Eunoia listing:** unadvertised
+
 A **child project** about the first hour of a new tool's life: what somebody has
 to decide before a repository exists, and whether handing those decisions to an
 agent as a filled-in form produces a better starting point than handing it a

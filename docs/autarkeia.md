@@ -111,14 +111,6 @@ inventory, stub by stub:
 The two-column rows are the more informative ones: they separate what a cost
 follows — the signature and its theories, or the rule count.
 
-**The prompt half exists in miniature, one level up.**
-[`tools/workflow-launcher`](../tools/workflow-launcher) turns an answered
-interview into a prompt and hands it to an agent in a directory a person already
-made, so that *what did you actually run* is a file rather than a memory. It is
-an island, it stops after the first hour, and it proves nothing about this
-state. What it shows is that the shape — a form, a rendered prompt, a staged
-result a person reads — is buildable at a scale where nothing has to be proven.
-
 ## The distance, in named parts
 
 Not a plan, and not ordered. What would have to stop being true.
@@ -187,8 +179,8 @@ rather than one and needs splitting or dropping.
 - **Nothing is verified by virtue of being generated.** The README's closing
   sentence already says so; the existence of this page raises what it is worth.
 - **No *single prompt* claim while the prompts are not recorded.** Ours are not.
-  The launcher writes the prompt it assembles; nothing records the prompts this
-  repository is actually developed with. anoieu carries the same gap as `F1` in
+  Nothing records the prompts this repository is actually developed with.
+  anoieu carries the same gap as `F1` in
   its ethics register, raised before either of us wrote a page about it.
 - **No rule, check, CI job or template change justified by this page**, and no
   use of it to refuse work. One instance of either is grounds for deleting the
