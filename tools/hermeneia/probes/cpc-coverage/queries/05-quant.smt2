@@ -1,0 +1,5 @@
+(set-logic ALL)
+(declare-fun g (Int) Int)
+(assert (forall ((i Int)) (> (g i) i)))
+(assert (<= (g 5) 5))
+(check-sat)

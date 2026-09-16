@@ -1,0 +1,7 @@
+(set-logic ALL)
+(declare-sort U 0)
+(declare-fun f (U) U)
+(declare-const a U)
+(assert (= (f a) a))
+(assert (not (= (f (f a)) a)))
+(check-sat)

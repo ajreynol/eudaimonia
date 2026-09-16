@@ -1,0 +1,6 @@
+(set-logic ALL)
+(declare-datatype Lst ((nil) (cons (hd Int) (tl Lst))))
+(declare-const l Lst)
+(assert (not ((_ is nil) l)))
+(assert (not ((_ is cons) l)))
+(check-sat)

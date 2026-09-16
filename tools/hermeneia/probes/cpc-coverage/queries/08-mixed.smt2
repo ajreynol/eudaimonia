@@ -1,0 +1,6 @@
+(set-logic ALL)
+(declare-fun h (Int) Bool)
+(declare-const n Int)
+(assert (h n))
+(assert (not (h (+ n 0))))
+(check-sat)

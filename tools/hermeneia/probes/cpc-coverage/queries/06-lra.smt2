@@ -1,0 +1,6 @@
+(set-logic ALL)
+(declare-const a Real)
+(declare-const b Real)
+(assert (< a b))
+(assert (< b a))
+(check-sat)

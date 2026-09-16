@@ -144,9 +144,35 @@ cd tools/hermeneia
 lake build
 ```
 
-It has no external Lake dependencies. The next step is an adapter proving the
-numeral contract against actual generated Logos definitions. The experiment
-does not yet certify any Logos fragment or compose with checker soundness.
+It has no external Lake dependencies, and it does not by itself certify any
+Logos fragment.
+
+Beside it, [`Instances/CpcMini/`](Instances/CpcMini/Refutation.lean) is the
+first configuration that does compose with checker soundness. A refutation in
+Logos's CpcMini calculus is checked by reflection, carried through CpcMini's
+proved `correct___eo_is_refutation`, and turned into a proposition about Lean
+`Bool`s — with no `sorry` and no open soundness hypothesis. It imports a
+neighbouring Logos checkout, so it stays outside this package's build and is run
+by its own script:
+
+```bash
+Instances/CpcMini/check.sh <path-to-logos-checkout>
+```
+
+See [`Instances/README.md`](Instances/README.md) for what an instance is and
+why these are not in `lakefile.toml`. What it establishes and what it does not
+is in [the ledger](docs/ledger.md#what-the-instance-has-checked): one calculus,
+one constant, no `Int`, no operation law, no fragment reached by induction.
+
+[`docs/lean-smt.md`](docs/lean-smt.md) asks what this would have to reach to be
+useful to [lean-smt][lean-smt] as a **baseline proof reconstruction** — one
+uniform justification for any CPC proof, in place of its per-rule replay. It
+records what was measured — reflection on a 2244-command proof costs nothing
+over running the checker, and twelve solver-produced CPC proofs under lean-smt's
+own options all check ([`probes/cpc-coverage/`](probes/cpc-coverage/README.md),
+rerunnable) — what blocks kernel reduction, and where the difficulty actually
+is: not the 591 rules, but three narrowed sorts. It is a proposal to a project
+that has not been asked, and nothing depends on it.
 
 ## The name
 
@@ -178,9 +204,15 @@ channel and speaks on no other project's behalf.
 **Started 2026-09-16 by explicit maintainer instruction.** This README is the
 initial charter. The configurable-semantics contract, initial plan, source
 ledger and standalone Lean interface experiment are present. Generic transfer
-and synthetic rejection proofs compile; the concrete Logos adapter and first
-native refutation example remain open. No dependency on this project has been
-introduced.
+and synthetic rejection proofs compile.
+
+Since launch, on the same day: the first concrete instance composes with a real
+checker soundness theorem and yields a native Lean proposition, for CpcMini and
+one Boolean constant; and [`docs/lean-smt.md`](docs/lean-smt.md) records what a
+baseline reconstruction for lean-smt would take. A `Cpc` instance, `Int`, any
+operation law, and a refutation of a solver-produced proof remain open. No
+dependency on this project has been introduced, and the instance is outside this
+package's build.
 
 A person decides whether the project **graduates** into its own repository,
 is **folded** into its parent, or is **retired in place** with a note recording
@@ -193,3 +225,4 @@ boundaries is recorded here with the promotion decision and who holds it.
 [work]: https://github.com/ajreynol/kanon/blob/4c4a78ae23c424e4fb6cc5e1cc8c4c3a4cec2f76/tools/ynoia/tools.md#hermeneia--from-the-embedded-semantics-to-leans-own-logic
 [names]: https://github.com/ajreynol/kanon/blob/4c4a78ae23c424e4fb6cc5e1cc8c4c3a4cec2f76/tools/ynoia/names.md#reserved-and-free-to-take
 [policy]: https://github.com/ajreynol/kanon/blob/main/docs/policy.md#research-projects
+[lean-smt]: https://github.com/ufmg-smite/lean-smt

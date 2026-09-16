@@ -1,0 +1,5 @@
+(set-logic ALL)
+(declare-const a (Array Int Int))
+(declare-const i Int)
+(assert (not (= (select (store a i 5) i) 5)))
+(check-sat)
