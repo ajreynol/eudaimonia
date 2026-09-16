@@ -18,9 +18,10 @@ need hypotheses or a different representation, and which are unsupported.
 
 **The goals, in order.**
 
-1. **State the bridge.** Choose a pinned semantics and write down the relation
-   between embedded values, native Lean values, and their environments. State
-   the typing, translation and model assumptions needed to transfer a result.
+1. **State the bridge.** Treat correspondence as a contract for configurable
+   semantics, then choose one pinned configuration to instantiate it. Relate
+   embedded values, native Lean values, and their environments. State the
+   typing, translation and model assumptions needed to transfer a result.
 2. **Prove one small fragment.** Start with Boolean variables, literals,
    conjunction and negation. Prove their correspondence and compose it with a
    refutation theorem to obtain a native Lean proposition. This is the first
@@ -120,6 +121,33 @@ toolchain it uses. Noesis and Hermeneia answer different questions: preserving
 meaning through compilation, and relating that meaning to native Lean
 statements. Neither project's completion is assumed here.
 
+## Initial technical work
+
+The [correspondence contract](docs/contract.md) accounts for the configurable
+calculus translation, SMT evaluation and native backend definitions. It spells
+out what it means for `Term.Numeral n` to denote Lean's `n : Int`, and proposes
+native-meaning and proof fields that could eventually accompany `.eos` entries.
+These are proposed fields; the existing compiler does not accept them.
+
+The [implementation plan](docs/plan.md) gives ordered deliverables and completion
+checks. The [ledger](docs/ledger.md) records inspected sources, semantic
+boundaries, and the distinction between source observations and proved coverage.
+
+A standalone [Lean contract experiment](Hermeneia/Contract.lean) checks literal
+and operation interfaces and proves generic refutation transfer. Its
+[synthetic checks](Hermeneia/Checks.lean) prove that changing literal meaning,
+translation or addition breaks the fixed correspondence, and that a vacuous
+model class cannot support every native assignment. Run it independently:
+
+```bash
+cd tools/hermeneia
+lake build
+```
+
+It has no external Lake dependencies. The next step is an adapter proving the
+numeral contract against actual generated Logos definitions. The experiment
+does not yet certify any Logos fragment or compose with checker soundness.
+
 ## The name
 
 *Hermeneia* (Greek **ἑρμηνεία**, "interpretation") names the act of carrying
@@ -148,8 +176,11 @@ channel and speaks on no other project's behalf.
 ## Status and endings
 
 **Started 2026-09-16 by explicit maintainer instruction.** This README is the
-initial charter. No implementation, correspondence proof or runnable example
-exists yet, and no dependency on this project has been introduced.
+initial charter. The configurable-semantics contract, initial plan, source
+ledger and standalone Lean interface experiment are present. Generic transfer
+and synthetic rejection proofs compile; the concrete Logos adapter and first
+native refutation example remain open. No dependency on this project has been
+introduced.
 
 A person decides whether the project **graduates** into its own repository,
 is **folded** into its parent, or is **retired in place** with a note recording

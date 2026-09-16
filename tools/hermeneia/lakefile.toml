@@ -1,0 +1,7 @@
+name = "hermeneia"
+version = "0.1.0"
+defaultTargets = ["Hermeneia"]
+
+[[lean_lib]]
+name = "Hermeneia"
+moreLeanArgs = ["-DwarningAsError=true"]
