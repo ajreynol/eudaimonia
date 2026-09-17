@@ -1,6 +1,0 @@
-(declare-const p Bool)
-(declare-const q Bool)
-(assume @gate (nand p q))
-(assume @and (and p q))
-(step @not-and (not (and p q)) :rule nand-elim :premises (@gate))
-(step @false false :rule contra :premises (@and @not-and))

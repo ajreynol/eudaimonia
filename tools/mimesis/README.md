@@ -8,8 +8,8 @@ A child project of the Eudaimonia build framework, in two strands:
   checker, a producer's own checker, a test suite. Each says what was decided,
   what was got wrong, and what caught it. The supply is real history: 75 commits
   touched CPC's signature on cvc5's trunk in the twelve months to 2026-09-16.
-- **Tutorials** cover different jobs: adding a rule to CPC and carrying it
-  through Logos, or writing a new signature from a calculus's rule descriptions.
+- **Tutorials** cover different jobs: adding CPC rules or extending CPC theories
+  and carrying them through Logos, or defining a new calculus's signature.
   Worked files are kept, and each tutorial distinguishes what was run from
   instructions for the reader's own change.
 
@@ -26,7 +26,7 @@ the rule in Logos is part of that job.
 | [`docs/adding-a-cpc-rule.md`](docs/adding-a-cpc-rule.md) | tutorial | **Start here if you want to add a rule to Cpc.eo in cvc5.** Signature, proof tests, Logos regeneration and Lean proof, then the cvc5 pin and CI |
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
 | [`docs/defining-a-calculus.md`](docs/defining-a-calculus.md) | tutorial | **Defining a calculus: propositional resolution.** Write a signature from scratch, with worked proof tests |
-| [`docs/extending-theories.md`](docs/extending-theories.md) | tutorial | **Extending theories.** Add symbols or theories, connect them to their semantics, and identify the verification work they require |
+| [`docs/extending-theories.md`](docs/extending-theories.md) | tutorial | **Extending CPC theories.** Add a symbol or theory to CPC, wire up `Cpc.eo` or `CpcExpert.eo` and cvc5's proof output, and update Logos for main-signature support |
 
 ## What each strand owes
 

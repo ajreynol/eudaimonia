@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run the theory tutorial's proof tests with Ethos and its generated checker.
+"""Check the CPC theory tutorial's main and expert proof fixtures with Ethos.
 
-Usage: python3 check.py /path/to/ethos /path/to/theorydemo
-This checks executable behavior; Semantics.lean checks the translation lemmas.
+Usage: python3 check.py /path/to/ethos /path/to/cvc5
+This checks signature behavior; it does not build cvc5 or verify Logos proofs.
 """
 
 from pathlib import Path
@@ -16,38 +16,41 @@ def main():
         print(__doc__, file=sys.stderr)
         return 2
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-    ethos, checker = sys.argv[1:]
+    ethos, cvc5 = sys.argv[1:]
     here = Path(__file__).resolve().parent
+    signature = Path(cvc5).resolve() / "proofs" / "eo" / "cpc"
+    main_signature = signature / "Cpc.eo"
+    expert_signature = signature / "expert" / "CpcExpert.eo"
+    for path in (main_signature, expert_signature):
+        if not path.is_file():
+            print(f"Missing signature: {path}", file=sys.stderr)
+            return 2
     cases = [
-        ("nand", True, "", ""),
-        ("nor", True, "", ""),
-        ("wrong-conclusion", False,
-         "Unexpected conclusion for rule nand-elim:", "stuck at step @false"),
-        ("wrong-type", False, "Type checking failed:", "stuck loading assumption 1"),
+        ("int-pow2", False, ""),
+        ("int-pow2-wrong-type", False, "Type checking failed:"),
+        ("finite-fields", False, "Could not find symbol FiniteField"),
+        ("finite-fields", True, ""),
+        ("finite-fields-wrong-type", True, "Type checking failed:"),
     ]
     failed = False
-    for name, valid, ethos_error, checker_error in cases:
+    for name, expert, diagnostic in cases:
         proof = str(here / "test" / f"{name}.cpc")
-        ethos_args = [ethos, f"--include={here / 'gates.eo'}"]
-        if valid:
-            ethos_args.append("--require-proof-of-false")
-        for label, args, diagnostic in (
-            ("ethos", [*ethos_args, proof], ethos_error),
-            ("theorydemo", [checker, proof], checker_error),
-        ):
-            result = subprocess.run(args, text=True, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-            if valid:
-                ok = result.returncode == 0 and result.stdout.strip() == "correct"
-            elif label == "ethos":
-                ok = result.returncode != 0 and diagnostic in result.stdout
-            else:
-                ok = (result.returncode == 1 and diagnostic in result.stdout
-                      and result.stdout.strip().endswith("incorrect"))
-            print(f"{'PASS' if ok else 'FAIL'} {label}: {name}")
-            if not ok:
-                print(f"exit {result.returncode}\n{result.stdout}", file=sys.stderr)
-                failed = True
+        args = [ethos, f"--include={main_signature}"]
+        if expert:
+            args.append(f"--include={expert_signature}")
+        if not diagnostic:
+            args.append("--require-proof-of-false")
+        result = subprocess.run([*args, proof], text=True, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        if diagnostic:
+            ok = result.returncode != 0 and diagnostic in result.stdout
+        else:
+            ok = result.returncode == 0 and result.stdout.strip() == "correct"
+        label = "main + expert" if expert else "main only"
+        print(f"{'PASS' if ok else 'FAIL'} {label}: {name}")
+        if not ok:
+            print(f"exit {result.returncode}\n{result.stdout}", file=sys.stderr)
+            failed = True
     return int(failed)
 
 

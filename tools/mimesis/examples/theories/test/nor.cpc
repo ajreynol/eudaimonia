@@ -1,6 +1,0 @@
-(declare-const p Bool)
-(declare-const q Bool)
-(assume @gate (nor p q))
-(assume @or (or p q))
-(step @not-or (not (or p q)) :rule nor-elim :premises (@gate))
-(step @false false :rule contra :premises (@or @not-or))

@@ -1,9 +1,0 @@
-; Existing Boolean vocabulary used by the gate theory and its proof rules.
-(declare-const and (-> Bool Bool Bool) :right-assoc-nil true)
-(declare-const or (-> Bool Bool Bool) :right-assoc-nil false)
-(declare-const not (-> Bool Bool))
-
-; New symbols. These declarations alone give no SMT semantics to the gates.
-; Both gates take exactly two Boolean arguments; neither is associative.
-(declare-const nand (-> Bool Bool Bool))
-(declare-const nor (-> Bool Bool Bool))

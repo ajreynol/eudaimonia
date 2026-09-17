@@ -1,0 +1,2 @@
+; Main CPC must reject a Boolean argument to the integer operator.
+(assume @bad (= (int.pow2 true) 8))

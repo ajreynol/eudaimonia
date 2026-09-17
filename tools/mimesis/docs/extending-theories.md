@@ -1,300 +1,324 @@
-# Extending theories
+# Extending CPC theories
 
 Part of the [Eunoia tutorials](tutorials.md).
 
-Adding a theory symbol—or a whole theory—means deciding both which terms the
-signature accepts and what those terms mean. Eunoia declarations describe the
-syntax and typing. A separate semantics connects them to the model used by
-Logos. Proof rules then need to be justified against that meaning.
+Start here when adding a theory symbol or a new theory to **cvc5's CPC proof
+format**. The job spans the Eunoia declaration, the terms and rules cvc5 prints,
+and, for the main signature, their interpretation and proofs in Logos. For
+experimental features, it also includes keeping their vocabulary in
+`expert/CpcExpert.eo` and out of proofs produced with safe options.
 
-This tutorial adds `nand` and `nor` as a small Boolean-gate theory. The
-[worked files](../examples/theories/README.md) generate a checker and include
-Lean lemmas checking the translations and Boolean values. The example reuses the
-existing Boolean domain; the [new-domain section](#6-when-the-theory-needs-a-new-domain)
-explains the additional work for a theory with new sorts or values. That larger
-extension is a development procedure, not a completed implementation here.
+We follow two existing implementations: `int.pow2`, an operator in the main
+integer theory, and finite fields, an expert theory. They are models to read,
+not declarations to add again. The [worked proofs](../examples/theories/README.md)
+run against cvc5's actual signatures. Mimesis supplies optional advice and
+fixtures; no cvc5 or Logos development step requires a Mimesis checkout.
 
-Mimesis is optional reading. Use these example files if helpful; your own
-signature, compiler, and Logos development need no Mimesis dependency.
+## 1. Choose the main or expert signature
 
-## 1. Decide whether the model already has the meaning
+Make this decision before choosing a file. The contract in
+[`expert/CpcExpert.eo`][expert] is concrete: proofs emitted by safe builds or
+with `--safe-options` must never reference symbols or rules from `expert/`.
+Expert declarations cover experimental theory symbols even when their proof
+rules are still incomplete.
 
-Before adding a declaration, state the intended types and interpretation.
-For this example, both gates take two Boolean arguments:
+Paths in this table are relative to cvc5's `proofs/eo/cpc/`:
 
-| `p` | `q` | `nand p q` | `nor p q` |
-| --- | --- | --- | --- |
-| false | false | true | true |
-| false | true | true | false |
-| true | false | true | false |
-| true | true | false | false |
-
-NAND means `not (and p q)`, and NOR means `not (or p q)`. The target SMT
-semantics already has all three operators. We can translate into those terms
-without adding a model type, a value constructor, or an evaluator.
-
-Distinguish the three inputs to the compiler:
-
-| Input | Its job | In this example |
+| Change | Declarations and rules | Entry point |
 | --- | --- | --- |
-| `.eo` signature and its includes | Declare term syntax, types, and proof-checking rules | `gates.eo`, `theories/BooleanGates.eo`, `rules/BooleanGates.eo` |
-| Signature `.eos` | Translate input terms and types into the semantic model | `Gates.eos` |
-| Target `smt.eos` | Define the model's types, values, typing, and evaluation | The unchanged file supplied with the pinned compiler |
+| Extend a main theory | `theories/<Theory>.eo`, `rules/<Theory>.eo` and relevant `programs/` files | Reachable through `Cpc.eo` |
+| Add an expert operator to an existing theory | Its extension under `expert/theories/` and `expert/rules/`, such as `ArithExt.eo` | Reachable through `expert/CpcExpert.eo` |
+| Add an experimental theory | New `expert/theories/<Theory>.eo` and, as rules become available, `expert/rules/<Theory>.eo` | Add includes to `expert/CpcExpert.eo` |
+| Add a theory to the main signature | New `theories/<Theory>.eo` and `rules/<Theory>.eo`, with Logos support | Add includes to `Cpc.eo` |
 
-For CPC, the signature lives under cvc5's `proofs/eo/cpc/`, its authoritative
-translation is Logos's `install/defs/Cpc.eos`, and the target `smt.eos` comes
-from Logos's pinned Ethos compiler. The compiler's `development-cpc.eos` is a
-development fixture; editing it alone does not update Logos's semantics.
-See the [semantics reference][semantics] and [Logos installer documentation][install].
+Follow the existing include chain; a rule file can already include the theory
+file it needs. Expert files can depend on main declarations. Keep the reverse
+dependency out of the main signature, including through shared programs.
+Do not include `CpcExpert.eo` from `Cpc.eo` to make an undeclared symbol work.
 
-## 2. Add the vocabulary
+SMT-LIB standardization does not determine placement. For example, `int.pow2`
+is documented as nonstandard but lives in the main signature; arithmetic's
+expert extensions live in `expert/theories/ArithExt.eo`.
 
-In [`theories/BooleanGates.eo`](../examples/theories/theories/BooleanGates.eo),
-the additions are:
-
-```lisp
-(declare-const nand (-> Bool Bool Bool))
-(declare-const nor (-> Bool Bool Bool))
-```
-
-These are exactly binary. Do not copy an associativity attribute from a nearby
-declaration without checking the algebra: NAND and NOR are not associative.
-The same file declares `and`, `or`, and `not`, the vocabulary needed to express
-their expansions.
-
-The root [`gates.eo`](../examples/theories/gates.eo) includes the theory and its
-rules separately:
-
-```lisp
-(include "theories/BooleanGates.eo")
-(include "rules/BooleanGates.eo")
-```
-
-For one new CPC operator, add it to the existing theory file. For a new theory,
-follow that layout: its declarations under `theories/`, its checking rules
-under `rules/`, and include them from the calculus's entry point. Keep relative
-includes intact when copying or compiling the signature.
-
-If your operator has indices or type parameters, specify which are explicit,
-implicit, or computed in its Eunoia type. Check malformed applications as well
-as ordinary ones. A width or index restriction that the producer happens to
-respect may still need a check in the signature or semantic translation.
-
-## 3. Give the vocabulary its meaning
-
-The new entries in [`Gates.eos`](../examples/theories/Gates.eos) are:
-
-```lisp
-(section "Boolean gates")
-
-(define-symbol nand (x y)
-  :term (not (and x y)))
-
-(define-symbol nor (x y)
-  :term (not (or x y)))
-```
-
-Here `:term` gives a translation into SMT terms. The parameters `x` and `y`
-stand for the translated arguments; `not`, `and`, and `or` name target
-operators. The generated `__eo_to_smt` therefore maps a NAND application to
-`SmtTerm.not (SmtTerm.and … …)`.
-
-The other entries, such as `(define-symbol not (x))`, use the same-name
-translation convention. That abbreviation works when the target already has
-the symbol. It does not invent the meaning of an arbitrary new name. Also,
-writing an Eunoia `program` to compute a rule's result does not provide that
-result's model interpretation; those are separate jobs.
-
-`section` organizes the semantics configuration and closes its current block;
-it does not define a namespace or a new semantic domain. The theory here is
-the vocabulary, translations, and rules taken together.
-
-**Check the representation as well as the formula.** Our Eunoia `and` has
-`:right-assoc-nil true`, so `(and p q)` contains a final `true`; `or` similarly
-ends in `false`. The NAND translation above uses the target's binary `and`
-directly. Those terms agree on Boolean values, but their syntax is different.
-The worked Lean lemmas check that agreement too. This distinction matters when
-writing the eventual rule proof.
-
-## 4. Add rules and exercise the new terms
-
-The theory's NAND elimination rule is:
-
-```lisp
-(declare-rule nand-elim ((p Bool) (q Bool))
-  :premises ((nand p q))
-  :conclusion (not (and p q))
-)
-```
-
-The NOR rule is analogous. A contradiction rule lets us make complete proof
-tests. For example, [`test/nand.cpc`](../examples/theories/test/nand.cpc)
-assumes `(nand p q)` and `(and p q)`, expands the gate, and derives `false`.
-
-The tests also include an integer passed to NAND and an attempted refutation
-that replaces NAND's `not-and` conclusion with `not-or`. The latter assumptions
-are satisfiable with `p = true`, `q = false`; rejection must come from an
-invalid proof step, not just a missing final contradiction.
-
-Run the examples through both Ethos and the generated checker. Ethos reads
-the signature directly and tests its syntax and checking behavior. The
-generated checker also checks whether terms lie within the supplied semantic
-translation. Agreement on these examples is useful evidence, but the new rule
-still has a universal soundness obligation.
-
-## 5. Compile and inspect the result
-
-The following is an optional Eudaimonia walkthrough for the supplied example.
-Run from an Eudaimonia checkout; generated files go to a fresh temporary
-directory. `EXAMPLE` only locates the tutorial's input files.
+Use complete cvc5 and Logos working trees and absolute paths:
 
 ```bash
-EUDAIMONIA="$PWD"
-EXAMPLE="$EUDAIMONIA/tools/mimesis/examples/theories"
-WORK=$(mktemp -d)
-
-scripts/new-checker.sh --checker TheoryDemo --calculus Gates \
-  --signature "$EXAMPLE/gates.eo" --semantics "$EXAMPLE/Gates.eos" \
-  --smt-semantics "$EUDAIMONIA/examples/hello/smt.eos" \
-  --no-scopes --no-list-premises --no-datatypes --no-binders \
-  --indexed-ops 0 --out "$WORK"
-
-cd "$WORK/TheoryDemo"
-install/get-eo-compiler.sh --pinned --jobs 4
-install/install-gates.sh
-scripts/build.sh
-
-source install/deps/eoc-env.sh
-python3 "$EXAMPLE/check.py" "$EOC_ETHOS_BIN" "$PWD/.lake/build/bin/theorydemo"
-lake env lean "$EXAMPLE/Semantics.lean"
-install/install-gates.sh --check
+CVC5=/absolute/path/to/cvc5
+LOGOS=/absolute/path/to/logos
+ETHOS=/absolute/path/to/ethos
 ```
 
-This needs the compiler's CMake/C++/GMP dependencies, Python 3, and the Lean
-toolchain used by the generated project. The supplied `smt.eos` snapshot matches
-Eudaimonia's compiler pin; move the compiler and its semantics together when
-upgrading them.
+If needed, `./contrib/get-ethos-checker` from the cvc5 checkout builds Ethos at
+`deps/bin/ethos`. Keep all of `proofs/eo/`: the relative includes are part of
+the signature. See the [CPC rule tutorial](adding-a-cpc-rule.md#1-set-up-the-two-working-trees)
+for setup and prerequisites.
 
-Inspect the generated files with these questions in mind:
+## 2. Extend an existing theory: follow `int.pow2`
 
-| Generated file | What to inspect |
-| --- | --- |
-| `Gates/TheoryDemoTerm.lean` and `Gates/Parser.lean` | Are both new operators represented and recognized? |
-| `Gates/Spec.lean` | Does each `__eo_to_smt` branch express the intended meaning? |
-| `Gates/SmtModel.lean` and related model modules | Are the required target operators and their typing/evaluation present? |
-| `Gates/Proofs/Rules/Nand_elim.lean` and `Nor_elim.lean` | What exactly must be proved about each compiled checking program? |
-
-[`Semantics.lean`](../examples/theories/Semantics.lean) checks six lemmas:
-the two translation equations for arbitrary input terms, both gates' values
-for every Boolean input, and their agreement with the Eunoia expansions on
-those inputs. It prints their axiom dependencies so an accidental `sorry`
-cannot hide in the validation record.
-
-**The generated checker remains unverified.** These lemmas do not prove the
-per-rule obligations, translation type preservation for arbitrary terms, or
-checker correctness. Eudaimonia generates those as open work; an executable
-that prints `correct` does not finish it. For an existing Logos development,
-extend the existing proofs and explicitly build affected targets, following
-[the CPC rule tutorial](adding-a-cpc-rule.md#5-prove-the-generated-rule-obligation).
-
-## 6. When the theory needs a new domain
-
-First see whether the intended theory can be expressed faithfully with existing
-types and operations. Reusing a representation still requires justification:
-encoding a mathematical domain into integers, arrays, or datatypes may need
-invariants, and each rule must respect them. Declaring an uninterpreted sort
-does not give it the intended interpretation.
-
-If the target model itself must grow, work through the following layers. This
-is the extension procedure to apply to your theory; the gate example does not
-add a new domain.
-
-| Layer | Work to supply |
-| --- | --- |
-| Input sorts and symbols | Eunoia declarations, parameter/index handling, literals if needed, and producer/parser support for their concrete syntax |
-| Sort translation | Input `.eos` entries using `:type`, including the domain of valid parameters |
-| Semantic sorts | Target `smt.eos` `define-sort` entries and the appropriate well-formedness, default-value, and boundedness behavior |
-| Semantic values | A representation of values, their types, and canonical forms; `declare-constructor` entries where the existing embedding supports them |
-| Semantic operations | Target `define-symbol` entries with typing and evaluation cases, plus required helper programs or native implementations |
-| Verification | Typing and evaluation lemmas, translation compatibility, model existence, and the affected rule proofs |
-
-Use a complete existing theory as a guide, not just one declaration. For
-example, the [bit-vector signature][bv-signature] and [target semantics][smt]
-jointly cover `BitVec` widths, binary literals, value representation, default
-values, and operations. The target's `define-sort BitVec` gives a default;
-its `Binary` value constructor checks the width and representation; a
-`define-literal Binary` separately handles literal terms. Those are different
-parts of a theory, even though they describe the same mathematical objects.
-
-The two `.eos` roles also use different attributes. In an input translation,
-`:term` and `:type` describe what a symbol becomes. In the target, `:typeof`
-describes an operator's result type, and `:eval` or `:value` describes its
-meaning. As a small target-side example, the pinned `smt.eos` defines negation
-with:
+The declaration in `theories/Ints.eo` is small:
 
 ```lisp
-(define-symbol not (x)
-  :typeof (of1 Bool Bool x)
-  :eval ((smt.bool x)) (smt.bool ("not" x)))
+(declare-const int.pow2 (-> Int Int))
 ```
 
-Here `of1` and `smt.bool` are macros declared earlier in that file; quoted
-`"not"` names a native operation. A new primitive needs the corresponding
-typing and evaluation definitions, rather than only a same-name translation.
-If its representation or primitives are outside the embedding's vocabulary,
-the compiler/native layer needs an extension too. The
-[semantics reference][semantics] documents that boundary and the ordering of
-helper definitions. Keep changes in those source configurations; regenerate
-the Lean modules instead of editing generated constructors or evaluators.
+It says that the operator takes an integer and returns an integer. Its
+evaluation support is separate. In `Cpc.eo`, `$run_evaluate` dispatches to
+the arithmetic evaluation program:
 
-Before claiming the theory verified, establish that its well-formed types have
-appropriate values and that well-formed models exist. Otherwise a rule theorem
-quantified over such models can be vacuous. New values also affect canonical
-forms and possibly value ordering, especially when used inside sets or maps.
-Build the affected model and translation proofs as well as the new rules;
-regeneration alone does not check preserved proofs.
+```lisp
+(($run_evaluate (int.pow2 i1)) ($arith_eval_int_pow_2 ($run_evaluate i1)))
+```
 
-## 7. Carry a CPC extension through Logos
+That lets the existing `evaluate` rule prove a concrete result:
 
-For cvc5, make the declaration and producer changes in cvc5, update
-`install/defs/Cpc.eos` in Logos, and regenerate Logos from that edited `Cpc.eo`.
-If the target semantics or compiler also changed, update the compiler pin and
-the compatible semantics before the final regeneration. A local
-`--smt-semantics` override is useful for experimenting; the released pin must
-reproduce those semantics without your private file.
+```lisp
+(assume @neq (not (= (int.pow2 3) 8)))
+(step @eval (= (int.pow2 3) 8) :rule evaluate :args ((int.pow2 3)))
+(step @false false :rule contra :premises (@eval @neq))
+```
 
-Test a proof that uses the new symbol in its assumptions and derived terms,
-including inside existing surrounding theories where supported. An unsupported
-translation may cause `incomplete`; that reports a coverage limitation, not a
-proof of the new theory. Test typing boundaries and invalid rule applications,
-and explicitly build the model, translation, and rule proofs your change affects.
+For your operator, specify the arity, types, indices, and any implicit
+parameters, then trace the proof steps cvc5 uses on it. Check whether existing
+rules for evaluation, normalization, congruence, or distinct values need new
+cases. Adding a declaration alone does not supply those cases. When a new
+rule is needed, use the [CPC rule workflow](adding-a-cpc-rule.md).
 
-Then follow [the CPC tutorial's landing procedure](adding-a-cpc-rule.md#7-land-logos-then-update-cvc5s-pin):
-land the matching Logos change, obtain passing CI at the exact commit, and move
-cvc5's `LOGOS_VERSION` to it. A theory declaration changes the vocabulary the
-checker and its semantics must agree on, even when it adds no proof rule.
+For an expert extension to an existing theory, make these additions in the
+expert files and programs reached from `CpcExpert.eo`. The fact that the base
+theory is supported by the main signature does not make every extension safe.
 
-## What was checked
+## 3. Add a theory: follow finite fields in `CpcExpert.eo`
 
-On 2026-09-17, the example was generated using Eudaimonia
-`9e3c15e68edb7dc0ac6dc9f9d75cfec1f9d43f33`, with Ethos and `ethos-eoc` built
-from its pin, `8dc85c4db8d6cc612f02dc3bb627331732605eff`, and Lean 4.33.0.
-The compiler was built from the pinned source archive and connected to the
-generated installer; the download/bootstrap command above was not rerun.
+The [finite-field theory file][finite-fields] starts by including arithmetic
+for its integer parameters. These are excerpts from its declarations:
 
-The signature and semantics compiled, the generated checker built, all four
-proof tests had their expected outcomes in both checkers, and the regeneration
-comparison passed. All six Lean lemmas compiled; their printed dependencies
-were `propext`, `Classical.choice`, and `Quot.sound`, with no `sorryAx`.
-The [example README](../examples/theories/README.md) records the test meanings.
+```lisp
+(include "../../theories/Arith.eo")
 
-No new semantic domain was implemented, no generated rule or checker soundness
-obligation was discharged, and no cvc5 or Logos pin was changed. The new-domain
-and CPC integration sections are procedures checked against the pinned
-[semantics reference][semantics], [target semantics][smt], and
-[Logos installation documentation][install].
+(declare-const FiniteField (-> Int Type))
 
-[semantics]: https://github.com/cvc5/ethos/blob/8dc85c4db8d6cc612f02dc3bb627331732605eff/tools/eoc/semantics/README.md
-[smt]: https://github.com/cvc5/ethos/blob/8dc85c4db8d6cc612f02dc3bb627331732605eff/tools/eoc/semantics/smt.eos
-[bv-signature]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/theories/BitVectors.eo
+(declare-parameterized-const ff.value ((p Int)) (-> Int (FiniteField p)))
+
+(declare-parameterized-const ff.add ((p Int :implicit))
+    (-> (FiniteField p) (FiniteField p) (FiniteField p))
+    :right-assoc-nil (ff.value p 0))
+```
+
+Here `(FiniteField 7)` is a type and `(ff.value 7 0)` is its zero value.
+`ff.add` infers the field parameter from its arguments, which must have the
+same type. Its list representation has a zero terminator. Those details must
+agree with cvc5's conversion of sorts, constants, and variadic applications.
+CPC uses `ff.value` applications; this file explicitly does not support native
+finite-field literal syntax.
+
+The type constructor above accepts an integer parameter; it does not itself
+check primality. For your theory, explicitly identify where valid indices,
+value ranges, and other mathematical restrictions are enforced. A producer
+restriction is not automatically a signature check or a semantic invariant.
+
+`expert/CpcExpert.eo` makes these declarations available with:
+
+```lisp
+(include "./theories/FiniteFields.eo")
+```
+
+For a new experimental theory, create `expert/theories/<Theory>.eo` and add
+`(include "./theories/<Theory>.eo")` to `expert/CpcExpert.eo`. This is
+worthwhile even before all theory rules are implemented: CPC needs a
+declaration for each experimental symbol that cvc5 prints. As rules become
+available, put them in `expert/rules/<Theory>.eo`, include their theory file
+using `../theories/<Theory>.eo`, and include that rule file from
+`CpcExpert.eo`. Check that the entire include chain loads.
+
+Finite fields also illustrate a change to an existing generic rule.
+`CpcExpert.eo` extends normalization through
+`$get_aci_normal_form_expert` and `aci_norm_expert`; cvc5's EO printer chooses
+that rule for `ProofRule::ACI_NORM` on finite-field addition and multiplication.
+The [expert proof fixture](../examples/theories/test/finite-fields.cpc) uses it
+to prove `(= (ff.add x y) (ff.add y x))` for `x` and `y` in `(FiniteField 7)`.
+
+## 4. Make cvc5 emit the declared vocabulary
+
+Trace a term from the solver to the printed proof. These are the places to
+inspect, with existing finite-field handling as a guide; a new operator will
+not necessarily need changes in every file:
+
+| cvc5 source | What must agree with the signature |
+| --- | --- |
+| `src/parser/smt2/smt2_state.cpp`, `src/printer/smt2/smt2_printer.cpp` | Input and printed names, including ordinary theory operators |
+| `src/proof/eo/eo_node_converter.cpp` | CPC-specific term encoding; `CONST_FINITE_FIELD` becomes `ff.value` with field size and value arguments |
+| `src/proof/eo/eo_dependent_type_converter.cpp` | Indexed sorts; `FINITE_FIELD_TYPE` maps to `FiniteField` |
+| `src/proof/eo/eo_list_node_converter.cpp` | Variadic operators and their list representation; includes finite-field addition and multiplication |
+| `src/proof/eo/eo_printer.cpp` | Rule names and arguments; selects `aci_norm_expert` for the finite-field normalization cases |
+
+The solver still needs its normal kind, type-checking, rewriting, and proof
+production support. Inspect an actual generated proof to check the connection
+to CPC; a hand-written proof cannot establish that the printer emits the same
+terms.
+
+**Enforce the expert restriction in cvc5 too.** A directory name does not
+disable a solver feature. For finite fields, `ff` is an expert option in
+`src/options/ff_options.toml`; `src/smt/set_defaults.cpp` disables it under
+safe options, and `src/smt/illegal_checker.cpp` rejects the disabled theory's
+kinds. Follow the appropriate existing path for your theory or extension.
+Test `--safe-options` and a build configured with `./configure.sh safe`, as
+well as the unrestricted feature.
+
+## 5. Check the main and expert signatures separately
+
+Save the `int.pow2` refutation above as a CPC file, or use the optional
+fixtures here. `EXAMPLES` below only locates those fixtures:
+
+```bash
+EXAMPLES=/absolute/path/to/eudaimonia/tools/mimesis/examples/theories
+
+"$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" --require-proof-of-false \
+  "$EXAMPLES/test/int-pow2.cpc"
+
+"$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" \
+  --include="$CVC5/proofs/eo/cpc/expert/CpcExpert.eo" --require-proof-of-false \
+  "$EXAMPLES/test/finite-fields.cpc"
+
+python3 "$EXAMPLES/check.py" "$ETHOS" "$CVC5"
+```
+
+Both positive runs must print `correct`. The script checks five outcomes:
+
+| Proof | Includes | Expected result |
+| --- | --- | --- |
+| `int-pow2.cpc` | Main | Complete refutation accepted |
+| `int-pow2-wrong-type.cpc` | Main | Boolean argument to `int.pow2` rejected by type checking |
+| `finite-fields.cpc` | Main | Rejected because `FiniteField` is undeclared |
+| `finite-fields.cpc` | Main and expert | Complete refutation accepted |
+| `finite-fields-wrong-type.cpc` | Main and expert | Addition mixing fields of sizes 7 and 11 rejected by type checking |
+
+Adapt this coverage to your extension: well-typed terms and valid steps,
+malformed indices and argument types, and invalid rule applications. For expert
+features, also check that their vocabulary is unavailable with only `Cpc.eo`.
+
+Produce a regression from the changed cvc5 using
+`--proof-format-mode=cpc --proof-granularity=dsl-rewrite --dump-proofs`.
+Check that it exercises the new vocabulary and intended rules, and identify
+any remaining `trust` steps. Pass the CPC commands inside the dump's outer
+proof-list delimiters to Ethos, omitting the leading `unsat` result.
+
+At the reviewed revision, the `cpc_gen.sh` helper installed by
+`contrib/get-ethos-checker` inserts **both** signature includes. For a main-only
+test, use an include-free proof with the explicit `Cpc.eo` command above.
+Passing the helper's default check does not establish that the proof can be
+checked without expert declarations. Check proofs from supported safe-mode
+inputs this way; an expert-only input should be rejected by safe cvc5 itself.
+
+## 6. Extend Logos for changes to the main signature
+
+The normal Logos compilation starts at `Cpc.eo`, which excludes the expert
+signature. A change confined to `CpcExpert.eo` and its private includes may
+therefore leave the compiled Logos package and cvc5's Logos pin unchanged.
+Run the cvc5 regeneration comparison to confirm this; shared main files can
+still affect Logos. Do not treat an expert declaration as implemented Logos
+semantics or pass `CpcExpert.eo` as a replacement for `Cpc.eo` to the installer.
+
+For a new main symbol or theory, or an expert feature being promoted to the
+main signature, **the Logos update is part of the implementation**:
+
+| Source | Required work |
+| --- | --- |
+| Logos `install/defs/Cpc.eos` | Translate the new CPC terms and types into the model |
+| Logos's pinned Ethos `tools/eoc/semantics/smt.eos` | Supply any missing semantic sorts, values, typing, and evaluation |
+| Logos's handwritten model, translation, and rule proofs | Establish the properties of those additions and repair affected proofs |
+
+For `int.pow2`, the [CPC semantics][cpc-semantics] contains:
+
+```lisp
+(define-symbol int.pow2 (x))
+```
+
+This uses the target operator with the same name. Such an entry works only
+because the target already supplies that meaning. For your symbol, use an
+existing target operator or an explicit `:term` translation when that captures
+the intended operation. New sorts need a `:type` translation as well. Editing
+the compiler's `development-cpc.eos` alone does not update the authoritative
+`install/defs/Cpc.eos` in Logos.
+
+For a whole new theory, first determine whether the target model can represent
+it faithfully. A finite-field declaration, for example, would not acquire
+finite-field semantics just by being translated to an uninterpreted sort.
+A new domain needs valid type parameters, a representation of values, typing
+and evaluation for each operation, and the corresponding model and translation
+proofs. Establish that the required values and models exist; rule proofs over
+an impossible model would be vacuous. The finite-field fixture here does not
+implement or verify that domain in Logos.
+
+Keep model changes in the semantic sources and regenerate the Lean. If the
+target semantics or compiler changes, land it in Ethos and update Logos's
+compiler pin in `install/get-eo-compiler.sh`. The final generation must work
+with that pin, without a private `--smt-semantics` override. See the
+[Logos installer documentation][install] for local development overrides.
+
+Then regenerate from the edited main signature:
+
+```bash
+cd "$LOGOS"
+install/get-eo-compiler.sh
+install/install-cpc.sh --all "$CVC5/proofs/eo/cpc/Cpc.eo"
+scripts/build.sh Cpc CpcMini logos
+```
+
+Review the term constructors and parser, the translations in `Cpc/Spec.lean`,
+and the generated `SmtModel`, `SmtEval`, and related modules. Keep the refreshed
+`install/defs/Cpc.cached.eo` with the change. Existing rule proof files are
+preserved, so successful regeneration does not mean those proofs still compile.
+Build the affected model and translation proofs and every affected rule proof,
+and discharge any new rule's generated `sorry`.
+
+Follow [the CPC rule tutorial's validation steps](adding-a-cpc-rule.md#6-validate-the-logos-change),
+including proof hygiene and explicit proof builds: the reviewed Logos CI builds
+only a subset of the rule proofs. Exercise the new main vocabulary with the
+rebuilt Logos executable using include-free CPC proofs. An `incomplete` result
+does not establish support for the theory.
+
+Land the matching Logos change, obtain passing Logos CI at the exact commit,
+and set cvc5's `LOGOS_VERSION` in `contrib/get-logos-checker` to it. Then run:
+
+```bash
+cd "$CVC5"
+./contrib/check-logos-compilation
+```
+
+This compares the main signature against the pinned Logos generation. It does
+not build all the Lean proofs. See the
+[landing procedure](adding-a-cpc-rule.md#7-land-logos-then-update-cvc5s-pin)
+for the exit statuses, exact-commit CI requirement, and final regression check.
+
+## 7. When promoting an expert feature
+
+Move its declarations and supported rules into the main include chain, remove
+obsolete expert copies, and update any printer dispatch that selected an
+expert rule name. Check the full dependency chain: a promoted rule must not
+still require an expert-only symbol or helper.
+
+Complete the Logos work above before enabling the feature under safe options.
+Update cvc5's feature guards as appropriate and add main-only Ethos, Logos,
+and safe-cvc5 regressions. For finite fields this would be a larger development
+than moving `FiniteFields.eo`: it includes the semantic domain and proofs.
+
+## Sources and validation
+
+On 2026-09-17, all five fixture checks passed against cvc5
+`2900761a7c2e2c0e99e2cf669cffa3740ea9a138` (the merged
+[PR #12891][pr]), using Ethos built from cvc5's checker pin,
+`8dc85c4db8d6cc612f02dc3bb627331732605eff`. Negative cases were checked for
+the expected diagnostics, not merely a nonzero exit.
+
+The cvc5 integration and Logos commands are a source-reviewed procedure for
+the reader's extension. No solver build, new theory implementation, Logos
+regeneration, or Lean proof was performed for these fixtures. Logos sources
+were reviewed at cvc5's pin, `664c35d6e188a62d5b5dac8fb403d19b9e0f4baa`;
+its compiler pin is `406b5499f3c83f2a114113107be251f8e58b2d85`, separate from
+the Ethos checker revision used above. No project pins were changed.
+
+[pr]: https://github.com/cvc5/cvc5/pull/12891
+[expert]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/CpcExpert.eo
+[finite-fields]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/theories/FiniteFields.eo
+[cpc-semantics]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/install/defs/Cpc.eos
 [install]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/install/README.md
