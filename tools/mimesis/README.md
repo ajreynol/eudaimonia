@@ -25,7 +25,8 @@ the rule in Logos is part of that job.
 | --- | --- | --- |
 | [`docs/adding-a-cpc-rule.md`](docs/adding-a-cpc-rule.md) | tutorial | **Start here if you want to add a rule to Cpc.eo in cvc5.** Signature, proof tests, Logos regeneration and Lean proof, then the cvc5 pin and CI |
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
-| [Defining a calculus](docs/defining-a-calculus.md), [Extending theories](docs/extending-theories.md) | tutorials | **Signature and theory development.** Write a resolution calculus from scratch, then learn how to add symbols or theories and connect them to their semantics |
+| [`docs/defining-a-calculus.md`](docs/defining-a-calculus.md) | tutorial | **Defining a calculus: propositional resolution.** Write a signature from scratch, with worked proof tests |
+| [`docs/extending-theories.md`](docs/extending-theories.md) | tutorial | **Extending theories.** Add symbols or theories, connect them to their semantics, and identify the verification work they require |
 
 ## What each strand owes
 
