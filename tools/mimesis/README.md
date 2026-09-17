@@ -13,6 +13,10 @@ A child project of the Eudaimonia build framework, in two strands:
   Worked files are kept, and each tutorial distinguishes what was run from
   instructions for the reader's own change.
 
+Mimesis provides optional advice and examples. Creating a Eunoia signature,
+generating a checker, and verifying rules in Logos require no Mimesis checkout
+or tooling; the tutorials describe those projects' workflows.
+
 **[Choose a tutorial](docs/tutorials.md).** If you are changing cvc5, start with
 **[adding a rule to `Cpc.eo`](docs/adding-a-cpc-rule.md)**. Updating and proving
 the rule in Logos is part of that job.
@@ -22,7 +26,7 @@ the rule in Logos is part of that job.
 | [`docs/adding-a-cpc-rule.md`](docs/adding-a-cpc-rule.md) | tutorial | **Start here if you want to add a rule to Cpc.eo in cvc5.** Signature, proof tests, Logos regeneration and Lean proof, then the cvc5 pin and CI |
 | [`examples/cpc-rule/`](examples/cpc-rule/README.md) | tutorial | a small CPC refutation and rejected applications to adapt for a new rule |
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
-| [`docs/tutorial.md`](docs/tutorial.md) | tutorial | **Writing a signature from scratch: propositional resolution.** The calculus written from three lines of prose, with the three mistakes a first draft makes and the errors they produce |
+| [`docs/defining-a-calculus.md`](docs/defining-a-calculus.md) | tutorial | **Defining a calculus: propositional resolution.** The calculus written from three lines of prose, with the three mistakes a first draft makes and the errors they produce |
 | [`examples/resolution/`](examples/resolution/README.md) | tutorial | the resolution tutorial's worked files, and a `check.sh` that re-runs its proof tests |
 
 ## What each strand owes

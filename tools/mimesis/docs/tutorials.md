@@ -1,11 +1,13 @@
 # Eunoia tutorials
 
-Choose the job you are doing:
+These tutorials offer advice and optional worked examples. Mimesis is not a
+dependency of signature creation or checker development. Choose the job you
+are doing:
 
 | I want to… | Start here | What you will work on |
 | --- | --- | --- |
 | Add a proof rule to cvc5's CPC signature | **[Start here if you want to add a rule to Cpc.eo in cvc5](adding-a-cpc-rule.md)** | The rule's interface and tests, its generated Lean and soundness proof in Logos, and the cvc5 version pin |
-| Define my own proof calculus | [Write a signature from scratch: propositional resolution](tutorial.md) | Terms, premises, arguments, computed conclusions, side conditions, and proof tests |
+| Define my own proof calculus | [Define a calculus: propositional resolution](defining-a-calculus.md) | Terms, premises, arguments, computed conclusions, side conditions, and proof tests |
 
 For a concrete example of why the Logos proof matters, read the
 [BV abstraction case study](case-study.md): stating the obligation exposed a

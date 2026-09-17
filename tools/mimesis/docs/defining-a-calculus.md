@@ -1,4 +1,4 @@
-# Tutorial: a signature for propositional resolution
+# Defining a calculus: propositional resolution
 
 Part of the [Eunoia tutorials](tutorials.md). This is the route for writing a
 signature from scratch. To extend cvc5's existing calculus, start with

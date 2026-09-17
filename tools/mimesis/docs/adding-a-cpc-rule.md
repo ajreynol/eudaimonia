@@ -13,7 +13,7 @@ the existing `modus_ponens` rule as a small worked model, with
 [runnable proof files](../examples/cpc-rule/README.md) and an existing Lean
 proof to read. Do not add a second copy of that rule; apply the same steps to
 your new inference. For a whole new calculus, use the separate
-[signature-from-scratch tutorial](tutorial.md).
+[signature-from-scratch tutorial](defining-a-calculus.md).
 
 **What was run:** the example proof tests against the merged PR's CPC
 signature. The commands for regenerating, proving, and merging your new rule
@@ -32,7 +32,6 @@ Set these paths once, using absolute paths to your own checkouts:
 ```bash
 CVC5=/absolute/path/to/cvc5
 LOGOS=/absolute/path/to/logos
-MIMESIS=/absolute/path/to/eudaimonia/tools/mimesis
 
 cd "$CVC5"
 ./contrib/get-logos-checker --version
@@ -109,12 +108,18 @@ Here is a complete refutation using the model rule:
 (step @false false :rule contra :premises (@q @nq))
 ```
 
-Run it against the signature you are editing:
+You can save those commands as a proof file and run it against the signature
+you are editing. To use the optional example files kept with this tutorial,
+set `MIMESIS` to their location:
 
 ```bash
+MIMESIS=/absolute/path/to/eudaimonia/tools/mimesis
 "$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" --require-proof-of-false \
   "$MIMESIS/examples/cpc-rule/test/modus-ponens.cpc"
 ```
+
+That path is only for these examples. Your signature and Logos development
+use your own files and do not depend on Mimesis.
 
 The expected result is `correct`. The
 [worked files](../examples/cpc-rule/README.md) also change one thing at a time:
@@ -237,11 +242,17 @@ useful milestones. Neither discharges the new `sorry`.
 ## 6. Validate the Logos change
 
 Run the local CI groups after setting up the compiler, so regeneration is
-included, and check the same proof against the newly built executable:
+included:
 
 ```bash
 cd "$LOGOS"
 bash scripts/run-ci.sh
+```
+
+If you are following the optional worked example, check the same proof against
+the newly built executable:
+
+```bash
 ./.lake/build/bin/logos "$MIMESIS/examples/cpc-rule/test/modus-ponens.cpc"
 ```
 
