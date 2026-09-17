@@ -1,0 +1,16 @@
+; From a gate application, derive its Boolean expansion.
+(declare-rule nand-elim ((p Bool) (q Bool))
+  :premises ((nand p q))
+  :conclusion (not (and p q))
+)
+
+(declare-rule nor-elim ((p Bool) (q Bool))
+  :premises ((nor p q))
+  :conclusion (not (or p q))
+)
+
+; Close a refutation once a formula and its negation have been derived.
+(declare-rule contra ((p Bool))
+  :premises (p (not p))
+  :conclusion false
+)

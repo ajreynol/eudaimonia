@@ -1,0 +1,2 @@
+; NAND accepts Boolean arguments, not an integer.
+(assume @bad (nand 0 true))

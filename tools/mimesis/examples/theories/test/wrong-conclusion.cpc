@@ -1,0 +1,8 @@
+; A NAND premise yields not-and, not not-or. These assumptions are satisfiable
+; (p=true, q=false), so this attempted refutation must be rejected.
+(declare-const p Bool)
+(declare-const q Bool)
+(assume @gate (nand p q))
+(assume @or (or p q))
+(step @bad (not (or p q)) :rule nand-elim :premises (@gate))
+(step @false false :rule contra :premises (@or @bad))

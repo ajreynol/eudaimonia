@@ -1,0 +1,4 @@
+; A small Boolean-gate theory, used by ../../docs/extending-theories.md.
+; The signature describes syntax and checking; Gates.eos supplies its meaning.
+(include "theories/BooleanGates.eo")
+(include "rules/BooleanGates.eo")

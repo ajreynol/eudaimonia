@@ -1,0 +1,22 @@
+; Translate the input vocabulary into the existing SMT Boolean semantics.
+; No change to smt.eos, SmtType, or SmtValue is needed for this theory.
+(define-symbol and (x y))
+(define-symbol or (x y))
+(define-symbol not (x))
+
+(section "Boolean gates")
+
+(define-symbol nand (x y)
+  :term (not (and x y)))
+
+(define-symbol nor (x y)
+  :term (not (or x y)))
+
+; The compiler's datatype-name hook, also needed by signatures without datatypes.
+(program $eo_to_smt_reserved_datatype_name ((s "String"))
+  :keep
+  :signature ("String") "Bool"
+  (
+    (($eo_to_smt_reserved_datatype_name s) ("string_prefix_eq" "str_at_sign" s))
+  )
+)
