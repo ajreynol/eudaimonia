@@ -22,7 +22,7 @@ for the stated reason.
 | Same finite-field proof | `Cpc.eo` and `expert/CpcExpert.eo` | `aci_norm_expert` proves commutativity of addition, yielding a refutation |
 | [`finite-fields-wrong-type.cpc`](test/finite-fields-wrong-type.cpc) | Main and expert | Type error when adding elements of different fields |
 
-The [tutorial commands](../../docs/extending-theories.md#5-check-the-main-and-expert-signatures-separately)
+The [tutorial commands](../../docs/extending-theories.md#4-check-the-addition-with-ethos)
 also show the individual Ethos invocations. The explicit main-only check
 matters: cvc5's `cpc_gen.sh` helper includes both signatures by default.
 

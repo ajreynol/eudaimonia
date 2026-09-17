@@ -2,108 +2,89 @@
 
 Part of the [Eunoia tutorials](tutorials.md).
 
-Start here when adding a theory symbol or a new theory to **cvc5's CPC proof
-format**. There are two paths with very different requirements:
+This tutorial walks through adding a theory symbol or a new theory to cvc5's
+CPC signature: declare its vocabulary, connect it to cvc5's proof output, and
+check the result. **Both the main and expert paths follow steps 1–4.** If you
+are adding to `expert/CpcExpert.eo`, you finish at step 4. That signature does
+not go to Logos, so no Logos work is required. If you are adding to `Cpc.eo`,
+continue through steps 5–7 to give the addition its semantics and proofs in
+Logos, then update cvc5's Logos pin.
 
-| Path | What is required | Where the work ends |
-| --- | --- | --- |
-| **Expert: `expert/CpcExpert.eo`** | Add declarations with the right names and types, make them reachable from the expert signature, and check that they match what cvc5 prints. Proof-rule support may still be incomplete. | **The trail ends in CPC.** `CpcExpert.eo` does not go to Logos: no Logos semantics, Lean proofs, regeneration, or Logos pin update is required. |
-| **Main: `Cpc.eo`** | Supply the declarations and proof support, then update Logos's semantics, regenerate its checker, complete the affected proofs, and update cvc5's Logos pin. | The matching Logos development is part of completing the feature. |
+We use the existing `int.pow2` operator as a running example. Read its
+implementation as a model for your addition; do not add a second copy. When
+adding a whole theory, you also need to declare its sorts and values; a
+finite-field example illustrates that part. The optional
+[worked files](../examples/theories/README.md) exercise these existing
+implementations. Your own development does not require Mimesis.
 
-The expert path is deliberately lightweight. Use sections 2–5 for the relevant
-declaration, cvc5 integration, and checks, then stop. You do not need a Logos
-checkout. Section 6 is for main-signature changes; section 7 is for a later
-promotion from expert to main.
+## 1. Choose where the declaration belongs
 
-We follow two existing implementations: `int.pow2`, an operator in the main
-integer theory, and finite fields, an expert theory. They are models to read,
-not declarations to add again. The [worked proofs](../examples/theories/README.md)
-run against cvc5's actual signatures. Mimesis supplies optional advice and
-fixtures; no cvc5 or Logos development step requires a Mimesis checkout.
-
-## 1. Choose the main or expert signature
-
-Make this decision before choosing a file. The contract in
-[`expert/CpcExpert.eo`][expert] is concrete: proofs emitted by safe builds or
-with `--safe-options` must never reference symbols or rules from `expert/`.
-Expert declarations cover experimental theory symbols even when their proof
-rules are still incomplete.
-
-Paths in this table are relative to cvc5's `proofs/eo/cpc/`:
-
-| Change | Declarations and rules | Entry point |
-| --- | --- | --- |
-| Extend a main theory | `theories/<Theory>.eo`, `rules/<Theory>.eo` and relevant `programs/` files | Reachable through `Cpc.eo` |
-| Add an expert operator to an existing theory | Its extension under `expert/theories/` and `expert/rules/`, such as `ArithExt.eo` | Reachable through `expert/CpcExpert.eo` |
-| Add an experimental theory | New `expert/theories/<Theory>.eo` and, as rules become available, `expert/rules/<Theory>.eo` | Add includes to `expert/CpcExpert.eo` |
-| Add a theory to the main signature | New `theories/<Theory>.eo` and `rules/<Theory>.eo`, with Logos support | Add includes to `Cpc.eo` |
-
-Follow the existing include chain; a rule file can already include the theory
-file it needs. Expert files can depend on main declarations. Keep the reverse
-dependency out of the main signature, including through shared programs.
-Do not include `CpcExpert.eo` from `Cpc.eo` to make an undeclared symbol work.
-
-SMT-LIB standardization does not determine placement. For example, `int.pow2`
-is documented as nonstandard but lives in the main signature; arithmetic's
-expert extensions live in `expert/theories/ArithExt.eo`.
-
-Both paths use a complete cvc5 working tree and an Ethos binary. Set absolute
-paths; the main path adds a Logos checkout in section 6:
+Start with a complete cvc5 checkout and an Ethos binary. Set their absolute
+paths so that the commands below work from any directory:
 
 ```bash
 CVC5=/absolute/path/to/cvc5
 ETHOS=/absolute/path/to/ethos
 ```
 
-If needed, `./contrib/get-ethos-checker` from the cvc5 checkout builds Ethos at
-`deps/bin/ethos`. Keep all of `proofs/eo/`: the relative includes are part of
-the signature. See the [CPC rule tutorial](adding-a-cpc-rule.md#1-set-up-the-two-working-trees)
-for setup and prerequisites.
+If needed, run `./contrib/get-ethos-checker` from cvc5 to build Ethos at
+`deps/bin/ethos`. Keep the complete `proofs/eo/` subtree: the signature files
+include each other by relative path.
 
-## 2. Extend an existing theory: follow `int.pow2`
+Choose the main or expert location once. The editing and checking steps are
+the same; this choice determines where you put the files and whether you
+continue to Logos after step 4. All paths in this table are relative to
+`proofs/eo/cpc/`:
 
-The declaration in `theories/Ints.eo` is small:
+| Path | Theory declarations | Entry point |
+| --- | --- | --- |
+| Main | `theories/<Theory>.eo` | `Cpc.eo` |
+| Expert | `expert/theories/<Theory>.eo` | `expert/CpcExpert.eo` |
+
+Use the expert path for experimental vocabulary. Its declarations can be
+added while proof-rule support is still incomplete. The contract in
+[`CpcExpert.eo`][expert] is that proofs from safe builds or `--safe-options`
+must never reference expert symbols or rules. Main additions must have the
+Logos support developed in steps 5–7. Being part of SMT-LIB does not decide
+placement: `int.pow2` is nonstandard, but belongs to the main signature.
+
+For an existing theory, use its existing declaration file. An experimental
+extension of a main theory goes in its expert extension file, such as
+`expert/theories/ArithExt.eo`.
+
+For a new theory, create a file in the appropriate directory and include it
+from the chosen entry point. For example, a new `MyTheory.eo` uses the same
+relative include in either entry point:
+
+```lisp
+(include "./theories/MyTheory.eo")
+```
+
+An existing rule file may already include the theory file, so first check
+whether it is reachable. Expert files can include main files, but main files
+must not depend on expert files. At the end of this step, loading your chosen
+entry point should reach the file you will edit next.
+
+## 2. Declare the new vocabulary
+
+Write the name and type of each term cvc5 will print. For an operator over
+existing types, this can be a single declaration. In `theories/Ints.eo`,
+`int.pow2` takes an integer and returns an integer:
 
 ```lisp
 (declare-const int.pow2 (-> Int Int))
 ```
 
-It says that the operator takes an integer and returns an integer. Its
-evaluation support is separate. In `Cpc.eo`, `$run_evaluate` dispatches to
-the arithmetic evaluation program:
+Apply the same pattern to your operator. Match its argument order, result
+type, indices, and implicit parameters. This declaration gives the term its
+syntax and type; its evaluation and proof support come in the next step.
+
+If you are adding a theory with a new sort, declare that sort before its
+values and operators. For example, these excerpts from
+[`expert/theories/FiniteFields.eo`][finite-fields] describe a field indexed
+by an integer and addition within that field:
 
 ```lisp
-(($run_evaluate (int.pow2 i1)) ($arith_eval_int_pow_2 ($run_evaluate i1)))
-```
-
-That lets the existing `evaluate` rule prove a concrete result:
-
-```lisp
-(assume @neq (not (= (int.pow2 3) 8)))
-(step @eval (= (int.pow2 3) 8) :rule evaluate :args ((int.pow2 3)))
-(step @false false :rule contra :premises (@eval @neq))
-```
-
-For your operator, specify the arity, types, indices, and any implicit
-parameters, then trace the proof steps cvc5 uses on it. Check whether existing
-rules for evaluation, normalization, congruence, or distinct values need new
-cases. Adding a declaration alone does not supply those cases. For a new
-main-signature rule, use the [CPC rule workflow](adding-a-cpc-rule.md).
-
-For an expert extension to an existing theory, make these additions in the
-expert files and programs reached from `CpcExpert.eo`. You can add its
-declarations before completing its proof rules; no Logos work is required.
-The fact that the base theory is supported by the main signature does not
-make every extension safe.
-
-## 3. Add a theory: follow finite fields in `CpcExpert.eo`
-
-The [finite-field theory file][finite-fields] starts by including arithmetic
-for its integer parameters. These are excerpts from its declarations:
-
-```lisp
-(include "../../theories/Arith.eo")
-
 (declare-const FiniteField (-> Int Type))
 
 (declare-parameterized-const ff.value ((p Int)) (-> Int (FiniteField p)))
@@ -113,162 +94,161 @@ for its integer parameters. These are excerpts from its declarations:
     :right-assoc-nil (ff.value p 0))
 ```
 
-Here `(FiniteField 7)` is a type and `(ff.value 7 0)` is its zero value.
-`ff.add` infers the field parameter from its arguments, which must have the
-same type. Its list representation has a zero terminator. Those details must
-agree with cvc5's conversion of sorts, constants, and variadic applications.
-CPC uses `ff.value` applications; this file explicitly does not support native
+The file includes `../../theories/Arith.eo` for its integer vocabulary.
+`(FiniteField 7)` is a type, and `(ff.value 7 0)` is its zero value.
+`ff.add` infers the field parameter from its arguments, which must belong to
+the same field. Its list representation ends in that field's zero value.
+CPC represents finite-field constants with `ff.value`, rather than native
 finite-field literal syntax.
 
-The type constructor above accepts an integer parameter; it does not itself
-check primality. For your theory, explicitly identify where valid indices,
-value ranges, and other mathematical restrictions are enforced. A producer
-restriction is not automatically a signature check or a semantic invariant.
+For your declarations, identify which restrictions the types enforce and
+which need separate handling. For example, `FiniteField` above accepts an
+integer parameter; the declaration itself does not check primality. Keep
+these distinctions explicit when implementing the checking rules and, on the
+main path, the semantics.
 
-`expert/CpcExpert.eo` makes these declarations available with:
+## 3. Connect the declarations to cvc5's proof output
+
+Now check that cvc5 prints the names and arguments you just declared. For
+`int.pow2`, the SMT parser and printer associate `Kind::POW2` with the name
+`int.pow2`. Other terms need CPC-specific conversion. Inspect the relevant
+parts of this chain and update them where necessary:
+
+| cvc5 source | What to check |
+| --- | --- |
+| `src/parser/smt2/smt2_state.cpp`, `src/printer/smt2/smt2_printer.cpp` | The operator's input and printed names |
+| `src/proof/eo/eo_node_converter.cpp` | CPC term encoding, such as converting a finite-field constant to `ff.value` with size and value arguments |
+| `src/proof/eo/eo_dependent_type_converter.cpp` | Indexed types, such as the field size in `FiniteField` |
+| `src/proof/eo/eo_list_node_converter.cpp` | Variadic applications and their terminators |
+| `src/proof/eo/eo_printer.cpp` | The names and arguments of proof rules used on these terms |
+
+Next, follow the proof steps cvc5 emits for the operator. Existing rules may
+need additional cases even when no new rule is introduced. For `int.pow2`,
+the `evaluate` rule uses `$run_evaluate` in `Cpc.eo`, which contains:
 
 ```lisp
-(include "./theories/FiniteFields.eo")
+(($run_evaluate (int.pow2 i1)) ($arith_eval_int_pow_2 ($run_evaluate i1)))
 ```
 
-For a new experimental theory, create `expert/theories/<Theory>.eo` and add
-`(include "./theories/<Theory>.eo")` to `expert/CpcExpert.eo`. This is
-worthwhile even before all theory rules are implemented: CPC needs a
-declaration for each experimental symbol that cvc5 prints. As rules become
-available, put them in `expert/rules/<Theory>.eo`, include their theory file
-using `../theories/<Theory>.eo`, and include that rule file from
-`CpcExpert.eo`. Check that the entire include chain loads.
+This connects the declared operator to the program that computes its result.
+For your addition, extend the evaluation or normalization programs it needs.
+If you add theory rules, put them in `rules/<Theory>.eo` or
+`expert/rules/<Theory>.eo` alongside the chosen theory directory. Include the
+theory from the rule file using `../theories/<Theory>.eo`, and make the rule
+file reachable from the same entry point chosen in step 1.
 
-Finite fields also illustrate a change to an existing generic rule.
-`CpcExpert.eo` extends normalization through
-`$get_aci_normal_form_expert` and `aci_norm_expert`; cvc5's EO printer chooses
-that rule for `ProofRule::ACI_NORM` on finite-field addition and multiplication.
-The [expert proof fixture](../examples/theories/test/finite-fields.cpc) uses it
-to prove `(= (ff.add x y) (ff.add y x))` for `x` and `y` in `(FiniteField 7)`.
+An expert declaration can land before those proof rules are complete; add
+and test rule support as it becomes available. For a new main-signature rule,
+the [CPC rule tutorial](adding-a-cpc-rule.md) explains its declaration and
+soundness proof in detail.
 
-## 4. Make cvc5 emit the declared vocabulary
+Finally, check that the feature's availability in cvc5 agrees with its
+placement. Expert vocabulary must stay out of safe-mode proofs. For example,
+finite fields have an expert `ff` option in `src/options/ff_options.toml`;
+`src/smt/set_defaults.cpp` disables it under safe options, and
+`src/smt/illegal_checker.cpp` rejects the disabled theory's kinds. Follow the
+corresponding mechanism for your feature. The next step checks this integration.
 
-Trace a term from the solver to the printed proof. These are the places to
-inspect, with existing finite-field handling as a guide; a new operator will
-not necessarily need changes in every file:
+## 4. Check the addition with Ethos
 
-| cvc5 source | What must agree with the signature |
-| --- | --- |
-| `src/parser/smt2/smt2_state.cpp`, `src/printer/smt2/smt2_printer.cpp` | Input and printed names, including ordinary theory operators |
-| `src/proof/eo/eo_node_converter.cpp` | CPC-specific term encoding; `CONST_FINITE_FIELD` becomes `ff.value` with field size and value arguments |
-| `src/proof/eo/eo_dependent_type_converter.cpp` | Indexed sorts; `FINITE_FIELD_TYPE` maps to `FiniteField` |
-| `src/proof/eo/eo_list_node_converter.cpp` | Variadic operators and their list representation; includes finite-field addition and multiplication |
-| `src/proof/eo/eo_printer.cpp` | Rule names and arguments; selects `aci_norm_expert` for the finite-field normalization cases |
+First write a small CPC file that exercises your addition without including
+either signature in the file itself. For `int.pow2`, this complete refutation
+uses the evaluation support from step 3:
 
-The solver still needs its normal kind, type-checking, rewriting, and proof
-production support. Inspect an actual generated proof to check the connection
-to CPC; a hand-written proof cannot establish that the printer emits the same
-terms.
+```lisp
+(assume @neq (not (= (int.pow2 3) 8)))
+(step @eval (= (int.pow2 3) 8) :rule evaluate :args ((int.pow2 3)))
+(step @false false :rule contra :premises (@eval @neq))
+```
 
-**Enforce the expert restriction in cvc5 too.** A directory name does not
-disable a solver feature. For finite fields, `ff` is an expert option in
-`src/options/ff_options.toml`; `src/smt/set_defaults.cpp` disables it under
-safe options, and `src/smt/illegal_checker.cpp` rejects the disabled theory's
-kinds. Follow the appropriate existing path for your theory or extension.
-Test `--safe-options` and a build configured with `./configure.sh safe`, as
-well as the unrestricted feature.
-
-## 5. Check the main and expert signatures separately
-
-Save the `int.pow2` refutation above as a CPC file, or use the optional
-fixtures here. `EXAMPLES` below only locates those fixtures:
+Save your test and set its absolute path:
 
 ```bash
-EXAMPLES=/absolute/path/to/eudaimonia/tools/mimesis/examples/theories
-
-"$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" --require-proof-of-false \
-  "$EXAMPLES/test/int-pow2.cpc"
-
-"$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" \
-  --include="$CVC5/proofs/eo/cpc/expert/CpcExpert.eo" --require-proof-of-false \
-  "$EXAMPLES/test/finite-fields.cpc"
-
-python3 "$EXAMPLES/check.py" "$ETHOS" "$CVC5"
+PROOF=/absolute/path/to/extension.cpc
 ```
 
-Both positive runs must print `correct`. The script checks five outcomes:
+Run it with the signature you selected in step 1. For the main path, including
+the `int.pow2` example, load only `Cpc.eo`:
 
-| Proof | Includes | Expected result |
-| --- | --- | --- |
-| `int-pow2.cpc` | Main | Complete refutation accepted |
-| `int-pow2-wrong-type.cpc` | Main | Boolean argument to `int.pow2` rejected by type checking |
-| `finite-fields.cpc` | Main | Rejected because `FiniteField` is undeclared |
-| `finite-fields.cpc` | Main and expert | Complete refutation accepted |
-| `finite-fields-wrong-type.cpc` | Main and expert | Addition mixing fields of sizes 7 and 11 rejected by type checking |
+```bash
+"$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" \
+  --require-proof-of-false "$PROOF"
+```
 
-Adapt this coverage to what your extension implements. For an expert symbol
-without proof rules yet, check that its declarations load, accept the intended
-terms, reject wrong argument types, and remain unavailable with only `Cpc.eo`.
-As rules are added, test valid steps and invalid applications too. Complete
-proof-rule coverage is not a prerequisite for adding expert declarations.
+For the expert path, load `Cpc.eo` and `CpcExpert.eo` together:
 
-Produce a regression from the changed cvc5 using
+```bash
+"$ETHOS" --include="$CVC5/proofs/eo/cpc/Cpc.eo" \
+  --include="$CVC5/proofs/eo/cpc/expert/CpcExpert.eo" \
+  --require-proof-of-false "$PROOF"
+```
+
+A valid refutation must print `correct`. If you have only added declarations
+so far, use a file with well-typed declarations and assumptions and omit
+`--require-proof-of-false`; you do not need to implement proof rules to test
+that the terms typecheck.
+
+Then make an invalid application and check that it fails for the intended
+reason. For `int.pow2`, `(int.pow2 true)` must fail type checking. For
+`ff.add`, mixing `(FiniteField 7)` and `(FiniteField 11)` must fail. Test any
+new rule's invalid applications as well. An expert term must also fail to
+load with only `Cpc.eo`, because its declaration is unavailable there. The
+[five worked checks](../examples/theories/README.md) demonstrate these cases.
+
+Finally, exercise the feature in your changed cvc5 using
 `--proof-format-mode=cpc --proof-granularity=dsl-rewrite --dump-proofs`.
-Check that it exercises the new vocabulary and intended rules, and identify
-any remaining `trust` steps. Pass the CPC commands inside the dump's outer
-proof-list delimiters to Ethos, omitting the leading `unsat` result.
+Inspect the emitted terms and rule applications, and check the proof with
+Ethos. Remove the leading `unsat` and outer proof-list delimiters before
+passing the CPC commands to the checker. Record any remaining `trust` steps
+as incomplete proof support.
 
-At the reviewed revision, the `cpc_gen.sh` helper installed by
-`contrib/get-ethos-checker` inserts **both** signature includes. For a main-only
-test, use an include-free proof with the explicit `Cpc.eo` command above.
-Passing the helper's default check does not establish that the proof can be
-checked without expert declarations. Check proofs from supported safe-mode
-inputs this way; an expert-only input should be rejected by safe cvc5 itself.
+For safe-mode support, also test `--safe-options` and a build configured with
+`./configure.sh safe`. Their proofs must check with `Cpc.eo` alone; an
+expert-only input should be rejected by safe cvc5 itself. Use the explicit
+includes above for this check: the `cpc_gen.sh` helper installed by
+`contrib/get-ethos-checker` includes both signatures by default.
 
-**For an expert-only addition, the tutorial ends here.** The declarations and
-applicable CPC checks are enough; the following Logos work is not required.
+**The expert path ends here.** Once the declarations and applicable CPC checks
+are in place, your expert addition is ready for review, even if proof-rule
+support is still incomplete. `CpcExpert.eo` is not compiled into Logos, so
+there is no Logos checkout, semantics, Lean proof, regeneration, or pin update
+to do. Continue below only for changes to `Cpc.eo` or its included files.
 
-## 6. Extend Logos for changes to the main signature
+## 5. Give the main addition its meaning in Logos
 
-This section applies only to the main path. Logos compiles `Cpc.eo`;
-`CpcExpert.eo` and its private includes are outside that compilation. Changes
-confined to those expert files require no Logos update or regeneration check.
-If your change also modifies the main signature or its shared dependencies,
-handle that part through this path.
-
-For a new main symbol or theory, or an expert feature being promoted to the
-main signature, **the Logos update is part of the implementation**:
-
-| Source | Required work |
-| --- | --- |
-| Logos `install/defs/Cpc.eos` | Translate the new CPC terms and types into the model |
-| Logos's pinned Ethos `tools/eoc/semantics/smt.eos` | Supply any missing semantic sorts, values, typing, and evaluation |
-| Logos's handwritten model, translation, and rule proofs | Establish the properties of those additions and repair affected proofs |
-
-For `int.pow2`, the [CPC semantics][cpc-semantics] contains:
+The CPC declaration now accepts the intended terms. Next, tell Logos what
+those terms mean. Open `install/defs/Cpc.eos` in your Logos development
+checkout. This file translates CPC terms and types into the semantic model.
+For `int.pow2`, its entry is:
 
 ```lisp
 (define-symbol int.pow2 (x))
 ```
 
-This uses the target operator with the same name. Such an entry works only
-because the target already supplies that meaning. For your symbol, use an
-existing target operator or an explicit `:term` translation when that captures
-the intended operation. New sorts need a `:type` translation as well. Editing
-the compiler's `development-cpc.eos` alone does not update the authoritative
-`install/defs/Cpc.eos` in Logos.
+This selects the target operator with the same name. Use this form when the
+target already defines your operation. Otherwise, write an explicit `:term`
+translation into existing target operations, or extend the target semantics.
+A new sort also needs a `:type` translation. Keep CPC translations in this
+Logos file; changing the compiler's `development-cpc.eos` alone does not
+update them.
 
-For a whole new theory, first determine whether the target model can represent
-it faithfully. A finite-field declaration, for example, would not acquire
-finite-field semantics just by being translated to an uninterpreted sort.
-A new domain needs valid type parameters, a representation of values, typing
-and evaluation for each operation, and the corresponding model and translation
-proofs. Establish that the required values and models exist; rule proofs over
-an impossible model would be vacuous. The finite-field fixture here does not
-implement or verify that domain in Logos.
+The target semantics lives in `tools/eoc/semantics/smt.eos` in Logos's pinned
+Ethos compiler. If your theory needs a new semantic domain, define its valid
+sorts, values, and the typing and evaluation of its operations there. Identify
+the properties the model and translation proofs will need, including existence
+of the required values and models; you will prove them in step 6. A finite-field
+declaration, for example, would need an actual finite-field interpretation;
+mapping it to an uninterpreted sort would not provide that meaning.
 
-Keep model changes in the semantic sources and regenerate the Lean. If the
-target semantics or compiler changes, land it in Ethos and update Logos's
-compiler pin in `install/get-eo-compiler.sh`. The final generation must work
-with that pin, without a private `--smt-semantics` override. See the
-[Logos installer documentation][install] for local development overrides.
+When changing the target semantics or compiler, land those changes in Ethos
+and update Logos's compiler pin in `install/get-eo-compiler.sh`. The
+[installer documentation][install] describes local overrides for development;
+the final generation must use the pinned sources without a private override.
 
-Then regenerate from the edited main signature:
+## 6. Regenerate Logos and complete the proofs
+
+With the declarations and semantics in place, compile your edited main
+signature in the Logos checkout:
 
 ```bash
 LOGOS=/absolute/path/to/logos
@@ -278,61 +258,77 @@ install/install-cpc.sh --all "$CVC5/proofs/eo/cpc/Cpc.eo"
 scripts/build.sh Cpc CpcMini logos
 ```
 
-Review the term constructors and parser, the translations in `Cpc/Spec.lean`,
-and the generated `SmtModel`, `SmtEval`, and related modules. Keep the refreshed
-`install/defs/Cpc.cached.eo` with the change. Existing rule proof files are
-preserved, so successful regeneration does not mean those proofs still compile.
-Build the affected model and translation proofs and every affected rule proof,
-and discharge any new rule's generated `sorry`.
+`--all` updates both `Cpc` and `CpcMini`. Review the generated term constructors
+and parser, the translations in `Cpc/Spec.lean`, and the affected model
+modules. Keep `install/defs/Cpc.cached.eo`, which records the input signature,
+with the generated changes. Fix mistakes in their source declarations or
+semantics and regenerate.
 
-Follow [the CPC rule tutorial's validation steps](adding-a-cpc-rule.md#6-validate-the-logos-change),
-including proof hygiene and explicit proof builds: the reviewed Logos CI builds
-only a subset of the rule proofs. Exercise the new main vocabulary with the
-rebuilt Logos executable using include-free CPC proofs. An `incomplete` result
-does not establish support for the theory.
+Now complete the affected model, translation, and rule proofs. New rules get
+proof files containing `sorry`; existing rule proof files are preserved and
+may need repair. Build affected proofs explicitly. For the running example,
+the evaluation rule's proof target is:
 
-Land the matching Logos change, obtain passing Logos CI at the exact commit,
-and set cvc5's `LOGOS_VERSION` in `contrib/get-logos-checker` to it. Then run:
+```bash
+scripts/build.sh Cpc.Proofs.Rules.Evaluate
+```
+
+Choose the targets your own change affects. Building the executable alone
+does not build all soundness proofs. Follow the
+[CPC validation procedure](adding-a-cpc-rule.md#6-validate-the-logos-change)
+for proof hygiene, CI, and broader proof builds when a theory change affects
+other rules. Record which proof targets you checked.
+
+Run your include-free proof from step 4 through the rebuilt Logos executable:
+
+```bash
+./.lake/build/bin/logos "$PROOF"
+```
+
+It must report `correct`; test the invalid applications too. An `incomplete`
+result means the required support is not finished. Commit the semantic sources,
+cached signature, generated modules, completed proofs, and regressions together.
+
+## 7. Land Logos and update cvc5's pin
+
+Merge the matching Logos change and obtain a successful Logos `CI` run at the
+exact commit you will pin. In cvc5, set `LOGOS_VERSION` in
+`contrib/get-logos-checker` to that full commit hash, then run:
 
 ```bash
 cd "$CVC5"
 ./contrib/check-logos-compilation
 ```
 
-This compares the main signature against the pinned Logos generation. It does
-not build all the Lean proofs. See the
-[landing procedure](adding-a-cpc-rule.md#7-land-logos-then-update-cvc5s-pin)
-for the exit statuses, exact-commit CI requirement, and final regression check.
+This must confirm that the main signature matches the pinned Logos generation.
+It does not build the Lean proofs; that work belongs to step 6. Install the
+newly pinned checker with `./contrib/get-logos-checker` and check the regression
+proof emitted by your changed cvc5. The
+[CPC landing procedure](adding-a-cpc-rule.md#7-land-logos-then-update-cvc5s-pin)
+details the CI requirement and failure statuses.
 
-## 7. When promoting an expert feature
-
-Move its declarations and supported rules into the main include chain, remove
-obsolete expert copies, and update any printer dispatch that selected an
-expert rule name. Check the full dependency chain: a promoted rule must not
-still require an expert-only symbol or helper.
-
-Complete the Logos work above before enabling the feature under safe options.
-Update cvc5's feature guards as appropriate and add main-only Ethos, Logos,
-and safe-cvc5 regressions. For finite fields this would be a larger development
-than moving `FiniteFields.eo`: it includes the semantic domain and proofs.
+The main addition is ready when cvc5's declaration and proof output agree with
+that tested Logos revision. If you later promote an expert feature, move its
+declarations and rules into the main include chain, remove obsolete expert
+copies, update the printer's rule selection, and follow these same seven steps.
 
 ## Sources and validation
 
-On 2026-09-17, all five fixture checks passed against cvc5
-`2900761a7c2e2c0e99e2cf669cffa3740ea9a138` (the merged
-[PR #12891][pr]), using Ethos built from cvc5's checker pin,
+The worked examples use cvc5 `2900761a7c2e2c0e99e2cf669cffa3740ea9a138`,
+the merged [PR #12891][pr]. All five fixture checks passed on 2026-09-17
+with Ethos built from cvc5's checker pin,
 `8dc85c4db8d6cc612f02dc3bb627331732605eff`. Negative cases were checked for
-the expected diagnostics, not merely a nonzero exit.
+the expected diagnostics.
 
-The cvc5 integration and Logos commands are a source-reviewed procedure for
-the reader's extension. No solver build, new theory implementation, Logos
-regeneration, or Lean proof was performed for these fixtures. Logos sources
-were reviewed at cvc5's pin, `664c35d6e188a62d5b5dac8fb403d19b9e0f4baa`;
-its compiler pin is `406b5499f3c83f2a114113107be251f8e58b2d85`, separate from
-the Ethos checker revision used above. No project pins were changed.
+The cvc5 integration and Logos steps are a source-reviewed procedure for your
+extension. No solver build, new theory implementation, Logos regeneration, or
+Lean proof was performed for these fixtures. Logos sources were reviewed at
+cvc5's pin, `664c35d6e188a62d5b5dac8fb403d19b9e0f4baa`, whose compiler pin
+is `406b5499f3c83f2a114113107be251f8e58b2d85`. The finite-field example checks
+CPC declarations and existing expert proof support; it does not implement
+finite-field semantics in Logos.
 
 [pr]: https://github.com/cvc5/cvc5/pull/12891
 [expert]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/CpcExpert.eo
 [finite-fields]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/theories/FiniteFields.eo
-[cpc-semantics]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/install/defs/Cpc.eos
 [install]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/install/README.md
