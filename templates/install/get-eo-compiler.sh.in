@@ -31,15 +31,15 @@ cross-check.
 The signature it all compiles is install/defs/@CALCULUS@.eo; run
 install/install-@CALCLOWER@.sh for that.
 
-The Eunoia compiler is developed on the ethosEoc3 branch of cvc5/ethos, which
-is where the latest one is; main lags it and lacks options this template needs.
+The Eunoia compiler is developed on the ethosEoc3 branch of cvc5/ethos and
+released on main, which is what this pin follows.
 
 Which commit of that branch gets built is DEV_MODE in this script. Pinned, it
 is the hardcoded ETHOS_VERSION, and what the compiler emits changes only when
 someone edits that line. In development mode it is the head of the branch,
 resolved at run time -- which tracks the compiler as it is developed, at the
 cost of a build that cannot be reproduced later. --tip and --pinned override
-DEV_MODE for one run.
+DEV_MODE for one run, and --branch says which branch --tip follows.
 
 DEV_MODE is 0: this checker is pinned. Note that the commit and
 install/defs/smt.eos are pinned together -- that file is a snapshot of the
@@ -51,7 +51,11 @@ Options:
   --jobs N             parallel compile jobs (default: all processors)
   --no-ethos           do not also build the ethos proof checker
   --keep-tmp           keep the downloaded archive instead of deleting it
-  --tip                build the head of the development branch, resolved now
+  --tip                build the head of ETHOS_BRANCH, resolved now
+  --branch NAME        which branch --tip follows (default: main). The
+                       compiler is developed on ethosEoc3 and released on
+                       main, so ethosEoc3 is what to name to see a format
+                       change before it is released
   --pinned             build the recorded commit instead
   -h, --help           show this message
 
@@ -64,9 +68,10 @@ USAGE
 # ---------------------------------------------------------------------------
 # Which Ethos to build.
 #
-# The Eunoia compiler is developed on the `ethosEoc3` branch of cvc5/ethos;
-# that is where the latest one is. `main` lags it, and its tools/eoc/driver.py
-# is missing two options this template is built on:
+# The Eunoia compiler is developed on the `ethosEoc3` branch of cvc5/ethos and
+# reaches `main` as squashed releases. `main` is what this pin follows, and
+# until 2026-09-11 it could not be: its tools/eoc/driver.py was missing two
+# options this template is built on,
 #
 #   --calc-name      what the generated Lean calls the calculus, which is how
 #                    the calculus name becomes the user's to choose rather than
@@ -74,9 +79,12 @@ USAGE
 #   --smt-semantics  the SMT-LIB semantics the calculus is read against, which
 #                    is the third of the three files a specification is
 #
-# So `main` is not an option today: building from it would cost exactly the two
-# things that make this a template. Whichever commit is chosen, it is checked
-# below rather than assumed.
+# and building from it would have cost exactly the two things that make this a
+# template. Both landed in the 0.2.4 release, and `tools/eoc/*.py` and
+# `plugins/` are now identical on the two branches -- the branch carries ten
+# CPC driver scripts under tools/eoc/cpc/ that nothing here calls, and no
+# compiler difference at all. Whichever commit is chosen, the options are
+# checked below rather than assumed.
 #
 # There are two ways to choose one, and which is in force is DEV_MODE:
 #
@@ -93,16 +101,16 @@ USAGE
 # format is still changing under it.
 DEV_MODE=0
 
-ETHOS_BRANCH="ethosEoc3"
+ETHOS_BRANCH="main"
 
-# The commit built when DEV_MODE=0: the head of ethosEoc3 on 2026-08-30.
+# The commit built when DEV_MODE=0: the 0.2.4 release on main, 2026-09-11.
 #
 # This is not an arbitrary choice of pin. install/defs/smt.eos is a snapshot of
 # tools/eoc/semantics/smt.eos *from this commit*, and the two move together --
 # the semantics format changes, so a snapshot taken at one commit will not
 # generally parse against another. scripts/bump-eoc.sh in the Eudaimonia
 # repository advances both at once.
-ETHOS_VERSION="406b5499f3c83f2a114113107be251f8e58b2d85"
+ETHOS_VERSION="8dc85c4db8d6cc612f02dc3bb627331732605eff"
 # ---------------------------------------------------------------------------
 
 # The driver options the pin has to provide. See the note above.
@@ -131,6 +139,8 @@ while [ $# -gt 0 ]; do
     --no-ethos) WITH_ETHOS=0; shift ;;
     --with-ethos) WITH_ETHOS=1; shift ;;
     --tip) DEV_MODE=1; shift ;;
+    --branch) ETHOS_BRANCH="${2:?--branch requires a value}"; shift 2 ;;
+    --branch=*) ETHOS_BRANCH="${1#*=}"; shift ;;
     --pinned) DEV_MODE=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unrecognized option $1" >&2; usage >&2; exit 2 ;;
@@ -243,9 +253,9 @@ if [ "${#missing[@]}" -gt 0 ]; then
   echo "error: the pinned ethos does not support: ${missing[*]}" >&2
   echo >&2
   echo "ETHOS_VERSION is ${ETHOS_VERSION}." >&2
-  echo "The head of ethos main does not carry --calc-name or --smt-semantics;" >&2
-  echo "the ethosEoc3 branch does. See the note above ETHOS_VERSION in this" >&2
-  echo "script before moving the pin." >&2
+  echo "These options reached ethos main in the 0.2.4 release; a commit before" >&2
+  echo "it, or one on a branch that predates it, does not carry them. See the" >&2
+  echo "note above ETHOS_VERSION in this script before moving the pin." >&2
   exit 1
 fi
 echo "    ok: ${REQUIRED_DRIVER_OPTIONS[*]}"

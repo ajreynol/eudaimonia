@@ -42,12 +42,24 @@ has a `signature/` directory and no way to turn it into Lean.
       Modelled on `scripts/bump-eoc-version.py` in Logos, which pins `Cpc.eos`
       only — Logos ships no `smt.eos` and tracks the compiler's own.
 
-- [ ] **Move the pin to `main` when it can carry one.** The pin is on a
-      development branch, whose head moves. Main's `driver.py` has
-      `--semantics` but not `--calc-name` or `--smt-semantics`, which are the
-      configurable calculus name and the third specification file — the two
-      things that make this a template rather than a copy of Logos. Logos
-      carries the same workaround and the same TODO.
+- [x] **Move the pin to `main`** — done, 2026-09-16. `ETHOS_VERSION` is
+      `8dc85c4d`, the 0.2.4 release, and `ETHOS_BRANCH` is `main`. The blocker
+      this item named is gone: `--calc-name` and `--smt-semantics` are argparse
+      options of main's `driver.py`, alongside `--semantics` and `--no-parser`.
+
+      The bump itself was one line, because `smt.eos` did not change between
+      the old pin (`406b5499`) and the release, so the snapshot half of the pin
+      was already current — `bump-eoc.sh` reported every `examples/*/smt.eos`,
+      `Cpc.eos` and the digest unchanged. What was not one line is that the
+      branch is named in prose in five places, and that `--tip` resolves
+      `ETHOS_BRANCH`: moving it would have silently redirected the weekly
+      drift job at `main`, where a format change appears only after it has
+      shipped. `get-eo-compiler.sh` grew a `--branch` flag and
+      `smt-drift.yml` now names `ethosEoc3` explicitly.
+
+      A generated checker now pins a *released* commit, which is what
+      [docs/eoc-requests.md](docs/eoc-requests.md) item 2 asked for and what
+      the reproducible-build claim in the README rests on.
 - [x] **Run the compiler and install what it publishes.**
       `install/install-<calc>.sh` in a generated checker drives
       `driver.py lean` with `--semantics`, `--smt-semantics` and `--calc-name`,

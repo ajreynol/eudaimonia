@@ -85,16 +85,17 @@ soundness proof it feeds — is byte-identical between a 591-rule package and a
 [item 5](eoc-requests.md) of the wish list and the top priority there: it is the
 one item that removes work rather than overhead.
 
-## The compiler is pinned to a development branch
+## The compiler is pinned to one commit, and taking a newer one is a judgement
 
-`ethosEoc3`, not `main`, which lacks `--calc-name` and `--smt-semantics` — the
-two options that make the calculus name and the SMT-LIB semantics the user's to
-choose. Builds are reproducible; the branch is not a released one.
+`main`, at the 0.2.4 release — a released commit, as of 2026-09-16. It was
+`ethosEoc3` until then, because `main` lacked `--calc-name` and
+`--smt-semantics`, the two options that make the calculus name and the SMT-LIB
+semantics the user's to choose; both landed in that release.
 
 The commit is not the whole pin. `install/defs/smt.eos` is a snapshot of that
 commit's semantics, and the format is still changing, so the two move together —
 `scripts/bump-eoc.sh` advances both, and `.github/workflows/smt-drift.yml` runs
-weekly and says when the branch has moved ahead.
+weekly and says when the compiler has moved ahead.
 
 Keeping the pin current is deliberately manual. Taking an update can invalidate
 what is shipped proven, and that wants judgement rather than a bot.

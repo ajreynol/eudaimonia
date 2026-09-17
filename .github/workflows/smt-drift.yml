@@ -3,6 +3,11 @@ name: SMT semantics drift
 # Does the shipped SMT-LIB semantics snapshot still work against the *tip* of
 # the compiler's development branch?
 #
+# `ethosEoc3`, named explicitly below, and not the branch the pin now follows.
+# The pin is on a released commit of `main`; the format changes on `ethosEoc3`
+# first and reaches `main` squashed, so watching `main` would report a break
+# only once it had already shipped. Lead time is the whole point of this job.
+#
 # The main CI deliberately builds the compiler `--pinned`, so it cannot see
 # this. The `.eos` format is under active development, and the snapshot in
 # examples/*/smt.eos is frozen -- keeping it current is a manual decision, with
@@ -42,5 +47,5 @@ jobs:
           scripts/new-checker.sh --checker Drift --calculus Hello \
             --spec examples/hello --out checkers/.drift
           cd checkers/.drift/Drift
-          ./install/get-eo-compiler.sh --tip
+          ./install/get-eo-compiler.sh --tip --branch ethosEoc3
           ./install/install-hello.sh

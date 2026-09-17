@@ -23,7 +23,7 @@ usage() {
   cat <<'USAGE'
 usage: scripts/bump-eoc.sh [--commit <sha>] [--dry-run]
 
-  --commit <sha>  pin this commit instead of the head of ethosEoc3
+  --commit <sha>  pin this commit instead of the head of main
   --dry-run       report what would change, write nothing
 
 What moves together:
@@ -50,7 +50,7 @@ done
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${repo_root}"
 
-BRANCH="ethosEoc3"
+BRANCH="main"
 REMOTE="https://github.com/cvc5/ethos.git"
 RAW="https://raw.githubusercontent.com/cvc5/ethos"
 

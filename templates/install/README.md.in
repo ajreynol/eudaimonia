@@ -119,6 +119,10 @@ cp deps/ethos/tools/eoc/semantics/smt.eos defs/smt.eos
 ./install-@CALCLOWER@.sh
 ```
 
+`--tip` resolves the head of `ETHOS_BRANCH`, which is the branch the compiler
+is *released* on; `--branch ethosEoc3` follows the one it is *developed* on,
+where a format change appears first.
+
 The install reports an `smt-drift` line in the calculus profile when the
 snapshot still parses but has fallen behind the compiler's own. Deleting
 `defs/smt.eos` is also legitimate: the install falls back to the compiler's own

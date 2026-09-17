@@ -225,10 +225,10 @@ finish the job.
 
 Adopted here by bumping the pin to `406b5499`, which is what Logos main carries.
 
-## 2. Put `--calc-name` and `--smt-semantics` on `main`
+## 2. Put `--calc-name` and `--smt-semantics` on `main` — **done** (0.2.4, 2026-09-11)
 
-**The ask:** these two options are what make a template possible rather than a
-fork of Logos, and they exist only on the `ethosEoc3` branch.
+**The ask was:** these two options are what make a template possible rather
+than a fork of Logos, and they existed only on the `ethosEoc3` branch.
 
 - `--calc-name` — what the generated Lean calls the calculus. Without it the
   name comes from the signature's file name, so the calculus name stops being
@@ -236,11 +236,20 @@ fork of Logos, and they exist only on the `ethosEoc3` branch.
 - `--smt-semantics` — the SMT-LIB semantics the calculus is read against, which
   is one of the three files a specification consists of.
 
-**Evidence.** `main`'s `tools/eoc/driver.py` has `--semantics` but neither of
-the above; `ethosEoc3` has both. So a template must pin to a development branch
-whose head moves, and does — Eudaimonia pins a commit and says why in
-`install/get-eo-compiler.sh`. Logos carries the same workaround and the same
-TODO.
+**What landed.** Both are argparse options of `main`'s `tools/eoc/driver.py` as
+of `8dc85c4d`, together with `--semantics` and `--no-parser` — the four this
+template checks a fetched tree for before building. The eoc work reaches `main`
+as squashed releases, so `git log main..ethosEoc3` still lists the branch's own
+commits while `tools/eoc/*.py` and `plugins/` are byte-identical on the two;
+the branch's only extra content under `tools/eoc/` is ten CPC driver scripts
+nothing here calls.
+
+**Taken, 2026-09-16.** The pin is `8dc85c4d` and `ETHOS_BRANCH` is `main`, so a
+generated checker no longer pins a development branch and the reproducible-build
+claim is one a reader can check against a release. `.github/workflows/smt-drift.yml`
+keeps watching `ethosEoc3` by name, because the format changes there first and
+a job that watched the pin's own branch would report a break only after it had
+shipped.
 
 ## 3. Diagnose a premise-list operator with no nil
 

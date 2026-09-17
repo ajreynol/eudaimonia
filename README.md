@@ -241,18 +241,22 @@ A generated checker is **pinned**: `DEV_MODE=0`, and `ETHOS_VERSION` names the
 commit. Two runs a month apart build the same compiler, and a checker can be
 regenerated identically later.
 
-The Eunoia compiler is developed on the **`ethosEoc3`** branch of cvc5/ethos;
-that is where the latest one is. `main` lags it, and its `driver.py` lacks two
-options this template is built on:
+The Eunoia compiler is developed on the **`ethosEoc3`** branch of cvc5/ethos
+and reaches **`main`** as squashed releases, which is what the pin follows.
+Until the 0.2.4 release (2026-09-11) it could not: `main`'s `driver.py` lacked
+two options this template is built on,
 
-| option | what building from `main` would give up |
-| ------ | --------------------------------------- |
+| option | what building without it would give up |
+| ------ | -------------------------------------- |
 | `--calc-name` | the calculus name becomes the user's to choose, instead of being derived from the signature's file name |
 | `--smt-semantics` | the SMT-LIB semantics is the user's to supply — the third of the three files a specification is |
 
-So `main` is not an option today: it would cost exactly the two things that
-make this a template. The script does not take the branch on faith — it checks
-whatever it fetched for those options before building, so a commit without them
+and building from it would have cost exactly the two things that make this a
+template. Both are on `main` now, and `tools/eoc/` and `plugins/` are identical
+on the two branches — the branch carries ten CPC driver scripts this repository
+does not call, and no compiler difference. The script does not take the branch
+on faith — it checks whatever it fetched for those options before building, so
+a commit without them
 fails there, naming the missing option, rather than failing later inside a
 compile.
 
@@ -286,7 +290,7 @@ will not generally parse against another: the two have to move together.
 
 ```bash
 scripts/bump-eoc.sh --dry-run     # what would change
-scripts/bump-eoc.sh               # advance to the head of ethosEoc3
+scripts/bump-eoc.sh               # advance to the head of main
 scripts/bump-eoc.sh --commit <sha>
 ```
 
