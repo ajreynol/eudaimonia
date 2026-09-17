@@ -1,22 +1,29 @@
 # Mimesis
 
-**Where to learn how a Eunoia signature is written, and how one gets into
-Logos.** A child project of the Eudaimonia build framework, in two strands:
+**Where to learn how to write Eunoia and maintain its verification in Logos.**
+A child project of the Eudaimonia build framework, in two strands:
 
 - **Case studies** read an episode that already happened — a signature somebody
   wrote, and whatever answered back: a stated proof obligation, a generated
   checker, a producer's own checker, a test suite. Each says what was decided,
   what was got wrong, and what caught it. The supply is real history: 75 commits
   touched CPC's signature on cvc5's trunk in the twelve months to 2026-09-16.
-- **Tutorials** build a signature from a calculus's rule descriptions, one
-  decision at a time, with every step run and the files kept so a reader can run
-  them too.
+- **Tutorials** cover different jobs: adding a rule to CPC and carrying it
+  through Logos, or writing a new signature from a calculus's rule descriptions.
+  Worked files are kept, and each tutorial distinguishes what was run from
+  instructions for the reader's own change.
+
+**[Choose a tutorial](docs/tutorials.md).** If you are changing cvc5, start with
+**[adding a rule to `Cpc.eo`](docs/adding-a-cpc-rule.md)**. Updating and proving
+the rule in Logos is part of that job.
 
 | document | strand | what it is |
 | --- | --- | --- |
+| [`docs/adding-a-cpc-rule.md`](docs/adding-a-cpc-rule.md) | tutorial | **Start here if you want to add a rule to Cpc.eo in cvc5.** Signature, proof tests, Logos regeneration and Lean proof, then the cvc5 pin and CI |
+| [`examples/cpc-rule/`](examples/cpc-rule/README.md) | tutorial | a small CPC refutation and rejected applications to adapt for a new rule |
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
-| [`docs/tutorial.md`](docs/tutorial.md) | tutorial | **Propositional resolution.** The calculus written from three lines of prose, with the three mistakes a first draft makes and the errors they produce |
-| [`examples/resolution/`](examples/resolution/README.md) | tutorial | the tutorial's worked files, and a `check.sh` that re-runs its proof tests |
+| [`docs/tutorial.md`](docs/tutorial.md) | tutorial | **Writing a signature from scratch: propositional resolution.** The calculus written from three lines of prose, with the three mistakes a first draft makes and the errors they produce |
+| [`examples/resolution/`](examples/resolution/README.md) | tutorial | the resolution tutorial's worked files, and a `check.sh` that re-runs its proof tests |
 
 ## What each strand owes
 
@@ -57,8 +64,8 @@ written first-hand.
 representing — a craft picked up from worked instances before it can be stated
 as a rule. Both strands are that word taken literally: the doing of somebody who
 has already done it, set down in enough detail to be imitated and argued with.
-If the fastest way to a new signature turns out to be opening CPC and editing
-it, the name is wrong and so is the project.
+Learning from an existing CPC rule and designing a new signature are different
+starting points; the tutorials give each its own route.
 
 The name is reserved in [ynoia's register][names], in kanon's tree, and nothing
 here edits it; a reader who finds it listed as *not started* should read that as
@@ -76,8 +83,9 @@ framework run would produce are written outside the repository, never here.
 **Started 2026-09-16 by the maintainer, in an explicit instruction**, and
 reoriented the same day and the same way: it had led with writing one calculus
 ourselves, and the main goal now is accumulating case studies, with tutorials as
-the second strand. Two documents exist. A person decides whether it **graduates**
-into its own repository, is **folded** into the parent, or is **retired in
+the second strand. On 2026-09-17, the tutorial collection gained a CPC contributor
+entry point, with the Logos update at its center. A person decides whether it
+**graduates** into its own repository, is **folded** into the parent, or is **retired in
 place** with a note saying what was learned; going quiet is not one of those.
 
 [names]: https://github.com/ajreynol/kanon/blob/5545d5cd20578ec890100810aa59165bb782c6e1/tools/ynoia/names.md#reserved-for-an-intended-launch

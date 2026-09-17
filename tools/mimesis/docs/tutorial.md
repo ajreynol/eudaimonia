@@ -1,5 +1,9 @@
 # Tutorial: a signature for propositional resolution
 
+Part of the [Eunoia tutorials](tutorials.md). This is the route for writing a
+signature from scratch. To extend cvc5's existing calculus, start with
+[adding a CPC rule](adding-a-cpc-rule.md), including its verification in Logos.
+
 A Eunoia signature for propositional resolution, written one decision at a time,
 with every step run. You end with a file of about thirty lines of substance that
 checks resolution proofs, accepts the empty clause as a refutation, and rejects
