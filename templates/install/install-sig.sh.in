@@ -686,6 +686,16 @@ fi
 #    So the requirement is conditional, and both halves are visible in what was
 #    just emitted: does anything gather premises with `and`, and is there a nil
 #    for it?
+#
+#    What this still catches, now that the compiler catches the rest. eoc's
+#    DesugarChecker fails the compile outright when a rule gathers premises
+#    with an operator carrying no nil attribute at all, so that case never
+#    reaches this point -- there is no emitted Lean to grep. What it tests is
+#    `isListNilAttr`, i.e. that *some* nil attribute is present, and it says
+#    nothing about what the nil is. The check below asks the narrower question
+#    the contract is actually about: is the nil `true`? An `and` declared with
+#    a nil that is not the unit of conjunction compiles, emits, and is wrong
+#    here rather than upstream.
 if [ -f "${CORE_MODULE}" ]; then
   uses_and_premise_lists=0
   grep -q "__eo_mk_premise_list (Term.UOp UserOp.and)" "${CORE_MODULE}" && uses_and_premise_lists=1

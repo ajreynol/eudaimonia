@@ -251,27 +251,54 @@ keeps watching `ethosEoc3` by name, because the format changes there first and
 a job that watched the pin's own branch would report a break only after it had
 shipped.
 
-## 3. Diagnose a premise-list operator with no nil
+## 3. Diagnose a premise-list operator with no nil — **done** (`b023960d`, 2026-08-29)
 
-**The ask:** eoc knows both halves of this and could say so; today it emits
-silently broken code.
+**The ask was:** eoc knows both halves of this and could say so; it emitted
+silently broken code instead.
 
-**Evidence.** Compile CPC with `and` declared `(-> Bool Bool Bool)` instead of
-`(-> Bool Bool Bool) :right-assoc-nil true`. The compiler succeeds, and the
-output contains
+**The evidence was.** Compile CPC with `and` declared `(-> Bool Bool Bool)`
+instead of `(-> Bool Bool Bool) :right-assoc-nil true`. The compiler succeeded,
+and the output contained
 
 - **11** call sites of `__eo_mk_premise_list (Term.UOp UserOp.and)`, emitted for
   the rules that gather `:list` premises with `and`; and
 - **0** arms of `__eo_nil` for `and`, because the arm exists only by virtue of
   the attribute.
 
-Every one of those rules goes `Stuck` at run time. Nothing warns.
+Every one of those rules went `Stuck` at run time, and nothing warned.
 
-Eudaimonia checks for this after the fact, by grepping emitted Lean for the
-mismatch. That works but is the wrong place: eoc has both facts in hand while it
-is emitting.
+**What landed**, in `DesugarChecker::` of
+`plugins/desugar/desugar_checker.cpp`, exactly where the request said both
+halves were in hand — the rule asks for the operator, the operator says whether
+it has a nil:
 
-Worth noting what this is *not*: the attribute is not a core requirement.
+```
+DesugarChecker: proof rule R gathers its premises with OP, which declares no
+nil; mark OP :right-assoc-nil or :left-assoc-nil, or give the rule its premises
+individually
+```
+
+**Noticed 2026-09-17, while moving the pin, and not caused by it.** The commit
+is dated 2026-08-29 and the diagnostic is present at `3cf1c03f`, at `406b5499`
+and at the current pin, so this was already satisfied under the pin this page
+was written against. It is recorded as a stale entry rather than a win.
+
+**What it leaves for the checker here, which is narrower than it was.** The
+compiler tests `isListNilAttr` — that *some* nil attribute is present, one of
+`:left-assoc-nil`, `:right-assoc-nil`, `:left-assoc-ns-nil`,
+`:right-assoc-ns-nil` — and says nothing about what the nil *is*. The contract
+check in `install/install-<calc>.sh` greps for the arm returning
+`Term.Boolean true`. So the two divide cleanly, and neither is redundant:
+
+| case | caught by | when |
+| --- | --- | --- |
+| `and` gathers premise lists and has no nil attribute at all | the compiler | during desugar, before anything is emitted |
+| `and` has a nil attribute whose unit is not `true` | the contract check here | after the compile, against emitted Lean |
+
+The second is the one this repository still has to make for itself, and it is
+the one the signature contract is actually about.
+
+Worth keeping from the original entry: the attribute is not a core requirement.
 With plain binary `and`, the input assumption list, the refutation test and the
 SMT translation are all unchanged — the checker core never uses the nil. Only
 `:list`-premise rules do. So the diagnostic is conditional, not a blanket
@@ -420,17 +447,42 @@ typechecks `Checker.lean` with the two bridge theorems replaced by `sorry`.
 
 `Checker.lean` uses **two** theorems from `RuleLemmas` —
 `cmd_step_proven_facts_of_invariants` and
-`cmd_step_pop_proven_facts_of_invariants` — in **four places** across 1,063
-lines.
+`cmd_step_pop_proven_facts_of_invariants` — and they are the *only* thing it
+takes from there; nothing else in the package names either one.
 
 Take them as hypotheses rather than imports. `Checker.lean` then depends on no
 rule, builds standalone and proven, and the application to a particular rule set
 happens where `RuleLemmas` is: at the point that actually knows the rules.
 
-That is a small, local change with a large consequence. It would make
-`Checker.lean` genuinely what it already almost is — a proof about a stack
-machine, parameterized over "the rules do what they claim" — and it is the
-precondition for a generated checker ever shipping it proven.
+It would make `Checker.lean` genuinely what it already almost is — a proof about
+a stack machine, parameterized over "the rules do what they claim" — and it is
+the precondition for a generated checker ever shipping it proven.
+
+**Measured 2026-09-17, because "four places" undersold it.** Against
+`CpcMini/Proofs/Checker.lean` at logos `be479120`:
+
+| | |
+| --- | --: |
+| the file | **901** lines, not 1,063 — and byte-identical to `Cpc`'s, which is also 901 |
+| call sites of the two theorems | **4** (lines 65, 148, 209, 343) |
+| declarations that *directly* need them | **4** of 25 |
+| declarations that need them **transitively** | **15** of 25 |
+| declarations unaffected | 10 — the whole `typeInvariant` and `shapeInvariant` family |
+
+So the edit is four lines and the *signature change* is fifteen theorems, one of
+which is `correct___eo_is_refutation` — the top-level theorem the entire public
+API rests on (`Api.lean`, `ApiCorrect.lean`, `ApiChecks.lean`, `Native.lean`,
+`Native/Correct.lean` all name it). Parameterizing it means the soundness
+statement becomes conditional on the rule bridge.
+
+**That is the right shape rather than a cost to avoid** — a checker *is* sound
+if its rules are, and saying so in the statement is more honest than hiding it
+in an import. But it is a change to the public statement of soundness in
+somebody else's verified development, not a local tidy-up, and it should be
+proposed as that. The four-call-site framing is what makes it sound like a
+patch.
+
+This measurement is Eudaimonia's and has not been carried anywhere.
 
 It also subsumes TODO 7's canary: a `Checker.lean` that does not import the
 rules is checked by every ordinary build, so no canary is needed.

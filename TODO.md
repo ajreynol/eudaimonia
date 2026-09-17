@@ -159,6 +159,15 @@ Still framework work, because these should not be the user's at all:
       places. Take them as hypotheses instead. It then builds standalone and
       proven, and the rule set is applied where it is known. See
       [docs/eoc-requests.md](docs/eoc-requests.md) item 5.
+
+      **Re-measured 2026-09-17**, and the four-place figure is right about the
+      edit and wrong about the change. The file is 901 lines, not 1,063; the
+      two theorems are the only thing it takes from `RuleLemmas`; but 15 of its
+      25 declarations need them transitively, and one of those is
+      `correct___eo_is_refutation`, which the whole public API names. So the
+      soundness statement becomes conditional on the rule bridge — the right
+      shape, and a change to somebody else's public theorem rather than a local
+      one. Numbers and the affected/unaffected split are in item 5.
 - [ ] **`Proofs/CheckerCore.lean` likewise, probably.** Its differences from
       `CpcMini`'s are simp-lemma lists and one namespace qualifier.
 - [x] **`Proofs/RuleSupport/Support.lean` needs at least a shape** — done.
@@ -795,6 +804,20 @@ that "known limitations" there stays about substance.
 - [ ] **`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They
       are always generated: they are proven, and `NonVacuity.lean` builds on
       them.
+- [ ] **A `--no-parser` checker always reports a profile disagreement when it
+      is reinstalled.** `new-checker.sh --no-parser` records `PROFILE_PARSER=no`
+      correctly, but the `parser` row of the install's profile report takes its
+      *detected* value from the install script's own `--no-parser` flag
+      (`install-sig.sh.in`, `d_parser`) rather than from anything the compiler
+      emitted. A plain `./install-<calc>.sh` on such a checker therefore
+      detects `yes`, disagrees with its own `profile.conf`, and prints the
+      "the record of it is what is wrong" note about a record that is right.
+
+      Visible on every CI run, in the `Renamed` configuration's regeneration
+      group. Cosmetic -- the install proceeds and the group passes -- but it is
+      the one row of that report whose "detected" is not detected from the
+      calculus, which is why it is the one that misfires. Noticed 2026-09-17
+      while moving the compiler pin, and unrelated to it.
 
 ## What is not on this list
 
