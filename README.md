@@ -568,8 +568,16 @@ propositions nothing can prove by accident.
 ## How this repository is maintained
 
 This repository is part of the **Eunoia ecosystem** and follows its shared
-repository policy, kept by [anoieu](https://github.com/ajreynol/anoieu) in
-[`docs/policy.md`](https://github.com/ajreynol/anoieu/blob/main/docs/policy.md).
+repository policy, `docs/policy.md`, kept by
+[kanon](https://github.com/ajreynol/kanon/blob/main/docs/policy.md).
+
+The page moved there from `ajreynol/anoieu` on 2026-09-15, and the two halves of
+following it have not caught up with each other yet. The checker is still
+anoieu's, pinned as `ANOIEU_REV` in
+[`.github/workflows/anoieu.yml`](.github/workflows/anoieu.yml) at a commit that
+predates the move — so what this repository is *checked against* and where the
+rules are *read* are, for the moment, two different trees. Moving the pin is a
+person's decision and is not made by noticing this.
 
 **Eudaimonia is written by an AI agent under human supervision.** An assistant
 does the work — the scripts, the templates, the Lean, the documentation and the

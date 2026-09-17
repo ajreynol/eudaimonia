@@ -664,6 +664,31 @@ Merged upstream 2026-08-30. What it bought, applied here:
       `sorry` rules and names what is left. Textual and instant, and it counts
       what is in the files rather than what has been built, so a proof counts as
       soon as it is written.
+- [ ] **Decide whether to move the anoieu pin, which is now coupled to the
+      README.** `ANOIEU_REV` is `dc2c613` (2026-08-31), **181 commits** behind
+      anoieu's head, and two things have moved under it since:
+
+      * **the checker's path** — `tools/policy_check.py` at the pin,
+        `scripts/policy_check.py` on their main since 2026-09-15. Handled:
+        `.github/workflows/anoieu.yml` now looks in both and fails with a named
+        error rather than "No such file or directory" if it moves again.
+      * **the policy page itself** — it left anoieu for kanon on 2026-09-15,
+        and the checker's required URL moved with it: `POLICY_URL =
+        "ajreynol/anoieu"` at the pin, `POLICY_REPO = "ajreynol/kanon"` at
+        head. So the pinned checker *requires* a declaration naming anoieu,
+        and the page it names is gone. **The pin and the maintenance note are
+        coupled** the way `ETHOS_VERSION` and `smt.eos` are.
+
+      The note is currently written to satisfy both and to say why it reads
+      oddly — it links kanon, which is where the page is, and names anoieu,
+      which is what the pinned checker asks for. Verified: 0 failures under
+      *both* the pinned checker and anoieu's head checker.
+
+      What a person decides: whether to bump. It is not a link fix. It moves
+      this repository onto 181 commits of policy it has never been held to, and
+      anoieu's `D16` asks that a pin only move to a commit where their CI is
+      green — which is a judgement about their tree that nothing here can make.
+
 - [ ] **Size reporting**: Logos's `scripts/cpc-loc-summary.py` sizes the
       specification, the checker, the parser and the proof separately, which is
       how the shape of the development stays legible.

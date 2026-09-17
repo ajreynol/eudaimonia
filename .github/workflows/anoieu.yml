@@ -5,14 +5,36 @@ on: [push, pull_request]
 jobs:
   policy:
     runs-on: ubuntu-latest
+    env:
+      # The pin is ours to move, and moving it is a commit here. `--version`
+      # on any run prints the one you got.
+      #
+      # anoieu asks that a pin only move to a commit where their CI is green
+      # (their `D16`). That is a judgement about their tree, so it is a
+      # person's call and not this file's.
+      ANOIEU_REV: dc2c613
     steps:
       - uses: actions/checkout@v4
       - name: the policy, at the commit this repository pins
-        env:
-          # The pin is ours to move, and moving it is a commit here. `--version`
-          # on any run prints the one you got.
-          ANOIEU_REV: dc2c613
         run: |
           git clone --quiet https://github.com/ajreynol/anoieu /tmp/anoieu
           git -C /tmp/anoieu checkout --quiet "$ANOIEU_REV"
-      - run: python3 /tmp/anoieu/tools/policy_check.py --root .
+      - name: run it against this tree
+        # The checker has already moved once inside anoieu --
+        # `tools/policy_check.py` at this pin, `scripts/policy_check.py` on
+        # their main since 2026-09-15 -- so look in both rather than naming
+        # one. A bump that lands on a tree with neither then fails saying so,
+        # which is the failure to want; naming one path would fail with a bare
+        # "No such file or directory" and look like a broken runner.
+        run: |
+          set -euo pipefail
+          for candidate in scripts/policy_check.py tools/policy_check.py; do
+            if [ -f "/tmp/anoieu/${candidate}" ]; then
+              echo "checker: ${candidate} at ${ANOIEU_REV}"
+              exec python3 "/tmp/anoieu/${candidate}" --root .
+            fi
+          done
+          echo "error: no policy_check.py in anoieu at ${ANOIEU_REV}." >&2
+          echo "Looked in scripts/ and tools/. If it moved again, add the" >&2
+          echo "new path to the list in this workflow." >&2
+          exit 1

@@ -32,11 +32,12 @@ edit in somebody else's tree.
 
 ## The ceiling this is written under
 
-anoieu keeps [`docs/science-fiction.md`](https://github.com/ajreynol/anoieu/blob/main/docs/science-fiction.md):
-the furthest that ecosystem allows itself to plan, on the rule that above the
-line nothing gets an artifact — no board row, no name reserved, and **no rule
-whose justification is a state of the world we are not in**. That page binds
-anoieu and says so.
+The ecosystem keeps [`docs/science-fiction.md`](https://github.com/ajreynol/aisthesis/blob/main/docs/science-fiction.md):
+the furthest it allows itself to plan, on the rule that above the line nothing
+gets an artifact — no board row, no name reserved, and **no rule whose
+justification is a state of the world we are not in**. It was anoieu's when this
+document was written and moved to `aisthesis` on 2026-09-15; the line it draws is
+unchanged, and it binds the tree that keeps it rather than this one.
 
 This document is above that line by its own admission. It takes the discipline
 without the jurisdiction:
