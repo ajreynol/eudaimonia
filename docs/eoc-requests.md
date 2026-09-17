@@ -440,8 +440,14 @@ Logos's developments. That leaves ~4,988 lines of genuine checker layer to seed.
 freshly generated checker is never, since every rule is a `sorry`.
 
 No amount of seeding fixes that. It is why Logos excludes `Checker` and
-`ApiCorrect` from CI, and why `modularity.md` TODO 7 proposes a canary that
+`ApiCorrect` from CI, and why `modularity.md` TODO 7 added a canary that
 typechecks `Checker.lean` with the two bridge theorems replaced by `sorry`.
+
+That canary is **done and passing** — `scripts/check-checker-soundness.sh`,
+about a second, covering `ApiCorrect.lean` too, reading the two stubbed
+signatures out of `RuleLemmas.lean` rather than hard-coding them. Which means
+Logos has already demonstrated the thing the fix below depends on: the
+soundness proof needs those two *signatures* and not the rule proofs.
 
 ### The fix that would work
 
@@ -482,7 +488,10 @@ somebody else's verified development, not a local tidy-up, and it should be
 proposed as that. The four-call-site framing is what makes it sound like a
 patch.
 
-This measurement is Eudaimonia's and has not been carried anywhere.
+**Carried, 2026-09-17**, as [`discussion.md`](discussion.md) `D12`, to logos
+rather than to eoc — the file is Logos's and so is the theorem. The topic leads
+with their own canary rather than with our measurement, because the canary is
+the stronger evidence and it is theirs.
 
 It also subsumes TODO 7's canary: a `Checker.lean` that does not import the
 rules is checked by every ordinary build, so no canary is needed.

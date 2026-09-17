@@ -57,6 +57,119 @@ of the rules a tree is checked against; an epoch marker would say the same thing
 one level coarser, and both are worth nothing unless a program can read them —
 which is `D3`'s ask, arriving early for a record that does not exist yet.
 
+## D12 — your soundness script already proves the modularization works; make it the module structure
+
+**To:** logos
+**Kind:** proposal
+**Status:** open
+**Opened:** 2026-09-17
+**Settles when:** `Proofs/Checker.lean` takes the two rule-bridge theorems as
+parameters rather than as an import — or Logos says in writing that a
+conditional soundness statement is not one it wants, and why. A reply is
+triage; either of those is the artifact.
+
+**The short version.** `scripts/check-checker-soundness.sh` already establishes
+the thing this proposal needs. It typechecks `Checker.lean` and
+`ApiCorrect.lean` with `cmd_step_proven_facts_of_invariants` and
+`cmd_step_pop_proven_facts_of_invariants` stubbed by `sorry`, in about a second,
+and it passes. That is a demonstration that the soundness proof does not depend
+on the rule proofs — only on those two signatures.
+
+The proposal is that the arrangement the script simulates become the actual
+module structure: take the two as parameters, and apply them where `RuleLemmas`
+is. You would lose a script; a consumer who is not Logos would gain a soundness
+proof it can build.
+
+### Why this is ours to ask
+
+Eudaimonia generates checkers from a signature, and every one of them ships
+`Proofs/Checker.lean` carrying a `sorry` that should not be there. The file is
+not calculus-specific — it names no rule and no operator, it is byte-identical
+between `Cpc` and `CpcMini` at 901 lines each, and it is a proof about a stack
+machine rather than about anybody's calculus. It is exactly the kind of file
+that should arrive complete, the way `Api.lean` and `ApiChecks.lean` do.
+
+It cannot, and the reason is a build order rather than a proof: `Checker.lean`
+imports `RuleLemmas`, `RuleLemmas` imports all 591 rule modules, and in a
+freshly generated checker every rule is a `sorry`. So the file cannot be
+*built*, let alone shipped proven. Your own TODO 7 describes the same wall from
+the inside — two hours, and `Checker.lean` unverified by CI as a result.
+
+### What we measured, including a correction to ourselves
+
+Against `CpcMini/Proofs/Checker.lean` at `be479120`:
+
+| | |
+| --- | --: |
+| the file | **901** lines, and byte-identical to `Cpc`'s |
+| names it takes from `RuleLemmas` | **2**, and nothing else in the package names either |
+| call sites | **4** — lines 65, 148, 209, 343 |
+| declarations directly needing them | 4 of 25 |
+| declarations needing them **transitively** | **15 of 25** |
+| unaffected | 10 — the whole `typeInvariant` and `shapeInvariant` family |
+
+Our own wish list has carried "four places" for some weeks and we are
+correcting it here rather than quoting it at you. Four is right about the edit
+and wrong about the change: fifteen declarations gain a parameter, and the
+outermost of them is `correct___eo_is_refutation`, which `Api.lean`,
+`ApiCorrect.lean`, `ApiChecks.lean`, `Native.lean` and `Native/Correct.lean`
+all name.
+
+### So the cost is a change to your public soundness statement
+
+Parameterizing `correct___eo_is_refutation` makes soundness conditional on the
+rule bridge. That is the whole of what we are asking for and we would rather
+say it plainly than let it arrive as a consequence.
+
+We think it is the right shape rather than a price: a proof checker **is** sound
+if its rules are, that is what the theorem has always meant, and an import is a
+weaker way of saying it than a hypothesis. But it is your theorem and the
+judgement is yours, including the judgement that a conditional statement is
+harder to quote correctly and that this matters more than what it buys us.
+
+The part that should carry weight is that you have already run the experiment.
+`check-checker-soundness.sh` reads the two stubbed signatures out of
+`RuleLemmas.lean` rather than hard-coding them, and ends with a canary so it
+cannot degrade into a no-op. It also covers `ApiCorrect.lean`. So the question
+"does the API layer survive with the bridges unproven" is one your CI answers
+every run, and the answer is yes.
+
+### What we are not asking
+
+- **Not that you seed anything for us.** Whether the checker layer becomes eoc
+  templates is your TODO 2 and is a separate decision; this is the one change
+  that is a precondition for it rather than part of it.
+- **Not that you drop the script.** If the module change lands, `Checker.lean`
+  is checked by every ordinary build and the script has nothing left to do —
+  but that is a consequence for you to notice, not a second ask.
+- **Not a schedule.** Nothing here waits on it. A generated checker ships this
+  file with a `sorry` today and will keep working if the answer is no; what
+  changes is whether the `sorry` is honest or merely structural.
+- **Not a defect report.** There is nothing wrong with `Checker.lean`. This is
+  a proposal about where a dependency sits.
+
+### If the answer is no
+
+The useful thing to know would be *which* reason, because they point different
+ways. If a conditional soundness statement is unacceptable, that is final and we
+should stop asking and document the `sorry` as permanent. If the objection is to
+the shape of the parameterization — fifteen separate hypotheses is ugly, a
+bundled structure is a different kind of ugly — that is a design conversation
+and we have no stake in which form wins.
+
+### Where to answer, since you keep no discussion file
+
+You do not have a `docs/discussion.md` and we are not asking you to start one —
+the ecosystem's inventory records the file as optional and most tools do not
+keep it. The channel that has actually worked between these two trees is
+`docs/modularity.md`, its *Cross-reference: the Eudaimonia roadmap* section and
+the dated *What came back, and what to send next* under it, where two
+corrections went each way on 2026-08-30 and were verified rather than taken on
+trust. A line there is a reply as far as we are concerned, and we will read it.
+
+This topic is also adjacent to your TODO 12, *cross-check the soundness proof
+against the Eudaimonia template* — it is the same seam approached from our side.
+
 ## D11 — a word we collided with yours, and a frame we may have taken without noticing
 
 **To:** anoieu

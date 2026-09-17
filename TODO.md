@@ -168,6 +168,13 @@ Still framework work, because these should not be the user's at all:
       soundness statement becomes conditional on the rule bridge — the right
       shape, and a change to somebody else's public theorem rather than a local
       one. Numbers and the affected/unaffected split are in item 5.
+
+      Carried to logos as [`docs/discussion.md`](docs/discussion.md) `D12`.
+      Logos's own `scripts/check-checker-soundness.sh` already typechecks
+      `Checker.lean` and `ApiCorrect.lean` with both bridge theorems stubbed by
+      `sorry`, in about a second, and passes — so the premise is demonstrated
+      in their tree, and the topic asks them to make the module structure match
+      what the script simulates.
 - [ ] **`Proofs/CheckerCore.lean` likewise, probably.** Its differences from
       `CpcMini`'s are simp-lemma lists and one namespace qualifier.
 - [x] **`Proofs/RuleSupport/Support.lean` needs at least a shape** — done.
