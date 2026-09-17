@@ -8,8 +8,9 @@ A child project of the Eudaimonia build framework, in two strands:
   checker, a producer's own checker, a test suite. Each says what was decided,
   what was got wrong, and what caught it. The supply is real history: 75 commits
   touched CPC's signature on cvc5's trunk in the twelve months to 2026-09-16.
-- **Tutorials** cover different jobs: adding CPC rules or extending CPC theories
-  and carrying them through Logos, or defining a new calculus's signature.
+- **Tutorials** cover different jobs: adding CPC rules, extending CPC theories,
+  or defining a new calculus's signature. Main CPC changes continue through
+  Logos; expert additions end with their CPC declarations and checks.
   Worked files are kept, and each tutorial distinguishes what was run from
   instructions for the reader's own change.
 

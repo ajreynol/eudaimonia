@@ -3,10 +3,17 @@
 Part of the [Eunoia tutorials](tutorials.md).
 
 Start here when adding a theory symbol or a new theory to **cvc5's CPC proof
-format**. The job spans the Eunoia declaration, the terms and rules cvc5 prints,
-and, for the main signature, their interpretation and proofs in Logos. For
-experimental features, it also includes keeping their vocabulary in
-`expert/CpcExpert.eo` and out of proofs produced with safe options.
+format**. There are two paths with very different requirements:
+
+| Path | What is required | Where the work ends |
+| --- | --- | --- |
+| **Expert: `expert/CpcExpert.eo`** | Add declarations with the right names and types, make them reachable from the expert signature, and check that they match what cvc5 prints. Proof-rule support may still be incomplete. | **The trail ends in CPC.** `CpcExpert.eo` does not go to Logos: no Logos semantics, Lean proofs, regeneration, or Logos pin update is required. |
+| **Main: `Cpc.eo`** | Supply the declarations and proof support, then update Logos's semantics, regenerate its checker, complete the affected proofs, and update cvc5's Logos pin. | The matching Logos development is part of completing the feature. |
+
+The expert path is deliberately lightweight. Use sections 2–5 for the relevant
+declaration, cvc5 integration, and checks, then stop. You do not need a Logos
+checkout. Section 6 is for main-signature changes; section 7 is for a later
+promotion from expert to main.
 
 We follow two existing implementations: `int.pow2`, an operator in the main
 integer theory, and finite fields, an expert theory. They are models to read,
@@ -40,11 +47,11 @@ SMT-LIB standardization does not determine placement. For example, `int.pow2`
 is documented as nonstandard but lives in the main signature; arithmetic's
 expert extensions live in `expert/theories/ArithExt.eo`.
 
-Use complete cvc5 and Logos working trees and absolute paths:
+Both paths use a complete cvc5 working tree and an Ethos binary. Set absolute
+paths; the main path adds a Logos checkout in section 6:
 
 ```bash
 CVC5=/absolute/path/to/cvc5
-LOGOS=/absolute/path/to/logos
 ETHOS=/absolute/path/to/ethos
 ```
 
@@ -80,12 +87,14 @@ That lets the existing `evaluate` rule prove a concrete result:
 For your operator, specify the arity, types, indices, and any implicit
 parameters, then trace the proof steps cvc5 uses on it. Check whether existing
 rules for evaluation, normalization, congruence, or distinct values need new
-cases. Adding a declaration alone does not supply those cases. When a new
-rule is needed, use the [CPC rule workflow](adding-a-cpc-rule.md).
+cases. Adding a declaration alone does not supply those cases. For a new
+main-signature rule, use the [CPC rule workflow](adding-a-cpc-rule.md).
 
 For an expert extension to an existing theory, make these additions in the
-expert files and programs reached from `CpcExpert.eo`. The fact that the base
-theory is supported by the main signature does not make every extension safe.
+expert files and programs reached from `CpcExpert.eo`. You can add its
+declarations before completing its proof rules; no Logos work is required.
+The fact that the base theory is supported by the main signature does not
+make every extension safe.
 
 ## 3. Add a theory: follow finite fields in `CpcExpert.eo`
 
@@ -192,9 +201,11 @@ Both positive runs must print `correct`. The script checks five outcomes:
 | `finite-fields.cpc` | Main and expert | Complete refutation accepted |
 | `finite-fields-wrong-type.cpc` | Main and expert | Addition mixing fields of sizes 7 and 11 rejected by type checking |
 
-Adapt this coverage to your extension: well-typed terms and valid steps,
-malformed indices and argument types, and invalid rule applications. For expert
-features, also check that their vocabulary is unavailable with only `Cpc.eo`.
+Adapt this coverage to what your extension implements. For an expert symbol
+without proof rules yet, check that its declarations load, accept the intended
+terms, reject wrong argument types, and remain unavailable with only `Cpc.eo`.
+As rules are added, test valid steps and invalid applications too. Complete
+proof-rule coverage is not a prerequisite for adding expert declarations.
 
 Produce a regression from the changed cvc5 using
 `--proof-format-mode=cpc --proof-granularity=dsl-rewrite --dump-proofs`.
@@ -209,14 +220,16 @@ Passing the helper's default check does not establish that the proof can be
 checked without expert declarations. Check proofs from supported safe-mode
 inputs this way; an expert-only input should be rejected by safe cvc5 itself.
 
+**For an expert-only addition, the tutorial ends here.** The declarations and
+applicable CPC checks are enough; the following Logos work is not required.
+
 ## 6. Extend Logos for changes to the main signature
 
-The normal Logos compilation starts at `Cpc.eo`, which excludes the expert
-signature. A change confined to `CpcExpert.eo` and its private includes may
-therefore leave the compiled Logos package and cvc5's Logos pin unchanged.
-Run the cvc5 regeneration comparison to confirm this; shared main files can
-still affect Logos. Do not treat an expert declaration as implemented Logos
-semantics or pass `CpcExpert.eo` as a replacement for `Cpc.eo` to the installer.
+This section applies only to the main path. Logos compiles `Cpc.eo`;
+`CpcExpert.eo` and its private includes are outside that compilation. Changes
+confined to those expert files require no Logos update or regeneration check.
+If your change also modifies the main signature or its shared dependencies,
+handle that part through this path.
 
 For a new main symbol or theory, or an expert feature being promoted to the
 main signature, **the Logos update is part of the implementation**:
@@ -258,6 +271,7 @@ with that pin, without a private `--smt-semantics` override. See the
 Then regenerate from the edited main signature:
 
 ```bash
+LOGOS=/absolute/path/to/logos
 cd "$LOGOS"
 install/get-eo-compiler.sh
 install/install-cpc.sh --all "$CVC5/proofs/eo/cpc/Cpc.eo"
