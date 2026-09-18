@@ -366,5 +366,5 @@ and [Logos's regeneration instructions][current-install].
 [install]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/install/README.md
 [mp-proof]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/Cpc/Proofs/Rules/Modus_ponens.lean
 [contract]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/Cpc/Proofs/RuleSupport/Contract.lean
-[current-cvc-doc]: https://github.com/cvc5/cvc5/blob/main/docs/proofs/output_cpc.rst
+[current-cvc-doc]: https://cvc5.github.io/docs-ci/docs-main/proofs/output_cpc.html
 [current-install]: https://github.com/cvc5/logos/tree/main/install

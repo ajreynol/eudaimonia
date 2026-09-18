@@ -16,6 +16,8 @@ For a concrete example of why the Logos proof matters, read the
 missing condition in a rule that cvc5's own proof output did not exercise.
 
 Each tutorial records what was tested and what remains a procedure for the
-reader to run. The [Eunoia manual](https://github.com/cvc5/ethos/blob/main/user_manual.md)
+reader to run. cvc5's own [CPC documentation](https://cvc5.github.io/docs-ci/docs-main/proofs/output_cpc.html) is the upstream authority on
+the proof format, its two checkers, and the signature-and-pin requirement; the
+[Eunoia manual](https://github.com/cvc5/ethos/blob/main/user_manual.md)
 is the language reference. Return to [Mimesis](../README.md) for the case studies
 and the project's scope.

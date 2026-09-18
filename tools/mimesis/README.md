@@ -29,6 +29,7 @@ the rule in Logos is part of that job.
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
 | [`docs/defining-a-calculus.md`](docs/defining-a-calculus.md) | tutorial | **Defining a calculus: propositional resolution.** Write a signature from scratch, with worked proof tests |
 | [`docs/extending-cpc-operators.md`](docs/extending-cpc-operators.md) | tutorial | **Extending CPC with a new theory operator.** One operator over existing sorts, followed end to end: `int.pow2`'s declaration, its evaluator, cvc5's printed name, and the Lean lemma that justifies what it computes |
+| [`docs/discussion.md`](docs/discussion.md) | discussion | **cvc5's CPC output documentation.** Four things a contributor changing the signature has to find elsewhere, written as a draft for a person to take upstream; nothing in it was sent to cvc5 |
 | [`docs/extending-cpc-theories.md`](docs/extending-cpc-theories.md) | tutorial | **Extending CPC theories.** A sort, its values and operators, taken from cvc5's expert finite fields: the main-or-expert decision, cvc5's proof output, the safe-mode gate, and what a main theory owes Logos |
 
 ## What each strand owes
@@ -40,6 +41,10 @@ and leaves through the parent in a person's hands, never through an entry here.
 
 **A tutorial ships what works.** Every claim in one is something that was run,
 and anything that was not run says so — in the tutorial and in the file itself.
+
+**A discussion is a draft, not a dispatch.** Where writing an entry here turned
+up something another project might want to hear, it is written down for a person
+to send or to drop; sending it is not this project's to do.
 
 **Both are additive.** The Eunoia [manual][manual] is the authority on the
 language, the framework's [front page](../../README.md) on what a signature must

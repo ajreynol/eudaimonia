@@ -13,6 +13,11 @@ job in [extending CPC with a new theory operator](extending-cpc-operators.md),
 which is also where the Logos mechanics this tutorial refers to are worked
 through; a new inference is [adding a CPC rule](adding-a-cpc-rule.md).
 
+**Not in scope: implementing the theory in cvc5.** This starts from a theory
+cvc5 already solves — its kinds, type rules, rewriter and solver. cvc5's wiki
+records [how finite fields were added to the solver][add-theory]; everything
+below is the proof side of that same work.
+
 **What was run:** the [six worked proofs](../examples/cpc-theory/README.md)
 against cvc5's signature, with Ethos. The cvc5 integration, the safe-mode
 behaviour and the Logos requirements are read from sources at the fixed
@@ -86,8 +91,8 @@ All paths are relative to `proofs/eo/cpc/`:
 | Expert | `expert/theories/<Theory>.eo` | `expert/rules/<Theory>.eo` | `expert/CpcExpert.eo` |
 
 The contract stated in [`CpcExpert.eo`][expert] is that proofs emitted by safe
-builds, or under `--safe-options`, never reference anything declared in the
-expert subdirectory. That is the criterion: not whether the theory is in
+builds, or by a run restricted with `--safe-mode=safe`, never reference anything
+declared in the expert subdirectory. That is the criterion: not whether the theory is in
 SMT-LIB, and not whether it is finished. `int.pow2` is nonstandard and main;
 finite fields are a real cvc5 theory and expert.
 
@@ -202,8 +207,9 @@ has a kind that prints it.
 ## 5. Make cvc5's proof output agree
 
 The signature now accepts terms. Whether cvc5 emits *those* terms is a separate
-question, and for a new sort it usually needs work in more than one converter.
-Here is where finite fields are handled, and what each place decides:
+question — the solver side is assumed to be in place — and for a new sort it
+usually needs work in more than one converter. Here is where finite fields are
+handled, and what each place decides:
 
 | cvc5 source | What it decides | Finite fields |
 | --- | --- | --- |
@@ -220,7 +226,8 @@ built as an application, size first and value second — the opposite order from
 the `#f5m7` literal the SMT-LIB printer produces. Two spellings of one value,
 and the converter is the only place that says how they correspond.
 
-Then exercise the theory in your changed cvc5:
+Then exercise the theory in your changed cvc5, using the options
+[cvc5's CPC documentation][cpc-docs] describes:
 
 ```bash
 "$CVC5"/build/bin/cvc5 --proof-format-mode=cpc --proof-granularity=dsl-rewrite \
@@ -331,10 +338,13 @@ Finite fields:
   input using one raises `SafeLogicException` — suggesting `--ff` in builds
   where the option exists.
 
-Check the result from both ends. A safe cvc5 must reject an input that uses the
-theory, and every proof a safe build emits must check against `Cpc.eo` alone:
+Check the result from both ends. A restricted cvc5 must reject an input that
+uses the theory, and every proof it emits must check against `Cpc.eo` alone.
+A normal build tests the first half with one flag, and a safe build tests it as
+users get it:
 
 ```bash
+cvc5 --safe-mode=safe /path/to/input-using-the-theory.smt2
 ./configure.sh safe && cd build && make
 ```
 
@@ -447,6 +457,8 @@ is the source of the bit-vector model quoted above. No Logos regeneration or
 Lean proof was performed, and finite fields remain outside Logos's calculus.
 
 [pr]: https://github.com/cvc5/cvc5/pull/12891
+[cpc-docs]: https://cvc5.github.io/docs-ci/docs-main/proofs/output_cpc.html
+[add-theory]: https://github.com/cvc5/cvc5/wiki/Adding-a-new-theory-to-cvc5
 [expert]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/CpcExpert.eo
 [finite-fields]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/theories/FiniteFields.eo
 [logos]: https://github.com/cvc5/logos/tree/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa

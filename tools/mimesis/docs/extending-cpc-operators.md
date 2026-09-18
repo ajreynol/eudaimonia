@@ -14,6 +14,11 @@ longer job in [extending CPC theories](extending-cpc-theories.md); a new
 **inference** over terms you can already write is
 [adding a CPC rule](adding-a-cpc-rule.md).
 
+**Not in scope: giving cvc5 the operator.** This starts from a kind cvc5 already
+has — `Kind::POW2`, with its type rule, rewriter and solver support. A new kind
+is declared in `src/theory/<theory>/kinds.toml`, whose format is documented in
+[`src/theory/builtin/kinds.toml`][kinds].
+
 **What was run:** the [five worked proofs](../examples/cpc-operator/README.md),
 against cvc5's signature with Ethos. The cvc5 build, the Logos regeneration, the
 Lean proof and the pin update are a source-reviewed procedure, read at the fixed
@@ -68,10 +73,10 @@ Two other files can be the right home:
   `(include "../../theories/Arith.eo")` at the top of the file.
 
 The expert files carry the contract in
-[`CpcExpert.eo`][expert]: no proof from a safe build or a `--safe-options` run
-may reference anything declared there. Being outside SMT-LIB does not put an
-operator in them — `int.pow2` is nonstandard and main. What decides is whether
-cvc5 may use the operator in a safe build, which
+[`CpcExpert.eo`][expert]: no proof from a safe build, or from a run restricted
+with `--safe-mode=safe`, may reference anything declared there. Being outside
+SMT-LIB does not put an operator in them — `int.pow2` is nonstandard and main.
+What decides is whether cvc5 may use the operator in a safe build, which
 [extending CPC theories](extending-cpc-theories.md#1-choose-main-or-expert)
 works through.
 
@@ -237,9 +242,9 @@ computes what you think it computes, not merely that a proof using it passes.
 
 ## 5. Make cvc5 print the operator
 
-Now that the signature accepts the term, make cvc5 emit it. For an operator that
-is an ordinary application of a cvc5 `Kind`, two lines do it, and `int.pow2` has
-both:
+Now that the signature accepts the term, make cvc5 emit it. For an operator cvc5
+already has as a `Kind`, two lines connect it to the CPC name, and `int.pow2`
+has both:
 
 ```cpp
 addOperator(Kind::POW2, "int.pow2");     // src/parser/smt2/smt2_state.cpp
@@ -253,7 +258,8 @@ the converters under `src/proof/eo/`, which
 [extending CPC theories](extending-cpc-theories.md#5-make-cvc5s-proof-output-agree)
 works through for a theory that needs all of them.
 
-Then produce a real proof from your changed cvc5:
+Then produce a real proof from your changed cvc5, using the options
+[cvc5's CPC documentation][cpc-docs] describes:
 
 ```bash
 "$CVC5"/build/bin/cvc5 --proof-format-mode=cpc --proof-granularity=dsl-rewrite \
@@ -263,9 +269,9 @@ Then produce a real proof from your changed cvc5:
 Check that your operator appears with the spelling you declared, that the steps
 around it are named rules rather than `trust`, and that Ethos accepts the result.
 Give the checker the CPC commands inside the dump's `unsat` line and outer proof
-list, not the whole file. For a main-signature operator, also run `--safe-options`
-and a build configured with `./configure.sh safe`, and check those proofs against
-`Cpc.eo` alone.
+list, not the whole file. For a main-signature operator, also run
+`--safe-mode=safe` and a build configured with `./configure.sh safe`, and check
+those proofs against `Cpc.eo` alone.
 
 **An expert operator is finished here.** `CpcExpert.eo` is not compiled into
 Logos, so there is no regeneration, Lean proof or pin update to do, and the
@@ -440,6 +446,8 @@ and its support. `smt.eos` was read in that revision's compiler pin,
 `406b5499f3c83f2a114113107be251f8e58b2d85`.
 
 [pr]: https://github.com/cvc5/cvc5/pull/12891
+[cpc-docs]: https://cvc5.github.io/docs-ci/docs-main/proofs/output_cpc.html
+[kinds]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/src/theory/builtin/kinds.toml
 [expert]: https://github.com/cvc5/cvc5/blob/2900761a7c2e2c0e99e2cf669cffa3740ea9a138/proofs/eo/cpc/expert/CpcExpert.eo
 [logos]: https://github.com/cvc5/logos/tree/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa
 [install]: https://github.com/cvc5/logos/blob/664c35d6e188a62d5b5dac8fb403d19b9e0f4baa/install/README.md
