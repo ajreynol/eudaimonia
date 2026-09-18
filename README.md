@@ -4,6 +4,11 @@ The **Eudaimonia build framework**: a framework for building verified proof
 checkers for SMT, in the shape of
 [Logos](https://github.com/cvc5/logos).
 
+**[Browse the public reports](https://ajreynol.github.io/eudaimonia/)** —
+Euthyna's interactive graphics of Logos rule and proof size, with dated links
+and downloadable data. [Explore the latest rule scatter](https://ajreynol.github.io/eudaimonia/euthyna/)
+or read [how the reports are published](tools/euthyna/docs/publishing.md).
+
 ## The name
 
 *Eudaimonia* (Greek εὐδαιμονία, from *eu-* "good" and *daimōn* "spirit") is

@@ -1,0 +1,52 @@
+name: Reports
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/euthyna/**'
+      - '.github/workflows/reports.yml'
+  pull_request:
+    paths:
+      - 'tools/euthyna/**'
+      - '.github/workflows/reports.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check report generation and links
+        run: python3 -m unittest discover -s tools/euthyna/analysis -p 'test_*.py'
+      - name: Build reports from saved measurements
+        run: tools/euthyna/bin/euthyna site
+      - name: Upload report site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: tools/euthyna/site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy reports
+        id: deployment
+        uses: actions/deploy-pages@v4

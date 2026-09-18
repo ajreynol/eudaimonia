@@ -4,8 +4,13 @@ A research project about the proof in [Logos](https://github.com/cvc5/logos):
 what it is made of, where its weight sits, and what would have to change for it
 to cover more than one calculus.
 
-Euthyna is not a tool. Nothing here is built, installed, or shipped. It
-measures a Logos checkout it does not own and writes down what it found.
+**[Public reports](https://ajreynol.github.io/eudaimonia/)** ·
+**[Latest rule scatter](https://ajreynol.github.io/eudaimonia/euthyna/)**
+
+Euthyna measures a Logos checkout it does not own and publishes the results as
+interactive reports. Each report has a dated link, downloadable data, and an
+SVG export. Use **Copy snapshot link** to share a particular measurement.
+The [publishing guide](docs/publishing.md) explains the URLs and deployment.
 
 ## The name
 
@@ -20,22 +25,33 @@ a thing; Euthyna is named for the audit that account is submitted to. That is
 the whole of the relationship, and it is the right one — the audit does not
 correct the account, it asks it what it is made of.
 
-## An island
+## Relationship to Eudaimonia
 
-Euthyna lives in this repository and is connected to nothing in it.
+Euthyna lives in this repository and shares its public report site.
 
-- Nothing in Eudaimonia links here, imports from here, or runs anything here.
-  No document outside this directory mentions Euthyna, and none should start.
+**Not an island.** On 2026-09-18 the maintainer asked for the reports to be
+advertised and easy to share externally. This replaces the earlier isolation
+policy: the parent links here and a dedicated workflow publishes the reports.
+For compatibility with the parent's pinned policy checker, the declaration is
+also recorded in its required format:
+
+```text
+rule 10: advertised by the parent; built and published by dedicated report CI.
+```
+
+- Eudaimonia's README and documentation index link to the reports so readers
+  can find them. A dedicated workflow builds and publishes the site.
 - Euthyna reads a Logos checkout elsewhere on disk. It writes only inside
   `tools/euthyna/`, and never to the checkout it measures.
-- It is not part of any build, any CI job, or any generated checker.
+- It is independent of the checker build and its CI. Publishing reads saved
+  measurements; it does not build or modify Logos or a generated checker.
 
 It sits here because the questions it asks are the ones this repository was
 built out of, and because a finding worth having is worth having near the work
 it bears on. It is not here because anything depends on it. If Euthyna were
 deleted tomorrow, nothing in Eudaimonia would notice.
 
-The one direction the connection does run is in what is learned. Eudaimonia
+The research connection is in what is learned. Eudaimonia
 generalizes a checker away from its calculus; how far that can go is a
 question about how much of Logos's proof is *about CPC* and how much is about
 proof-checking as such. Euthyna is trying to answer that question with numbers.
@@ -48,7 +64,8 @@ and cannot write about itself. Split out, both halves are weaker: theirs
 unmeasured, and this one a set of numbers about a development the reader has not
 been shown. An audit of somebody else's proof is the measurement that makes
 their claim credible, which is a compliment to it rather than a dismissal of it.
-There is no `report/` here and there should not be one.
+The interactive reports are published on the website; that is separate from
+whether this work warrants a standalone paper.
 
 ## What it does
 
@@ -92,9 +109,11 @@ What Euthyna adds sits on top of them:
 | `analysis/rule-order.txt` | the coreness order over the rules — append-only, maintained here |
 | `analysis/rule-partition.py` | the partitioned per-rule proof and rule sizes |
 | `analysis/plot-rules.py` | the scatter, as a standalone HTML page |
+| `analysis/build-site.py` | the public report index, latest page, dated reports, and data downloads |
 | `analysis/derive.py` | Euthyna's derived metrics, over those scripts' output |
 | `analysis/euthyna_lean.py` | the Lean line count, import graph and bucket attribution the three share |
 | `data/snapshots/` | one directory per measurement run, kept in git |
+| `site/` | generated website, ignored locally and deployed by GitHub Actions |
 | `docs/` | what is measured, how, what it showed, and where it goes next |
 
 ## Running it
@@ -111,6 +130,7 @@ of the Logos tree, runs the nine measures, writes
 tools/euthyna/bin/euthyna measures      # the catalogue: what runs, what it needs
 tools/euthyna/bin/euthyna show          # re-print the newest snapshot's report
 tools/euthyna/bin/euthyna plot          # redraw the newest snapshot's scatter
+tools/euthyna/bin/euthyna site          # build the full shareable website
 tools/euthyna/bin/euthyna rules check   # is the coreness order current?
 tools/euthyna/bin/euthyna rules update  # append new rules, drop departed ones
 tools/euthyna/bin/euthyna verify        # vendored scripts vs. MANIFEST
@@ -121,8 +141,15 @@ The run writes `rules.html` into the snapshot and tells you where. It is the
 one file a snapshot does not keep in git — it is derived from
 `rule-partition.csv`, and `euthyna plot` puts it back.
 
+For sharing, use the website. `euthyna site` builds it locally at
+`tools/euthyna/site/index.html` from every saved snapshot, without a Logos
+checkout or extra Python packages. The Reports workflow builds and deploys
+the same site when report sources or snapshots are pushed to `main`.
+See [publishing.md](docs/publishing.md) for first-time Pages setup and previewing.
+
 ## Where to read next
 
+- [docs/publishing.md](docs/publishing.md) — public links, local preview, and deployment.
 - [docs/method.md](docs/method.md) — what measuring a proof means here, and
   what these numbers are and are not evidence of.
 - [docs/measures.md](docs/measures.md) — the catalogue: every measure, its

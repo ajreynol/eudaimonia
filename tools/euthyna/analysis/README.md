@@ -18,6 +18,8 @@ Everything else here is Euthyna's:
 | `rule-order.txt` | that order: 591 rules, most core first. The partition is a function of it |
 | `rule-partition.py` | the partitioned per-rule proof and rule sizes, reconciled against the layer or the run fails |
 | `plot-rules.py` | the scatter those two columns are the axes of, as a standalone HTML page |
+| `build-site.py` | builds the public report index, latest and dated charts, and downloadable data from saved snapshots |
+| `test_site.py` | checks report data, latest selection, local links, and incomplete-snapshot failures |
 | `derive.py` | the metrics over everything's output: floor, surplus, concentration, leverage, price, and the partition's own statistics |
 
 `derive.py` and `plot-rules.py` read the vendored scripts' **output** and never

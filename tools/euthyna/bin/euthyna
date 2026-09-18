@@ -43,6 +43,8 @@ usage: euthyna <command> [options]
   measures    List the measure catalogue: what runs, and what it reports.
   show [ID]   Print the headline numbers of a snapshot (default: the newest).
   plot [ID]   Redraw a snapshot's rule scatter as rules.html.
+  site        Build the shareable report site from every saved snapshot.
+              Accepts --out PATH and --base-url URL (see site --help).
   rules SUB   Maintain the coreness order the partition depends on:
               'check' (default) reports drift, 'update' appends new rules and
               removes departed ones, 'seed' writes it from scratch (once).
@@ -328,6 +330,11 @@ cmd_show() {
 # ---------------------------------------------------------------------------
 [ $# -gt 0 ] || { usage; exit 2; }
 cmd="$1"; shift
+
+if [ "${cmd}" = "site" ]; then
+  exec python3 "${root}/analysis/build-site.py" \
+    --snapshots "${root}/${SNAPSHOT_DIR}" "$@"
+fi
 
 # `rules` forwards its own flags (--out, --force) to analysis/rule-order.py, so
 # its arguments bypass the option loop below. --logos is still honoured here.

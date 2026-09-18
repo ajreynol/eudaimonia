@@ -85,6 +85,7 @@ TEMPLATE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Euthyna &mdash; what a proof rule costs to prove</title>
+__PUBLICATION_META__
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -186,13 +187,28 @@ TEMPLATE = """<!doctype html>
   .tablewrap { max-height: 420px; overflow: auto; }
   details { margin-top: 16px; }
   summary { cursor: pointer; color: var(--text-secondary); font-size: 0.9rem; }
+  a { color: var(--series-1); }
+  .report-nav, .share { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .report-nav { margin-bottom: 20px; font-size: 0.9rem; }
+  .share { margin: 20px 0; }
+  .share input { flex: 1 1 260px; min-width: 0; }
+  .share input, .share button {
+    padding: 8px 12px; border: 1px solid var(--axis); border-radius: 6px;
+    background: var(--surface-1); color: var(--text-primary); font: inherit;
+  }
+  .share button { cursor: pointer; }
+  #share-status { font-size: 0.85rem; }
 </style>
 </head>
 <body>
 
 <div class="viz-root">
+  __PUBLICATION_NAV__
   <h1>What a proof rule costs to prove</h1>
   <p class="sub">__SUBTITLE__</p>
+  __PUBLICATION_SHARE__
+  <noscript><p>Enable JavaScript to explore the charts and table. The CSV download
+    contains the measurements used by the report.</p></noscript>
 
   <div class="tiles">__TILES__</div>
 
@@ -459,13 +475,53 @@ function drawTable() {
 drawMain();
 drawFacets();
 drawTable();
+
+document.getElementById('copy-link')?.addEventListener('click', async () => {
+  const input = document.getElementById('share-url');
+  const status = document.getElementById('share-status');
+  try {
+    await navigator.clipboard.writeText(input.value);
+    status.textContent = 'Snapshot link copied.';
+  } catch {
+    input.focus();
+    input.select();
+    status.textContent = 'Select and copy the snapshot link above.';
+  }
+});
+
+document.getElementById('download-svg')?.addEventListener('click', () => {
+  const source = document.getElementById('main');
+  const copy = source.cloneNode(true);
+  // Resolve the page's CSS variables so the exported figure stands on its own.
+  const originals = [source, ...source.querySelectorAll('*')];
+  const clones = [copy, ...copy.querySelectorAll('*')];
+  const properties = ['fill', 'fill-opacity', 'stroke', 'stroke-width',
+    'stroke-dasharray', 'font-family', 'font-size', 'font-style', 'font-weight'];
+  originals.forEach((node, i) => {
+    const style = getComputedStyle(node);
+    for (const name of properties) clones[i].style.setProperty(name, style.getPropertyValue(name));
+  });
+  copy.setAttribute('xmlns', SVGNS);
+  copy.setAttribute('width', '900');
+  copy.setAttribute('height', '560');
+  copy.style.background = getComputedStyle(document.querySelector('.card')).backgroundColor;
+  copy.prepend(el('desc', {}, document.querySelector('.sub').textContent));
+  copy.prepend(el('title', {}, document.querySelector('h1').textContent));
+  const blob = new Blob([new XMLSerializer().serializeToString(copy)], {type: 'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = document.getElementById('download-svg').dataset.filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 </script>
 </body>
 </html>
 """
 
 
-def build(rows: list[dict], meta: dict) -> str:
+def build(rows: list[dict], meta: dict, publication: dict | None = None) -> str:
     rows_sorted = sorted(rows, key=lambda r: r["order"])
     ratios = sorted(r["ratio"] for r in rows)
     median_ratio = ratios[len(ratios) // 2]
@@ -491,6 +547,41 @@ def build(rows: list[dict], meta: dict) -> str:
         f"each is a share of its layer. Logos {commit[:12] or 'unknown'}"
         f"{', ' + meta['started'][:10] if meta.get('started') else ''}."
     )
+    if meta.get("logos_dirty"):
+        subtitle += " Measured with uncommitted Logos changes; the commit alone does not reproduce this snapshot."
+
+    publication_meta = publication_nav = publication_share = ""
+    if publication:
+        esc = html.escape
+        canonical = esc(publication["permalink"])
+        publication_meta = (
+            f'<link rel="canonical" href="{canonical}">'
+            '<meta name="description" content="Explore the lines of rule code and proof '
+            f'for {len(rows)} Logos CPC rules, with downloadable data and figures.">'
+            '<meta property="og:title" content="Euthyna — what a proof rule costs to prove">'
+            '<meta property="og:type" content="website">'
+            f'<meta property="og:url" content="{canonical}">'
+            f'<meta property="og:description" content="{esc(subtitle)}">'
+        )
+        publication_nav = (
+            '<nav class="report-nav" aria-label="Reports">'
+            f'<a href="{esc(publication["index"])}">All reports</a>'
+            f'<a href="{esc(publication["latest"])}">Latest snapshot</a>'
+            f'<a href="{esc(publication["snapshot"])}">This snapshot</a>'
+            f'<a href="{esc(publication["method"])}">How to read this chart</a>'
+            f'<a href="{esc(publication["data"])}" download>Download CSV</a>'
+            f'<a href="{esc(publication["metadata"])}">Snapshot metadata</a>'
+            '</nav>'
+        )
+        publication_share = (
+            '<div class="share">'
+            '<input id="share-url" aria-label="Permanent snapshot link" readonly '
+            f'value="{canonical}">'
+            '<button id="copy-link" type="button">Copy snapshot link</button>'
+            '<button id="download-svg" type="button" '
+            f'data-filename="{esc(publication["id"])}-rules.svg">Download SVG</button>'
+            '<span id="share-status" role="status"></span></div>'
+        )
 
     keep = ["rule", "order", "rule_loc", "proof_loc", "proof_files", "proof_reach_loc",
             "ratio", "family"]
@@ -504,6 +595,9 @@ def build(rows: list[dict], meta: dict) -> str:
         .replace("__TILES__", tile_html)
         .replace("__SUBTITLE__", html.escape(subtitle))
         .replace("__N__", str(len(rows)))
+        .replace("__PUBLICATION_META__", publication_meta)
+        .replace("__PUBLICATION_NAV__", publication_nav)
+        .replace("__PUBLICATION_SHARE__", publication_share)
     )
 
 

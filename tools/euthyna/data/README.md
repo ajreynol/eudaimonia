@@ -12,3 +12,10 @@ and cannot be reconstructed after the fact.
 A `-dirty` suffix means the Logos checkout had uncommitted changes when it was
 measured, so that snapshot is not exactly reproducible. It is still worth
 keeping, and the name says so.
+
+`bin/euthyna site` renders every saved snapshot for the
+[public reports](https://ajreynol.github.io/eudaimonia/). The site includes dated
+links and copies of `rule-partition.csv`, `meta.json`, and `summary.json`;
+readers can download the measurements behind a figure. Generated HTML stays
+out of git and is rebuilt by the Reports workflow. See
+[the publishing guide](../docs/publishing.md).
