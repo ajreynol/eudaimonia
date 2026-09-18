@@ -12,8 +12,10 @@ This is the contributor workflow introduced by [cvc5 PR #12891][pr]. It uses
 the existing `modus_ponens` rule as a small worked model, with
 [runnable proof files](../examples/cpc-rule/README.md) and an existing Lean
 proof to read. Do not add a second copy of that rule; apply the same steps to
-your new inference. For a whole new calculus, use the separate
-[signature-from-scratch tutorial](defining-a-calculus.md).
+your new inference. For a new term rather than a new inference, use
+[extending CPC with a new theory operator](extending-cpc-operators.md) or
+[extending CPC theories](extending-cpc-theories.md); for a whole new calculus,
+the separate [signature-from-scratch tutorial](defining-a-calculus.md).
 
 **What was run:** the example proof tests against the merged PR's CPC
 signature. The commands for regenerating, proving, and merging your new rule
@@ -188,7 +190,9 @@ A rule using existing operators may need no new semantic declarations. A new
 operator needs its meaning specified in `install/defs/Cpc.eos`, and possibly
 an extension to the compiler's `tools/eoc/semantics/smt.eos`. Generated
 `Spec.lean` and the model modules reflect those inputs; a hand edit to them
-will be overwritten. See [the installer documentation][install] for this case.
+will be overwritten. See [the installer documentation][install] for this case,
+and [extending CPC with a new theory operator](extending-cpc-operators.md) for
+that job on its own.
 
 ## 5. Prove the generated rule obligation
 

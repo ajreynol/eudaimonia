@@ -1,4 +1,0 @@
-; Even with the expert signature, addition must use a single field size.
-(declare-const x (FiniteField 7))
-(declare-const y (FiniteField 11))
-(assume @bad (= (ff.add x y) x))

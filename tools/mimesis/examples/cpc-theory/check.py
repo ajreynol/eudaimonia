@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the CPC theory tutorial's main and expert proof fixtures with Ethos.
+"""Check the CPC theory tutorial's expert proof fixtures with Ethos.
 
 Usage: python3 check.py /path/to/ethos /path/to/cvc5
 This checks signature behavior; it does not build cvc5 or verify Logos proofs.
@@ -9,6 +9,18 @@ from pathlib import Path
 import resource
 import subprocess
 import sys
+
+# (proof, expert, expectation), where expert says whether CpcExpert.eo is
+# loaded beside Cpc.eo, and an expectation is "refutes" for a proof of false,
+# "accepts" for a file that must only type check, or a diagnostic to demand.
+CASES = [
+    ("aci-norm", False, "Could not find symbol FiniteField"),
+    ("aci-norm", True, "refutes"),
+    ("nil-terminator", True, "refutes"),
+    ("no-evaluation", True, "Unexpected conclusion for rule evaluate"),
+    ("non-prime", True, "accepts"),
+    ("mixed-fields", True, "Type checking failed:"),
+]
 
 
 def main():
@@ -25,29 +37,22 @@ def main():
         if not path.is_file():
             print(f"Missing signature: {path}", file=sys.stderr)
             return 2
-    cases = [
-        ("int-pow2", False, ""),
-        ("int-pow2-wrong-type", False, "Type checking failed:"),
-        ("finite-fields", False, "Could not find symbol FiniteField"),
-        ("finite-fields", True, ""),
-        ("finite-fields-wrong-type", True, "Type checking failed:"),
-    ]
     failed = False
-    for name, expert, diagnostic in cases:
-        proof = str(here / "test" / f"{name}.cpc")
+    for name, expert, expectation in CASES:
         args = [ethos, f"--include={main_signature}"]
         if expert:
             args.append(f"--include={expert_signature}")
-        if not diagnostic:
+        if expectation == "refutes":
             args.append("--require-proof-of-false")
-        result = subprocess.run([*args, proof], text=True, stdout=subprocess.PIPE,
+        result = subprocess.run([*args, str(here / "test" / f"{name}.cpc")],
+                                text=True, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
-        if diagnostic:
-            ok = result.returncode != 0 and diagnostic in result.stdout
-        else:
+        if expectation in ("refutes", "accepts"):
             ok = result.returncode == 0 and result.stdout.strip() == "correct"
+        else:
+            ok = result.returncode != 0 and expectation in result.stdout
         label = "main + expert" if expert else "main only"
-        print(f"{'PASS' if ok else 'FAIL'} {label}: {name}")
+        print(f"{'PASS' if ok else 'FAIL'} {label}: {name}: {expectation}")
         if not ok:
             print(f"exit {result.returncode}\n{result.stdout}", file=sys.stderr)
             failed = True

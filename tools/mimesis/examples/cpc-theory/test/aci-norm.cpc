@@ -1,5 +1,6 @@
-; Expert CPC: finite-field addition is commutative.
-; Requires Cpc.eo and expert/CpcExpert.eo; the main signature alone must fail.
+; Expert CPC: finite-field addition is commutative, by the expert theory's
+; only rule. Requires Cpc.eo and expert/CpcExpert.eo; the main signature
+; alone must fail, because FiniteField is declared only in the expert file.
 (declare-const x (FiniteField 7))
 (declare-const y (FiniteField 7))
 (assume @neq (not (= (ff.add x y) (ff.add y x))))

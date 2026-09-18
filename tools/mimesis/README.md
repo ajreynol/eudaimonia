@@ -8,11 +8,12 @@ A child project of the Eudaimonia build framework, in two strands:
   checker, a producer's own checker, a test suite. Each says what was decided,
   what was got wrong, and what caught it. The supply is real history: 75 commits
   touched CPC's signature on cvc5's trunk in the twelve months to 2026-09-16.
-- **Tutorials** cover different jobs: adding CPC rules, extending CPC theories,
-  or defining a new calculus's signature. Main CPC changes continue through
-  Logos; expert additions end with their CPC declarations and checks.
-  Worked files are kept, and each tutorial distinguishes what was run from
-  instructions for the reader's own change.
+- **Tutorials** cover different jobs: adding a CPC rule, adding an operator to a
+  theory CPC already has, extending CPC with a whole theory, or defining a new
+  calculus's signature. Main CPC changes continue through Logos; expert additions
+  end with their CPC declarations and checks. Worked files are kept, and each
+  tutorial distinguishes what was run from instructions for the reader's own
+  change.
 
 Mimesis provides optional advice and examples. Creating a Eunoia signature,
 generating a checker, and verifying rules in Logos require no Mimesis checkout
@@ -27,7 +28,8 @@ the rule in Logos is part of that job.
 | [`docs/adding-a-cpc-rule.md`](docs/adding-a-cpc-rule.md) | tutorial | **Start here if you want to add a rule to Cpc.eo in cvc5.** Signature, proof tests, Logos regeneration and Lean proof, then the cvc5 pin and CI |
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
 | [`docs/defining-a-calculus.md`](docs/defining-a-calculus.md) | tutorial | **Defining a calculus: propositional resolution.** Write a signature from scratch, with worked proof tests |
-| [`docs/extending-theories.md`](docs/extending-theories.md) | tutorial | **Extending CPC theories.** Add a symbol or theory to CPC, wire up `Cpc.eo` or `CpcExpert.eo` and cvc5's proof output, and update Logos for main-signature support |
+| [`docs/extending-cpc-operators.md`](docs/extending-cpc-operators.md) | tutorial | **Extending CPC with a new theory operator.** One operator over existing sorts, followed end to end: `int.pow2`'s declaration, its evaluator, cvc5's printed name, and the Lean lemma that justifies what it computes |
+| [`docs/extending-cpc-theories.md`](docs/extending-cpc-theories.md) | tutorial | **Extending CPC theories.** A sort, its values and operators, taken from cvc5's expert finite fields: the main-or-expert decision, cvc5's proof output, the safe-mode gate, and what a main theory owes Logos |
 
 ## What each strand owes
 
@@ -88,7 +90,10 @@ framework run would produce are written outside the repository, never here.
 reoriented the same day and the same way: it had led with writing one calculus
 ourselves, and the main goal now is accumulating case studies, with tutorials as
 the second strand. On 2026-09-17, the tutorial collection gained a CPC contributor
-entry point, with the Logos update at its center. A person decides whether it
+entry point, with the Logos update at its center. On 2026-09-18 the theory
+tutorial became two: one operator over sorts CPC already has, followed from
+`int.pow2`'s declaration to the Lean lemma that justifies it, and a whole theory,
+followed through cvc5's expert finite fields. A person decides whether it
 **graduates** into its own repository, is **folded** into the parent, or is **retired in
 place** with a note saying what was learned; going quiet is not one of those.
 

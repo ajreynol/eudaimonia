@@ -8,7 +8,8 @@ are doing:
 | --- | --- | --- |
 | Add a proof rule to cvc5's CPC signature | **[Start here if you want to add a rule to Cpc.eo in cvc5](adding-a-cpc-rule.md)** | The rule's interface and tests, its generated Lean and soundness proof in Logos, and the cvc5 version pin |
 | Define my own proof calculus | [Define a calculus: propositional resolution](defining-a-calculus.md) | Terms, premises, arguments, computed conclusions, side conditions, and proof tests |
-| Add a symbol or theory to cvc5's CPC signature | [Extending CPC theories](extending-theories.md) | Main and expert declarations, `CpcExpert.eo`, cvc5 proof output and safe options, and Logos semantics and proofs |
+| Add an operator to a theory cvc5's CPC signature already has | [Extending CPC with a new theory operator](extending-cpc-operators.md) | One declaration, the program that computes it, cvc5's printed name, and its meaning, generated checker and soundness proof in Logos |
+| Add a whole theory to cvc5's CPC signature | [Extending CPC theories](extending-cpc-theories.md) | A sort, its values and operators, the main or expert decision, cvc5's proof output and safe options, and what a main theory owes Logos |
 
 For a concrete example of why the Logos proof matters, read the
 [BV abstraction case study](case-study.md): stating the obligation exposed a
