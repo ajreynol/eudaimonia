@@ -26,18 +26,19 @@ ecosystem in autarkeia would be more use to outsiders, not less; the word does
 not say so and has to be told. Chosen by the maintainer on 2026-09-02 with that
 objection on the record.
 
-It names a **state**, not a tool, so nothing here takes a name from anoieu's
-register. If the word ever names a program, adding the line there is a person's
-edit in somebody else's tree.
+It names a **state**, not a tool, so nothing here takes a name from the
+ecosystem's register, which kanon keeps in `docs/glossary.md`. If the word ever
+names a program, adding the line there is a person's edit in somebody else's
+tree.
 
 ## The ceiling this is written under
 
 The ecosystem keeps [`docs/science-fiction.md`](https://github.com/ajreynol/aisthesis/blob/main/docs/science-fiction.md):
 the furthest it allows itself to plan, on the rule that above the line nothing
 gets an artifact — no board row, no name reserved, and **no rule whose
-justification is a state of the world we are not in**. It was anoieu's when this
-document was written and moved to `aisthesis` on 2026-09-15; the line it draws is
-unchanged, and it binds the tree that keeps it rather than this one.
+justification is a state of the world we are not in**. **aisthesis keeps that
+page**, read in their tree on 2026-09-17, and the line it draws binds the tree
+that keeps it rather than this one.
 
 This document is above that line by its own admission. It takes the discipline
 without the jurisdiction:
@@ -65,11 +66,12 @@ that compiles, from a specification somebody else wrote. Under autarkeia what
 the prompt names is the calculus and what it is for, and the signature, the
 semantics, the profile and the proofs are downstream of it.
 
-**automated** — unattended, not assisted. Under a constraint anoieu has already
-written down about coding with prompts: a prompt is not a build script, because
-the same prompt does not produce the same tree twice. *Automated* here can mean
-**re-attemptable** and never *reproducible*, and a claim of the second is a
-defect wherever it appears, including here.
+**automated** — unattended, not assisted. Under a constraint the upper-bound
+page above has already written down about coding with prompts: a prompt is not a
+build script, because an agent is not a function and the same prompt does not
+produce the same tree twice. *Automated* here can mean **re-attemptable** and
+never *reproducible*, and a claim of the second is a defect wherever it appears,
+including here.
 
 **verified** — the whole of the distance. A generated checker's `correct`
 verdict means *the checks passed*, not *this has been proven*. It ships
@@ -167,9 +169,9 @@ read the proofs. That is where the interesting problem is and where every honest
 doubt lives: at 591 rules, the reviewer's job is the one nobody has designed.
 
 **What would show the term is wrong.** Hello scale passing, and teaching nothing
-about 591 — a gap of kind rather than of degree, which is the objection anoieu
-makes about scale in its own upper-bound page. Then the word names two states
-rather than one and needs splitting or dropping.
+about 591 — a gap of kind rather than of degree, which is the objection that
+upper-bound page makes about scale. Then the word names two states rather than
+one and needs splitting or dropping.
 
 ## What the word may not be used for
 
@@ -181,8 +183,9 @@ rather than one and needs splitting or dropping.
   sentence already says so; the existence of this page raises what it is worth.
 - **No *single prompt* claim while the prompts are not recorded.** Ours are not.
   Nothing records the prompts this repository is actually developed with.
-  anoieu carries the same gap as `F1` in
-  its ethics register, raised before either of us wrote a page about it.
+  The same gap is `F1` in the ecosystem's register of shortcomings, which
+  epikrisis keeps in `tools/zetesis/`, read on 2026-09-17 and raised before this
+  page existed.
 - **No rule, check, CI job or template change justified by this page**, and no
   use of it to refuse work. One instance of either is grounds for deleting the
   file rather than amending it.

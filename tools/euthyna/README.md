@@ -41,6 +41,15 @@ question about how much of Logos's proof is *about CPC* and how much is about
 proof-checking as such. Euthyna is trying to answer that question with numbers.
 That is an intellectual debt, not a technical one, and it is repaid in prose.
 
+**Publishing stance.** **No paper on its own, and that is the intended
+outcome.** What this establishes — what the generated development is made of and
+where its weight sits — is a section a paper about Logos and the compiler needs
+and cannot write about itself. Split out, both halves are weaker: theirs
+unmeasured, and this one a set of numbers about a development the reader has not
+been shown. An audit of somebody else's proof is the measurement that makes
+their claim credible, which is a compliment to it rather than a dismissal of it.
+There is no `report/` here and there should not be one.
+
 ## What it does
 
 The measuring is not Euthyna's invention. Logos already carries scripts that

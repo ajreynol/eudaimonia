@@ -63,8 +63,8 @@ if [ -z "${COMMIT}" ]; then
   [ -n "${COMMIT}" ] || { echo "error: could not read ${BRANCH} from ${REMOTE}" >&2; exit 1; }
 fi
 case "${COMMIT}" in
-  [0-9a-f]*) [ "${#COMMIT}" = 40 ] || { echo "error: --commit wants a full 40-character sha" >&2; exit 1; } ;;
-  *) echo "error: --commit wants a full 40-character sha" >&2; exit 1 ;;
+  *[!0-9a-f]*) echo "error: --commit wants a full 40-character sha" >&2; exit 1 ;;
+  *) [ "${#COMMIT}" = 40 ] || { echo "error: --commit wants a full 40-character sha" >&2; exit 1; } ;;
 esac
 echo "    ${COMMIT}"
 
@@ -86,10 +86,16 @@ file_digest() {
   fi
 }
 
+# curl or wget, whichever is there. install/get-eo-compiler.sh takes either and
+# the requirements say either, so insisting on one here would make this the only
+# command in the repository that needs the other.
 fetch() { # fetch <path-in-ethos> <destination>
   local path="$1" dest="$2"
-  curl -sSfL "${RAW}/${COMMIT}/${path}" -o "${dest}" \
-    || { echo "error: could not download ${path} at ${COMMIT}" >&2; exit 1; }
+  local url="${RAW}/${COMMIT}/${path}"
+  if command -v curl >/dev/null 2>&1; then curl -sSfL "${url}" -o "${dest}"
+  elif command -v wget >/dev/null 2>&1; then wget -q -O "${dest}" "${url}"
+  else echo "error: neither curl nor wget is installed; cannot download ${path}." >&2; exit 1
+  fi || { echo "error: could not download ${path} at ${COMMIT}" >&2; exit 1; }
 }
 
 echo "==> Downloading the semantics at that commit"
@@ -106,6 +112,13 @@ grep -q 'SmtValue' "${tmp}/smt.eos" \
 NEW_DIGEST="$(file_digest "${tmp}/smt.eos")" || {
   echo "error: no md5sum, md5 or openssl on PATH; cannot compute the digest." >&2; exit 1; }
 OLD_DIGEST="$(sed -n 's/^LOGOS_SMT_DIGEST="\([0-9a-f]*\)"$/\1/p' scripts/new-checker.sh)"
+# The rewrite below substitutes the old digest for the new one, so an empty old
+# one would be `sed s//.../g` -- an empty regex, which means *the last pattern*
+# and has no last pattern here. Refuse instead, as the pin does.
+[ -n "${OLD_DIGEST}" ] || {
+  echo "error: no LOGOS_SMT_DIGEST found in scripts/new-checker.sh." >&2
+  echo "That line is what this script rewrites; if it was renamed, rename it here too." >&2
+  exit 1; }
 
 changed=0
 report() { # report <path> <changed?>

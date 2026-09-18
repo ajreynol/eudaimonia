@@ -12,6 +12,10 @@ It is fixed documentation: it describes Logos, not your calculus, so it lives
 here rather than being copied into each generated project. Those projects link
 back to it.
 
+**Every number here about Logos was read from `cvc5/logos` at `be47912`, on
+2026-09-15**, and every number about a generated checker from a run of
+`scripts/run-ci.sh`. Discount them by age rather than by trust.
+
 Where two numbers are given they are `Cpc` (591 rules) against `CpcMini` (the
 same signature reduced to five rules). The gap between them is the single most
 useful thing in this document: it shows which costs follow the **signature and
@@ -39,8 +43,8 @@ A generated checker, immediately after `install/install-<calculus>.sh`:
 Three more files carry **no** obligation, having been ported from Logos and
 verified against a calculus that is not CPC:
 
-- **`Proofs/TypeDefaults.lean`** (243 lines) and **`Proofs/TypePredicates.lean`**
-  (36) come from `Cpc/Proofs/Canonical/TypeDefaultBasic.lean` and
+- **`Proofs/TypeDefaults.lean`** (241 lines) and **`Proofs/TypePredicates.lean`**
+  (34) come from `Cpc/Proofs/Canonical/TypeDefaultBasic.lean` and
   `Cpc/Proofs/TypePreservation/Predicates.lean`, two of six files Logos measures
   to be byte-identical between `Cpc` and `CpcMini`. They depend on nothing but
   the generated `SmtModel`, which is why they transfer unchanged.
@@ -80,7 +84,7 @@ mentioning what they stand for.
 
 ### What Logos did
 
-`Cpc/Proofs/Invariants/Stability.lean` is **552 lines** against CpcMini's 488 —
+`Cpc/Proofs/Invariants/Stability.lean` is **550 lines** against CpcMini's 486 —
 and that difference is not duplication. CpcMini defines
 `StableWhenTrueInAnyVarModel` as `True` and pays nothing; Cpc points the slot at
 a real invariant.
@@ -222,8 +226,9 @@ and you buy its canonicity development with it.
 
 ### What Logos did
 
-`Cpc/Proofs/Checker.lean` is **1,063 lines and byte-identical to
-`CpcMini/Proofs/Checker.lean`** modulo the package name. Those two packages
+`Cpc/Proofs/Checker.lean` is **901 lines and the same as
+`CpcMini/Proofs/Checker.lean`** apart from the two import lines naming the
+package. Those two packages
 differ in rule set (591 against 5), in signature, *and* in which invariants
 their rules require. It names no rule and no operator, and uses three `Term`
 constructors.

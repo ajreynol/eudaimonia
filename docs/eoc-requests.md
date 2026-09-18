@@ -10,8 +10,10 @@ hope the reader acts on it. This file is the list of those places.
 Each item states the evidence, since several of them look like template
 problems until you look at what is emitted.
 
-Companion document: `~/logos/docs/modularity.md`, written from the Logos side.
-Where the two overlap it is noted; the two lists agree.
+Companion document:
+[`docs/modularity.md`](https://github.com/cvc5/logos/blob/main/docs/modularity.md)
+in Logos, written from that side. Where the two overlap it is noted; the two
+lists agree.
 
 ---
 
@@ -637,7 +639,7 @@ committing.
 
 ## Cross-reference
 
-`~/logos/docs/modularity.md` reaches compatible conclusions from the Logos side,
+Logos's [`docs/modularity.md`](https://github.com/cvc5/logos/blob/main/docs/modularity.md) reaches compatible conclusions from that side,
 and its TODO 8 asked for a signature-contract check. Eudaimonia implements that
 in `install/install-<calc>.sh`, including the two seams that document records as
 unchecked — the nil attribute and the translation of `and` — both of which turn

@@ -215,6 +215,45 @@ if [ "${FORMAT}" = "${CALCULUS}" ] || [ "${FORMAT}" = "${CHECKER}" ]; then
 fi
 [ -n "${TOOLCHAIN}" ] || { echo "error: no Lean toolchain. Set TOOLCHAIN in config.sh or use --toolchain." >&2; exit 2; }
 
+# Every remaining option whose value is from a fixed set is checked *here*,
+# before anything is written. A value rejected after the tree exists leaves a
+# half-generated project behind, which then refuses the corrected run as
+# "already exists" -- so the second run reports the first run's mess rather than
+# the user's mistake.
+case "${PROFILE_INDEXED_OPS}" in
+  0|1|2|3) ;;
+  *) echo "error: --indexed-ops must be 0, 1, 2 or 3 (eoc's ladder stops at 3)." >&2; exit 2 ;;
+esac
+
+# --theorems is `all`, `none`, or a comma-separated subset of the four names.
+# An unrecognised name used to be accepted and dropped, so a typo produced a
+# checker quietly missing a theorem somebody had asked for -- and `none` is a
+# legitimate setting, so nothing downstream could tell the two apart.
+case "${THEOREMS}" in
+  all|none) ;;
+  *)
+    rest="${THEOREMS}"
+    while [ -n "${rest}" ]; do
+      case "${rest}" in
+        *,*) one="${rest%%,*}"; rest="${rest#*,}" ;;
+        *)   one="${rest}";     rest="" ;;
+      esac
+      case "${one}" in
+        translation|nonvacuity|canonicity|modelwf) ;;
+        all|none)
+          echo "error: --theorems ${one} names all four or none of them, so it" >&2
+          echo "cannot sit in a list. Pass --theorems ${one} on its own." >&2
+          exit 2 ;;
+        "")
+          echo "error: --theorems '${THEOREMS}' has an empty entry." >&2; exit 2 ;;
+        *)
+          echo "error: --theorems does not know '${one}'. The names are" >&2
+          echo "translation, nonvacuity, canonicity and modelwf -- or all, or none." >&2
+          exit 2 ;;
+      esac
+    done ;;
+esac
+
 # A specification is a signature and the two semantics it is read against, and
 # --spec is the three of them named at once, by the convention the example in
 # examples/cpc follows. It only fills a blank: naming one of the three
@@ -520,7 +559,6 @@ render pkg/Proofs/TypeDefaults.lean.in \
        "${DEST}/${CALCULUS}/Proofs/TypeDefaults.lean"
 render pkg/Proofs/TypePreservation.lean.in \
        "${DEST}/${CALCULUS}/Proofs/TypePreservation.lean"
-case ",${THEOREMS}," in *,all,*|*,none,*) ;; esac
 want_theorem() {
   case "${THEOREMS}" in
     all) return 0 ;;
@@ -697,10 +735,6 @@ sed -i.bak \
   -e "s|^PROFILE_PARSER=.*|PROFILE_PARSER=${PROFILE_PARSER}|" \
   "${DEST}/install/defs/profile.conf"
 rm -f "${DEST}/install/defs/profile.conf.bak"
-case "${PROFILE_INDEXED_OPS}" in
-  0|1|2|3) ;;
-  *) echo "error: --indexed-ops must be 0, 1, 2 or 3 (eoc's ladder stops at 3)." >&2; exit 2 ;;
-esac
 for k in SCOPES LIST_PREMISES DATATYPES BINDERS VALUE_ORDERING INDEXED_OPS LOGOS_SMT PARSER; do
   eval "v=\${PROFILE_${k}}"
   printf '    %-22s %s\n' "$(printf '%s' "${k}" | tr 'A-Z_' 'a-z-')" "${v}"

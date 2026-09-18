@@ -178,6 +178,15 @@ stopped is a result, provided the stopping point is written down precisely.
   narrow, and only then that the calculus is. This project has no standing to
   reach the third and its ledger says so entry by entry.
 
+**Publishing stance.** **No paper, and none while the gate is shut.** Nothing
+has been rendered and nothing has been run, so there is no result to write up,
+and the ledger of breaks is written for the parent rather than for a reader who
+has never heard of the framework. **A paper about somebody else's calculus is
+not this project's to write in any case** — what could ever be publishable here
+is a boundary in *Eudaimonia*, and that belongs to whatever the parent's stance
+becomes. Revisit only if goal 3 runs and what it finds turns out to be about the
+framework rather than about one rendering of it.
+
 ## The name
 
 *Apodeixis* (Greek **ἀπόδειξις**, from ἀποδεικνύναι "to show forth, to
@@ -208,11 +217,12 @@ work by accident. The placeholder is now `Demo`, which the same documents
 already used elsewhere and which nobody can mistake for a project. The parent
 names nothing here.
 
-**The register.** The ecosystem's names live in
-[anoieu's register][names] and `apodeixis` is not in it: it is neither taken nor
-reserved there. Adding a line to that file is a person's edit in somebody else's
-tree, and this directory does not make it. Until somebody does, the name is used
-here and claimed nowhere.
+**The register.** The ecosystem's names live in [kanon's glossary][names], and
+`apodeixis` **is** in it — recorded as a child project of eudaimonia, with
+Alethe as its proposed target, paused pending permission, and this charter as
+what the entry points at. Read on 2026-09-17. That line is a person's edit in
+somebody else's tree, which is the only way it could have got there; this
+directory neither made it nor asked for it.
 
 ## Why Alethe, and what this project is not doing with it
 
@@ -346,5 +356,5 @@ same day. Nothing here has been delivered yet, so nothing above is an exception
 the policy would ask this project to name, and the island is stated as fact
 rather than as intention.*
 
-[names]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/names.md
+[names]: https://github.com/ajreynol/kanon/blob/main/docs/glossary.md
 [manual]: https://github.com/cvc5/ethos/blob/main/user_manual.md

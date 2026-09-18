@@ -6,6 +6,7 @@ assume it has been read.
 
 | document | what it is for |
 | --- | --- |
+| [`maintenance.md`](maintenance.md) | How a person maintains this repository, possibly by directing an agent: what it is responsible for, the one command that says whether it is healthy, and the four decisions an agent may prepare and may not take. |
 | [`generated-checker.md`](generated-checker.md) | The anatomy of what a run produces: the full option table, what each option writes, and what regenerating over an existing checker does and refuses to do. |
 | [`limitations.md`](limitations.md) | What a generated checker does not yet do, and why — measured against what the CI suite cannot make pass. |
 | [`eoc-requests.md`](eoc-requests.md) | What a template for Logos-like checkers needs from the Eunoia compiler, each item with the evidence that produced it. |

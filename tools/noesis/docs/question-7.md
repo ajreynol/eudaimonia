@@ -182,4 +182,4 @@ That is an observation about the parent's own file, not a finding against
 anybody, and it leaves this island the way everything else does: a person
 decides whether it is worth a line in `TODO.md`.
 
-[why]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/why-eunoia.md
+[why]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/why-eunoia.md

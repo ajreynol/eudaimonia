@@ -98,7 +98,7 @@ one that changes what is installed.
 | Do rules gather `:list` premises? | `--[no-]list-premises` | **derived** — the premise-list calls are emitted per rule, and the nil either exists or does not |
 | How many indices do operators take, at most? | `--indexed-ops N` | **derived** — the compiler emits `UserOp<n>` only for an arity the calculus uses, so the highest one present is the answer |
 | Is `smt.eos` Logos's SMT-LIB semantics, unmodified? | computed | **derived** — by digest |
-| Should the generated parser be installed? | `--[no-]parser` | **derived**, and the one entry that is also a choice |
+| Should the generated parser be installed? | `--[no-]parser` | **declared**, and the only one that is a choice rather than a fact. Nothing emitted says whether a parser *should* exist, so there is nothing to check it against |
 | Does the calculus have algebraic datatypes? | `--[no-]datatypes` | **declared** — the machinery is emitted for every signature, so nothing distinguishes the answers |
 | Are any rules binder-sensitive? | `--[no-]binders` | **declared** — likewise unconditional, and a binder in the signature does not imply a rule reasoning under one |
 | Does the semantics lean on a total order on values? | `--[no-]value-ordering` | **declared** — the same `SmtValueOrder` is emitted either way |
@@ -107,7 +107,9 @@ one that changes what is installed.
 disagreement is reported. **Declared** ones are taken on trust, because the
 machinery they name is emitted unconditionally — a calculus with the feature and
 one without compile to the same thing, so claiming to verify them would be
-checking something that can only answer one way.
+checking something that can only answer one way. `--[no-]parser` is declared for
+a different reason: it is not a fact about the calculus at all but the one
+choice in the file, so there is nothing it could be checked against.
 
 Making those conditional is compiler work, set out in
 **[docs/eoc-requests.md](docs/eoc-requests.md)**.
@@ -242,23 +244,18 @@ commit. Two runs a month apart build the same compiler, and a checker can be
 regenerated identically later.
 
 The Eunoia compiler is developed on the **`ethosEoc3`** branch of cvc5/ethos
-and reaches **`main`** as squashed releases, which is what the pin follows.
-Until the 0.2.4 release (2026-09-11) it could not: `main`'s `driver.py` lacked
-two options this template is built on,
+and reaches **`main`** as squashed releases. **The pin follows `main`**, and
+what it needs of a commit there is two options `driver.py` has to carry:
 
 | option | what building without it would give up |
 | ------ | -------------------------------------- |
 | `--calc-name` | the calculus name becomes the user's to choose, instead of being derived from the signature's file name |
 | `--smt-semantics` | the SMT-LIB semantics is the user's to supply — the third of the three files a specification is |
 
-and building from it would have cost exactly the two things that make this a
-template. Both are on `main` now, and `tools/eoc/` and `plugins/` are identical
-on the two branches — the branch carries ten CPC driver scripts this repository
-does not call, and no compiler difference. The script does not take the branch
-on faith — it checks whatever it fetched for those options before building, so
-a commit without them
-fails there, naming the missing option, rather than failing later inside a
-compile.
+Those two are the whole of what makes this a template rather than a checker, so
+the script does not take a commit on faith: it checks whatever it fetched for
+both before building, and a commit without them fails there, naming the missing
+option, rather than failing later inside a compile.
 
 ### Choosing a commit
 
@@ -272,11 +269,8 @@ install/get-eo-compiler.sh --pinned   # build the recorded ETHOS_VERSION
 
 A tip build still resolves to one concrete commit before doing anything, and
 records it in `install/deps/eoc-env.sh` along with `EOC_DEV_MODE=1`. So what was
-built is always *known*, even when it is not reproducible.
-
-A tip build still resolves to one concrete commit before doing anything and
-records it, so what was built is always known — but it is a way to try
-something, not the default.
+built is always *known*, even when it is not reproducible — but it is a way to
+try something, not the default.
 
 ### Advancing the pin
 
@@ -451,6 +445,8 @@ what a run *produces*, which is
 config.sh                  the settings a run reads
 scripts/new-checker.sh     the generator
 scripts/run-ci.sh          generate every configuration and run its own CI
+scripts/bump-eoc.sh        move the compiler pin and its semantics snapshot
+                           together, because they do not move apart
 templates/                 what it renders, one file per generated file
   pkg/                       the calculus package
   eunoia/                    the proof-format library
@@ -460,11 +456,19 @@ templates/                 what it renders, one file per generated file
 examples/cpc/              a worked specification: CPC, as Logos compiles it
 examples/hello/            the smallest one that works: one rule, five proofs
 examples/scoped/           adds assumption discharge and `:list` premises
-docs/generated-checker.md  the anatomy of what a run produces
-docs/logos-experience-report.md
-                           every `sorry` a generated checker has, and what the
-                           same obligation cost Logos
-docs/eoc-requests.md       what a template needs from the eoc compiler
+docs/                      every document, one row each in docs/README.md
+  maintenance.md             where a person maintaining this repository starts
+  generated-checker.md       the anatomy of what a run produces
+  limitations.md             what a generated checker does not yet do, and why
+  eoc-requests.md            what a template needs from the eoc compiler
+  logos-experience-report.md every `sorry` a generated checker has, and what
+                             the same obligation cost Logos
+  discussion.md              the channel to the other tools in the ecosystem
+  autarkeia.md               the state this framework is aimed at, and what
+                             the word may not be used for
+tools/                     child projects: research whose subject is outside
+                           this tool, importing nothing from it and imported
+                           by nothing. Deleting one changes nothing here
 checkers/                  where runs write, ignored by git
 TODO.md                    what Logos has that a generated checker still needs
 ```
@@ -517,8 +521,14 @@ development, so it cannot be what failure means.
 
 The six configurations cover the option surface that changes what is written:
 signature source, `--dummy-rule`, `--theorems none`, a theorem subset,
-`--format-name` and `--no-parser`. `--mini` is covered by CPC, which is
-generated and installed with it after the six.
+`--format-name` and `--no-parser` — the last of these at generation time only.
+A plain install puts the parser back whatever the profile records, so the
+`Renamed` configuration exercises the *option* and not a checker that has no
+parser. [docs/limitations.md](docs/limitations.md) says why, and it is a defect
+rather than a decision.
+
+`--mini` is covered by CPC, which is generated and installed with it after the
+six.
 
 ### What is incorporated from Logos
 
@@ -535,8 +545,10 @@ generalize are copied in **complete and proven**, not restated as stubs:
 | `Proofs/Canonicity.lean` | evaluating a literal gives a value in normal form |
 | `Proofs/Invariants/Extra.lean` | the calculus-specific seam, `True` for a calculus that needs nothing |
 
-**55 declarations, 1,044 lines, zero `sorry`.** A generated checker starts with
-that rather than with an empty file and a description.
+**57 declarations over 1,085 lines, and not one `sorry` among them.** A
+generated checker starts with that rather than with an empty file and a
+description. Counted over the nine files above as the templates render them; the
+only occurrences of the word are in the headers saying there are none.
 
 The rule for what gets copied is **port facts, not structure**: a fact about the
 generated model constrains nothing about how you write your proofs, so it is
@@ -548,11 +560,12 @@ that could be closed by `trivial` would let 591 rules report as proven having
 proven nothing.
 
 Upstream modularity work is tracked and adopted as it lands, and pushed for
-where it is missing. Logos's `modularity2` made `Proofs/CheckerState.lean`
-identical between a 591-rule package and a 5-rule one — 1,463 lines that had
-differed by 145 — which is precisely what makes a file inheritable by a
-generated checker rather than maintained per calculus. `docs/eoc-requests.md`
-is the running list of where that work still has to happen upstream, ranked.
+where it is missing. In Logos, `Proofs/CheckerState.lean` is **1,399 lines and
+the same in the 591-rule package and the 5-rule one**, apart from the eight
+import lines that name the package — read at `be47912`, 2026-09-15. That is
+precisely what makes a file inheritable by a generated checker rather than
+maintained per calculus. `docs/eoc-requests.md` is the running list of where
+that work still has to happen upstream, ranked.
 
 ### What is not there
 
@@ -571,19 +584,25 @@ This repository is part of the **Eunoia ecosystem** and follows its shared
 repository policy, `docs/policy.md`, kept by
 [kanon](https://github.com/ajreynol/kanon/blob/main/docs/policy.md).
 
-The page moved there from `ajreynol/anoieu` on 2026-09-15, and the two halves of
-following it have not caught up with each other yet. The checker is still
-anoieu's, pinned as `ANOIEU_REV` in
-[`.github/workflows/anoieu.yml`](.github/workflows/anoieu.yml) at a commit that
-predates the move — so what this repository is *checked against* and where the
-rules are *read* are, for the moment, two different trees. Moving the pin is a
-person's decision and is not made by noticing this.
+The `anoieu / policy` check here takes the **pinned** form rather than anoieu's
+versioned contract: [`.github/workflows/anoieu.yml`](.github/workflows/anoieu.yml)
+names a commit of `ajreynol/anoieu`, so nothing this check decides moves until a
+person moves that pin. The pin predates the policy's current home and the
+checker at it asks for a declaration naming anoieu, which is why both names are
+above; [`docs/maintenance.md`](docs/maintenance.md) says what moving it takes.
 
 **Eudaimonia is written by an AI agent under human supervision.** An assistant
 does the work — the scripts, the templates, the Lean, the documentation and the
-measurements in it — and a human directs, reviews and decides.
+measurements in it — and a human directs, reviews and decides what is published.
 
-That is worth stating for two reasons.
+**What the supervision does not cover.** Nobody vets the internal design, reads
+the Lean line by line, or re-derives every measurement in these documents. No
+finding reaches another project's issue tracker, and nothing reaches another
+repository at all, without a person carrying it. Read *supervision* as *a person
+is accountable for what leaves here*, not as *a person has checked each of these
+sentences*.
+
+Two more things are worth stating.
 
 **What to trust.** Claims here are meant to be checked rather than believed, and
 most carry the measurement that produced them: a line count, a diff between two

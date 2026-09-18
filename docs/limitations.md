@@ -19,8 +19,11 @@ nonetheless placeholders:
 
 | file | what it stubs |
 | ---- | ------------- |
-| `Proofs/RuleSupport/Support.lean` | the eight names every rule statement is written against |
-| `Proofs/CheckerCore.lean` | the sixteen the generated dispatcher is written against |
+| `Proofs/RuleSupport/Support.lean` | the **seven** names every rule statement is written against, and one internal helper the unprovable obligation is built from |
+| `Proofs/CheckerCore.lean` | the **sixteen** the generated dispatcher is written against, and two more the file needs for itself |
+
+Both counts are measured rather than asserted: they are the names each stub
+defines that the compiler's own output then refers to.
 
 Both follow the same discipline. The **hypotheses** a proof is *given* are
 defined for real, so no statement is vacuously true. The **obligations** it must
@@ -79,18 +82,41 @@ compiler rather than by your calculus — sixteen names, and a calculus without
 `step_pop` rules needs a subset of the same set. The compiler generates a file
 that *uses* that vocabulary while generating nothing that *defines* it.
 
-In Logos the corresponding file is 1,123 lines, and `Proofs/Checker.lean` — the
-soundness proof it feeds — is byte-identical between a 591-rule package and a
-5-rule one. Neither is calculus-specific. Seeding them is
+In Logos the corresponding file is 1,120 lines, and `Proofs/Checker.lean` — the
+soundness proof it feeds, 901 lines — is the same in the 591-rule package and
+the 5-rule one apart from the two import lines that name the package. Read at
+`be47912`, 2026-09-15. Neither is calculus-specific. Seeding them is
 [item 5](eoc-requests.md) of the wish list and the top priority there: it is the
 one item that removes work rather than overhead.
 
+## `--no-parser` records a choice a generated checker cannot yet take
+
+The profile entry is real and the install flag is real; what is missing is a
+checker that can do without a parser. `Api.lean`'s `check_proof` calls
+`parseProof` unconditionally, and only the parser configuration the compiler
+generates defines it — so honouring `parser=no` on an install gives
+`Unknown identifier 'parseProof'`. `Main.lean` and the parse-hypothesis theorems
+in `ApiChecks.lean` and `ApiCorrect.lean` sit on the same path.
+
+**So a plain `install/install-<calc>.sh` installs a parser whatever the profile
+records**, which is what makes such a checker build, and it prints a note saying
+it has done so rather than leaving it to be discovered. **CI's `Renamed`
+configuration is therefore a test of the generator's option and not of a checker
+without a parser** — worth knowing before that row is read as coverage.
+
+What would close it is a decision rather than a patch: a checker driven
+programmatically owes no `check_proof`, so the option should render an API
+without one — a second shape for four files that currently ship proven, and a
+smaller theorem for a checker that takes it. That is
+[TODO.md](../TODO.md#7b-rough-edges)'s to carry and a person's to settle.
+
 ## The compiler is pinned to one commit, and taking a newer one is a judgement
 
-`main`, at the 0.2.4 release — a released commit, as of 2026-09-16. It was
-`ethosEoc3` until then, because `main` lacked `--calc-name` and
-`--smt-semantics`, the two options that make the calculus name and the SMT-LIB
-semantics the user's to choose; both landed in that release.
+`ETHOS_VERSION` is `8dc85c4`, which is the `ethos-0.2.4` tag on cvc5/ethos and
+is also the head of `main`, read on 2026-09-17. **The pin follows `main`**,
+because that is where a released commit carrying `--calc-name` and
+`--smt-semantics` is — the two options that make the calculus name and the
+SMT-LIB semantics the user's to choose rather than the compiler's.
 
 The commit is not the whole pin. `install/defs/smt.eos` is a snapshot of that
 commit's semantics, and the format is still changing, so the two move together —

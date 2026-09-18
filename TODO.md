@@ -178,7 +178,8 @@ Still framework work, because these should not be the user's at all:
 - [ ] **`Proofs/CheckerCore.lean` likewise, probably.** Its differences from
       `CpcMini`'s are simp-lemma lists and one namespace qualifier.
 - [x] **`Proofs/RuleSupport/Support.lean` needs at least a shape** — done.
-      It now defines the eight names every rule statement is written against,
+      It now defines the seven names every rule statement is written against,
+      plus the helper the unprovable obligation is built from,
       so **rule files compile in every calculus** (verified on CPC's 591, plus
       a 3-rule and a 1-rule signature). The split is deliberate: hypotheses are
       defined for real, so no rule statement is vacuous; the two obligations are
@@ -324,7 +325,7 @@ other 4,600.
 
 ### Corrections from the Logos maintainer
 
-`~/logos/docs/modularity.md` (2026-08-29) measures the same tree from the other
+Logos's [`docs/modularity.md`](https://github.com/cvc5/logos/blob/main/docs/modularity.md) (2026-08-29) measures the same tree from the other
 side and sends back two corrections to what is above. Both are accepted, and
 both were verified here rather than taken on trust.
 
@@ -422,7 +423,7 @@ deliberately rather than drifted into.
       name an operator compiles to need not be its spelling, and the attribute
       is only visible in what it generates.
 
-      This implements TODO 8 of `~/logos/docs/modularity.md`, and refines it.
+      This implements TODO 8 of Logos's [`docs/modularity.md`](https://github.com/cvc5/logos/blob/main/docs/modularity.md), and refines it.
       The report lists `:right-assoc-nil true` as a flat requirement; measuring
       it showed the restriction is narrower. Compiling CPC with `and` declared
       as a plain binary operator leaves the input assumption list, the
@@ -699,8 +700,11 @@ Not on the critical path, and each would change what the framework *is* rather
 than making it more complete.
 
 - [ ] **Seed the checker layer from Logos, not just describe it.** The largest
-      single win available: `Proofs/Checker.lean` is byte-identical across
-      Logos's two packages, and `CheckerCore.lean` nearly so. Shipping them
+      single win available: `Proofs/Checker.lean` is the same across Logos's
+      two packages apart from two import lines, and `CheckerCore.lean` differs
+      by 180 of its 1,120 — simp-lemma lists and one namespace qualifier, which
+      is drift between two hand-maintained copies rather than calculus-specific
+      content. Read at `be47912`, 2026-09-15. Shipping them
       would take a generated checker from "six obligations plus the rules" to
       "four plus the rules", and turn the soundness theorem from something the
       user proves into something they inherit. Blocked on upstream seeding them;
@@ -827,6 +831,20 @@ that "known limitations" there stays about substance.
       it against what the compiler emitted -- but nothing acts on a mismatch
       beyond reporting it, because the compiler decides arity emission from the
       signature.
+
+      *The validation itself ran too late and was moved, 2026-09-17.* It sat
+      after `profile.conf` had been written, so `--indexed-ops 9` left a
+      half-generated project behind and the corrected run was then refused as
+      "already exists" -- the second run reporting the first run's mess rather
+      than the user's mistake. Every fixed-set option is now checked before
+      anything is written.
+- [x] **`--theorems` rejects a name it does not know** -- fixed 2026-09-17.
+      There was a `case` over `all` and `none` with no default branch, which did
+      nothing at all, so `--theorems modelwf,nonvaccuity` was accepted and the
+      misspelled theorem silently dropped. `none` is a legitimate setting, so
+      nothing downstream could tell a typo from a choice. The four names, `all`
+      and `none` are now checked, `all` and `none` have to stand alone, and an
+      empty entry is refused.
 - [ ] **A calculus compiled with `--rules` needs `=>` in its signature.** The
       trimming stage that runs for a rule subset -- which is what
       `install-<calc>.sh --mini` does -- fails with
@@ -836,20 +854,36 @@ that "known limitations" there stays about substance.
 - [ ] **`--theorems` cannot remove `TypeDefaults` or `TypePredicates`.** They
       are always generated: they are proven, and `NonVacuity.lean` builds on
       them.
-- [ ] **A `--no-parser` checker always reports a profile disagreement when it
-      is reinstalled.** `new-checker.sh --no-parser` records `PROFILE_PARSER=no`
-      correctly, but the `parser` row of the install's profile report takes its
-      *detected* value from the install script's own `--no-parser` flag
-      (`install-sig.sh.in`, `d_parser`) rather than from anything the compiler
-      emitted. A plain `./install-<calc>.sh` on such a checker therefore
-      detects `yes`, disagrees with its own `profile.conf`, and prints the
-      "the record of it is what is wrong" note about a record that is right.
+- [x] **The `parser` row no longer reports a disagreement that was not one** --
+      fixed 2026-09-17. It took its *detected* value from the install run's own
+      `--no-parser` flag rather than from anything the compiler emitted, so a
+      plain `./install-<calc>.sh` on a `--no-parser` checker disagreed with a
+      `profile.conf` that was right and printed the "the record of it is what is
+      wrong" note about it. Nothing detects this one and nothing can: it is the
+      only *choice* in the file. The row now says so, and `profile.conf` and the
+      README's profile table say `declared` rather than `derived`.
 
-      Visible on every CI run, in the `Renamed` configuration's regeneration
-      group. Cosmetic -- the install proceeds and the group passes -- but it is
-      the one row of that report whose "detected" is not detected from the
-      calculus, which is why it is the one that misfires. Noticed 2026-09-17
-      while moving the compiler pin, and unrelated to it.
+- [ ] **`--no-parser` does not yet produce a checker that builds, and the
+      install has been hiding it.** Found 2026-09-17 while fixing the row above.
+
+      A plain `./install-<calc>.sh` installs the parser whatever
+      `profile.conf` says, so a checker generated with `--no-parser` gets one
+      back and builds. Make the install honour the record and `Hello/Api.lean`
+      fails at `Unknown identifier 'parseProof'`: `check_proof` calls it
+      unconditionally, and only the generated parser defines it. `Main.lean`,
+      the four parse-hypothesis theorems in `ApiChecks.lean` and the one in
+      `ApiCorrect.lean` are on the same path.
+
+      **So CI's `Renamed` configuration does not test what it looks like it
+      tests.** It generates with `--no-parser` and then installs a parser, which
+      exercises the generator's option and not the checker the option describes.
+
+      The install now *says* it is overriding the record rather than doing it
+      silently. What it cannot do is decide the real question, which is a design
+      one and a person's: a checker driven programmatically owes no
+      `check_proof`, so `--no-parser` should render an API without it -- and
+      that means a second shape for four files that are currently shipped
+      proven, and a smaller theorem for a checker that takes that shape.
 
 ## What is not on this list
 

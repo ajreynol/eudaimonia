@@ -54,8 +54,8 @@ week of that repository needed corrected, against `init_eo` as the baseline.
   write its README must not also be able to publish it.
 - **Running an agent in CI.** Nothing here runs on a push, on a schedule, or
   unattended. Every command is one a person types.
-- **Naming things.** The register of ecosystem names is anoieu's and stays
-  anoieu's; the interview asks which name you took and where it is recorded, and
+- **Naming things.** The register of ecosystem names is kanon's and stays
+  kanon's; the interview asks which name you took and where it is recorded, and
   refuses to invent one.
 - **Replacing `init_eo`.** That command owns the naming step and does it well.
   The interview points at it rather than reimplementing it.
@@ -63,6 +63,15 @@ week of that repository needed corrected, against `init_eo` as the baseline.
   person who has already decided.
 - **Anything after the first hour.** No maintenance, no scheduled audit, no
   ongoing relationship with what a launch produced. It hands over and stops.
+
+**Publishing stance.** **No paper.** The register here is this ecosystem's own
+practice read by a member of it, which makes every entry a self-assessment; and
+the claim the project is actually about — that rigor is portable — is evidenced
+by somebody *outside* this family launching a tool from it and saying what it
+cost, of whom there are none. Counting our own launches would be the most
+quotable wrong number this repository could produce. That changes if an outside
+launch happens and is written up by whoever ran it; it does not change by
+accumulating more of ours.
 
 ## The name
 
@@ -106,7 +115,7 @@ Three things, and the first two are the point.
 
 | | |
 | --- | --- |
-| [docs/ai-workflows.md](docs/ai-workflows.md) | **The findings register.** What this ecosystem is doing that looks novel, what of it generalises past this ecosystem, and — on the same list rather than in a section at the end — what is wrong with it. Every claim carries what would falsify it, because the failure mode of a document like this written by an agent is a list of flattering observations. anoieu's development-vision page grades the tools and remains the authority on whether the work is good; this asks the different question of what has been found out. |
+| [docs/ai-workflows.md](docs/ai-workflows.md) | **The findings register.** What this ecosystem is doing that looks novel, what of it generalises past this ecosystem, and — on the same list rather than in a section at the end — what is wrong with it. Every claim carries what would falsify it, because the failure mode of a document like this written by an agent is a list of flattering observations. The ecosystem's report card, which kanon keeps in `tools/stathmos/`, is where a reader's judgement of whether the work is good is written down; this asks the different question of what has been found out. |
 | [interview.md](interview.md) | **The form.** What a person has to settle before a repository exists: the name and where it is registered, what it is, the vision, what already answers this and why that is not enough, what is out of scope, the initial tools, the toolchain, which ecosystem machinery to adopt and which to leave, how the work will be run, and what the agent must not do. Thirteen questions, seven required, and **agnostic** — nothing in it assumes what kind of tool you are building. |
 | [supplements/](supplements) | **The specialisation, kept out of the core.** Extra questions for one *kind* of tool, merged into a copy of the form when asked for, so the agnostic version never grows a question most launches would skip. One exists: `measurement`, for a tool whose output is numbers. |
 | [bin/launch](bin/launch) and [prompts/](prompts) | **The machinery.** Assemble the answers into a prompt, show it, and — separately, explicitly — hand it to an agent in a directory somebody already made. An informal install: the same stage as compiling a signature, with none of the guarantees. |

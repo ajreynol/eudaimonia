@@ -87,6 +87,8 @@ PROFILE_INDEXED_OPS=3
 
 # Should the generated parser configuration be installed? A checker driven
 # programmatically rather than from proof files does not need one.
-# derived, and the one entry that is also a choice: --no-parser really does
-# change what is installed.
+# declared, and the only entry here that is a choice rather than a fact:
+# nothing the compiler emits says whether a parser *should* exist, so there is
+# nothing to check this against. install-@CALCLOWER@.sh installs one unless
+# --no-parser is passed, and says so when that contradicts this line.
 PROFILE_PARSER=yes

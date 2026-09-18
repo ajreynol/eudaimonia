@@ -101,8 +101,19 @@ to be a child project, so reaching it is also the instruction to leave.
   turns on it.
 - **Reporting defects, and taking the name.** Findings leave through this
   repository's ordinary discipline, carried by a person. The name is reserved in
-  anoieu's register and the entry that would say it is taken is a person's edit
-  in somebody else's tree; nothing here makes it.
+  the ecosystem's register, which kanon keeps, and the entry that would say it is
+  taken is a person's edit in somebody else's tree; nothing here makes it.
+
+**Publishing stance.** **Not yet, and the condition is goal 3.** There is no
+`report/`. What exists is a charter, a pass ledger and the 609 lines of
+[lean/Eos.lean](lean/Eos.lean), which defines the fragment of `smt.eos` the core
+symbols make up and is held against the generated Lean by 23 `#guard`s — a plan
+and one definition under it, and a plan is not a result. **A proved `linear_patterns`, or a recorded failure to state it
+over this embedding at all, is the first thing here that anybody outside would
+learn something from**, and the negative result would be worth more than the
+positive one. Until one of those exists, the paper this project could be part of
+is the one about a calculus and its semantics compiled into a proof assistant,
+and that is logos's and the compiler's rather than ours.
 
 ## What "verified" is claiming
 
@@ -276,6 +287,6 @@ this directory, so nothing above is yet an exception the policy would ask this
 project to name. It is on no build path and in no CI job, and the island is
 still stated as fact rather than as intention.*
 
-[p3]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/proposals.md
-[why]: https://github.com/ajreynol/anoieu/blob/main/tools/ynoia/why-eunoia.md
+[p3]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/proposals.md
+[why]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/why-eunoia.md
 [ready]: https://github.com/cvc5/ethos/blob/main/docs/noesis-readiness.md

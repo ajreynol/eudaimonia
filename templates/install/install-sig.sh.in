@@ -104,6 +104,7 @@ MINI_RULES="@MINI_RULES@"
 # The generated Parser.lean is the operator table of this signature; it plugs
 # into the Eunoia library, which this checker has. Installed by default.
 NO_PARSER=0
+PARSER_GIVEN=0
 RULES=()
 RULES_GIVEN=0
 
@@ -118,8 +119,8 @@ while [ $# -gt 0 ]; do
     --mini) MINI=1; shift ;;
     --check) CHECK=1; shift ;;
     --no-record) RECORD=0; shift ;;
-    --no-parser) NO_PARSER=1; shift ;;
-    --parser) NO_PARSER=0; shift ;;
+    --no-parser) NO_PARSER=1; PARSER_GIVEN=1; shift ;;
+    --parser) NO_PARSER=0; PARSER_GIVEN=1; shift ;;
     --rules)
       RULES_GIVEN=1; shift
       while [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; do RULES+=("$1"); shift; done ;;
@@ -165,6 +166,28 @@ if [ "${MINI}" = "1" ]; then
 fi
 SEMANTICS="${SEMANTICS:-${DEFS_DIR}/@CALCULUS@.eos}"
 SMT_SEMANTICS="${SMT_SEMANTICS:-${DEFS_DIR}/smt.eos}"
+
+# Whether the parser is installed is the one entry in the profile that is a
+# *choice* rather than a fact about the calculus, and a plain run of this
+# script can disagree with the record: a checker generated with --no-parser
+# gets one back. That is said out loud rather than done quietly.
+#
+# The record is deliberately *not* taken as the default, and the reason is a
+# defect rather than a preference: a checker with no parser does not build
+# today, because Api.lean's `check_proof` calls `parseProof` and only the
+# generated parser defines it. Honouring the record here would turn that into
+# a broken install. See `--no-parser` under rough edges in the Eudaimonia
+# roadmap.
+if [ "${PARSER_GIVEN}" = "0" ] && [ "${MINI}" = "0" ] && [ -f "${DEFS_DIR}/profile.conf" ]; then
+  case "$(sed -n 's/^PROFILE_PARSER=//p' "${DEFS_DIR}/profile.conf" | tr -d '"'"'"' ')" in
+    no)
+      echo "note: install/defs/profile.conf records parser=no, and this run is"
+      echo "      installing one anyway. --no-parser honours the record; a"
+      echo "      checker without the parser does not build today, which is why"
+      echo "      the record is not taken automatically."
+      ;;
+  esac
+fi
 
 for f in "${SIGNATURE}" "${SEMANTICS}"; do
   [ -f "${f}" ] || { echo "error: ${f} not found." >&2; exit 1; }
@@ -551,8 +574,6 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
     [ "${real:-0}" = "0" ] || d_idx="${n}"
   done
 
-  # The parser is installed unless it was turned off for this run.
-  if [ "${NO_PARSER}" = "0" ]; then d_parser=yes; else d_parser=no; fi
   # Logos's SMT-LIB semantics, by digest of the file this compiled against.
   d_logos=no
   if [ -n "${SMT_SEMANTICS}" ]; then
@@ -573,7 +594,6 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
   }
   report scopes        "${PROFILE_SCOPES:-yes}"        "${d_scopes}"
   report list-premises "${PROFILE_LIST_PREMISES:-yes}" "${d_list}"
-  report parser        "${PROFILE_PARSER:-yes}"        "${d_parser}"
   report indexed-ops   "${PROFILE_INDEXED_OPS:-3}"     "${d_idx}"
   report logos-smt     "${PROFILE_LOGOS_SMT:-no}"      "${d_logos}"
 
@@ -612,6 +632,12 @@ if [ -f "${PROFILE_FILE}" ] && [ "${MINI}" = "0" ]; then
     "binders" "${PROFILE_BINDERS:-yes}"
   printf '    %-16s %-4s  (declared; eoc emits the same SmtValueOrder either way)\n' \
     "value-ordering" "${PROFILE_VALUE_ORDERING:-yes}"
+  # Not detected, and it never was: nothing the compiler emits says whether a
+  # parser *should* be installed. It is the choice this run is making, which is
+  # this record unless a flag overrode it.
+  if [ "${NO_PARSER}" = "0" ]; then d_parser=yes; else d_parser=no; fi
+  printf '    %-16s %-4s  (the choice this run is making; nothing detects it)\n' \
+    "parser" "${d_parser}"
 
   if [ "${profile_mismatch}" = "1" ]; then
     echo
