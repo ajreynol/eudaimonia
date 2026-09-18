@@ -337,6 +337,28 @@ the coordinated Logos update. Nor is it a `trust` step: safe-mode proof
 completeness and Logos's semantic coverage are separate checks. An Ethos result
 of `correct` need not imply that Logos reports `correct` for the same proof.
 
+## What it cost, for the ledger
+
+An entry for the [ledger](../README.md#the-ledger), classified the way every
+entry is. What is recorded is what cost time while the tutorial was assembled,
+not a defect in anybody's tree.
+
+| what happened | whose |
+| --- | --- |
+| the job spans two repositories and a pin, and no one page carries it end to end: this tutorial was assembled from cvc5's `output_cpc.rst`, two contrib scripts, one workflow file and Logos's `install/README.md` | **the documentation's** — and the four specific gaps are written out in [upstream-draft.md](upstream-draft.md), as a draft for a person to take upstream |
+| `install-cpc.sh --check` compares regenerated output and does **not** typecheck the proofs it preserved, so a green `--check` after a signature change says nothing about whether the rule proofs still go through | **the documentation's** — the installer says so; the cost is that a reader meets the flag at the moment they would otherwise draw the opposite conclusion |
+| a plain `install-cpc.sh` regenerates `Cpc` alone, while Logos's regeneration CI checks `Cpc` and `CpcMini`: the invocation that matches CI is the flagged one | **nobody's** — regenerating less than CI checks is a defensible default, and the cost lands on whoever forgets `--all` |
+| `--rules` reads as a way to refresh one proof and selects a reduced calculus instead | **the documentation's** — a flag whose name suggests a filter over the package it is run against |
+| two exit vocabularies for one question: cvc5's `check-logos-compilation` distinguishes mismatch (2) from failure (1), Logos's own `--check` returns 1 for both | **nobody's** — two tools with two audiences; the cost is that a reader has to know which one they ran before reading the number |
+| `ethos` and `ethos-eoc` are different programs built from one tree, and *the checker* names either — as does *the pin*, of which there are three in play | **nobody's** — one tree, several artifacts, and no spelling fixes it; the tutorial spends a paragraph on it because nothing else does |
+| `correct` from Ethos need not mean `correct` from Logos | **nobody's** — it is what two checkers of different strength means, and it is the fact in this workflow most likely to be read as a contradiction |
+
+**And what it does not measure.** Nothing was regenerated here, no Lean proof was
+written, and no pin was moved: [Sources and validation](#sources-and-validation)
+says exactly what was run. So the friction above is a careful reader's and a
+reviewer's rather than an implementer's, and an implementer's entry — the one
+that would say what proving an unfamiliar rule actually costs — is still owed.
+
 ## Sources and validation
 
 Reviewed on 2026-09-17 against these fixed revisions:

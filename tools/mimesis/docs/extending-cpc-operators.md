@@ -428,6 +428,28 @@ details the statuses and the CI requirement.
 The operator is done when cvc5 prints it, Ethos checks it, Logos computes the
 same thing for it, and the proof that says so is built.
 
+## What it cost, for the ledger
+
+An entry for the [ledger](../README.md#the-ledger), classified the way every
+entry is. These are difficulties met while following the operator through, not
+defects in anybody's tree.
+
+| what happened | whose |
+| --- | --- |
+| an operator's Logos work arrives as a **broken finished proof with no `sorry` to find**. A new rule gets a generated file with a marker in it; a new operator adds a case to an existing program, so what moves is the statement of a proof somebody already completed | **nobody's**, and the entry's main finding — the work is wherever the build says it is, and no marker points at it |
+| the soundness lemma for an integer operator sits among the bit-vector lemmas, because powers of two were already there | **nobody's** — file layout follows what a lemma needs and not what a reader expects; the workable advice is to find it by the name the dispatch gives it |
+| a convention the signature invents — `(int.pow2 (- 3))` is `0` — is unchecked by everything until it meets the model, and then fails in exactly one lemma | **nobody's, and desirable.** It is what having a model is for. The cost is that no step of the cheap Ethos loop can tell you the convention is wrong |
+| an operator with **no** evaluation case still type checks, and `evaluate` then proves `(= t t)` for it with no diagnostic | **nobody's** — absent support and support that agrees are indistinguishable from the outside, which is why the worked proofs test what the operator computes rather than that a proof passes |
+| `Proves` names the computed term and `Expected` the claimed one, the opposite way round from how the words read | **the compiler's** — already recorded from [defining a calculus](defining-a-calculus.md#what-it-cost-for-the-ledger), and met again independently here, which is what makes it a label rather than an anecdote |
+| the third case in step 6 — a genuinely new target operation — is a change to `smt.eos`, which is a change to the compiler and moves a second pin in a second repository | **nobody's** — and the reason this tutorial pushes `:term` translations over new target symbols, since a `:term` is eliminated on the way into the model and adds nothing to it |
+
+**And what it does not measure.** Everything from step 5 onward was read rather
+than run, as [Sources and validation](#sources-and-validation) records: no cvc5
+build, no regeneration, no Lean proof. The rows above that concern the Logos side
+are therefore about what the sources say the work is, and the one number nobody
+here has — what repairing the `evaluate` proof for a new operator actually costs
+— is still owed.
+
 ## Sources and validation
 
 The [five worked proofs](../examples/cpc-operator/README.md) were run on

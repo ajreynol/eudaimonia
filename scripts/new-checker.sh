@@ -63,8 +63,10 @@ Options:
   --[no-]hygiene-ci     whether CI rejects `sorry` from the first commit
   --theorems LIST       which front-end theorems to include, comma-separated
                         from: translation, nonvacuity, canonicity, modelwf.
-                        `all` (the default) or `none`. Type preservation and
-                        the invariant slot are always generated
+                        `all` (the default) or `none`. Four files are always
+                        generated whatever this says: Proofs/TypePreservation,
+                        Proofs/TypeDefaults, Proofs/TypePredicates and the
+                        invariant slot Proofs/Invariants/Extra
   --dummy-rule          with no signature given, write a working starter
                         instead of a commented stub: a signature with one rule,
                         its semantics, and regression proofs covering every

@@ -287,6 +287,6 @@ this directory, so nothing above is yet an exception the policy would ask this
 project to name. It is on no build path and in no CI job, and the island is
 still stated as fact rather than as intention.*
 
-[p3]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/proposals.md
-[why]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/why-eunoia.md
+[p3]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/docs/proposals.md
+[why]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/docs/why-eunoia.md
 [ready]: https://github.com/cvc5/ethos/blob/main/docs/noesis-readiness.md

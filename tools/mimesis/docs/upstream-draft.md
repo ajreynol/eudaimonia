@@ -1,4 +1,11 @@
-# Discussion: cvc5's CPC output documentation
+# Upstream draft: cvc5's CPC output documentation
+
+**Not a correspondence channel.** A child project opens no topics and answers
+none, and this file is not `docs/discussion.md` in the sense the ecosystem's
+repository policy gives that name: it carries no topic, no id and no response
+gate, because it is not a wire to anybody. Eudaimonia's
+[`docs/discussion.md`](../../../docs/discussion.md) is the only one of those in
+this tree.
 
 A draft for a person to take upstream, if they agree with it. Nothing here is a
 defect report and nothing here was sent to cvc5: the page below is accurate

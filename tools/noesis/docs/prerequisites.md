@@ -108,4 +108,4 @@ language is worth the scope. Nothing here waits on that.
   through this repository's ordinary reporting discipline, with an id and a
   state, exactly like any other finding.
 
-[p3]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/proposals.md
+[p3]: https://github.com/ajreynol/kanon/blob/main/tools/ynoia/docs/proposals.md

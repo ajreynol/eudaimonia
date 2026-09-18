@@ -97,13 +97,25 @@ neither is a pass. It reads a remote, so it belongs in a person's hands or in a
 bump script and **never in this repository's CI**.
 
 **What has been established, which is not the same as the decision.** The
-candidate is `154228a` — the commit the other members moved to, and the first
-in which `scripts/policy_check.py` takes `--policy-version` at all: its
-predecessor `87cc0c2` does not. Asked about that commit on **2026-09-17**:
-seven check runs, every one `success` — `suites (3.10)`, `suites (3.12)`,
-`documentation-up-to-date`, `corpus`, `refresh`, `oracle`, `policy`. That
-satisfies anoieu's condition. **It does not make the decision**, which is 191
-commits of policy this tree has never been held to.
+candidate is `154228a`, the first commit in which `scripts/policy_check.py`
+takes `--policy-version` at all: its predecessor `87cc0c2` does not. Asked about
+that commit on **2026-09-17**: seven check runs, every one `success` — `suites
+(3.10)`, `suites (3.12)`, `documentation-up-to-date`, `corpus`, `refresh`,
+`oracle`, `policy`. That satisfies anoieu's condition. **It does not make the
+decision**, which is 191 commits of policy this tree has never been held to.
+
+**And a bump is no longer the only shape the decision has.** The policy allows a
+member to name a **contract** instead of a checker commit, calling anoieu's
+shared workflow: the obligations are fixed and the implementation is free to
+move, so a build can go red with nothing committed here. Read in the sibling
+checkouts on **2026-09-18**, of the nine members other than this one: four —
+epikrisis, kanon, koine and logos — are on the contract form; aisthesis and
+eschaton pin `154228a`; tachyon pins `442bb67`; dokimasia pins `87ad6825`
+through its own lock file; anoieu runs its own checker. So `154228a` is one of
+three live pins rather than *where everybody went*, and the real choice here is
+**pin or contract** before it is *which commit*. Either is a person's, and the
+maintenance note on the front page says which form this repository is on so that
+a reader of a red build knows what could have moved.
 
 **What the pin costs while it stays.** The checker at it requires a
 `**Status:**` field on every discussion topic, which the shared policy retired —

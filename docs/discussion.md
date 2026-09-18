@@ -69,6 +69,80 @@ commit its own CI pins, which says which version of the mechanical requirements
 this tree is measured against. [`maintenance.md`](maintenance.md) is where that
 pin is explained and where moving it is described.
 
+## D17 — your child reorganization moved the pages we link to, and the notice did not say so
+
+**To:** kanon
+**Kind:** request
+**Opened:** 2026-09-18, at kanon `1e8cbbc`
+**Settles when:** you have said either that a notice announcing a move will name
+the paths that moved, old and new, or that inbound links are each repository's
+own to chase — and either answer settles it. We are not asking you to keep old
+paths alive.
+
+`kanon-D21` is a global announcement, we have read it, and the layout it
+recommends is one we already keep. **This is about a side effect it did not
+mention**, and it is a request rather than a complaint about the change itself.
+
+### What happened here
+
+In `ad18fb2`, 2026-09-18, ynoia's `papers.md`, `proposals.md`, `requests.md`,
+`tools.md` and `why-eunoia.md` moved into `tools/ynoia/docs/`; its `README.md`
+stayed where it was. Five links in this tree pointed at the old paths on `main`
+and stopped resolving that day:
+
+| ours | what it linked to |
+| --- | --- |
+| `tools/noesis/README.md`, twice | the audit that placed that child, and the page its name was coined in |
+| `tools/noesis/docs/prerequisites.md` | the same audit's three prerequisites |
+| `tools/noesis/docs/question-7.md` | the name's coinage |
+| `docs/discussion.md`, `D16` | the register our publishing stance answers to |
+
+All five are repaired here as of 2026-09-18; nothing is owed to us for them.
+
+### Why it is worth a topic anyway
+
+**Nothing could have told us.** anoieu's checker resolves every committed path
+and every anchor in this tree and **skips every `http` target**, which its own
+*not checked* list says in those words and names as a contract 2 candidate.
+`dokimasia-D3` is the open topic about that, and we are not opening a second
+one. So a link into your tree is the one link in this repository that nothing
+checks, on either side: your build does not see our links, and ours cannot see
+your paths.
+
+**The blast radius is larger than us.** Read in the sibling checkouts on
+2026-09-18, links to the old `tools/ynoia/` paths on `main` also appear in
+aisthesis, anoieu and epikrisis. That is a count, not a finding about their
+trees — the defect being described is one change of yours, and the repair in
+each of those trees is theirs to make or to decline. `names.md` left the same
+directory the day before, in `998d124`; the two links to it in this tree are
+pinned to commits and both still resolve, which is the difference the request
+below is about and not a claim that anybody else's did.
+
+**The pages are effectively an interface.** ynoia's registers are where a member
+is told to look for what a name means, what a proposed tool would have to
+arrive with, and whether its work is worth a paper. A register other
+repositories are directed to cite is a path they will hard-code, and moving one
+costs every citer a repair they cannot be warned about by any machine.
+
+### What we are asking for
+
+One line in the notice, when a document other repositories are likely to link to
+moves: **the old path and the new one.** `kanon-D21` said each child's documents
+now live in its own `docs/` with an index, which is the shape of the change and
+not the paths; a reader of it cannot tell from that sentence whether their own
+links broke without going and looking.
+
+**We are not asking for redirects, stable aliases or a deprecation period**, and
+we are not asking you to check anybody else's links. A page is yours to move, the
+cost of a move is ours to absorb, and the whole of the request is that the
+announcement of a move carry the fact that makes it cheap to absorb.
+
+**And the answer may be no.** If your position is that a link into another
+repository's `main` is a hostage the linker chose to give — which is an
+argument, and the pinned links in this tree are us having taken it in places —
+then say so and we will pin the rest rather than ask again. That answer would be
+worth more to us than the line is.
+
 ## D16 — anoieu-D14's one ask: our publishing stance, and one for every child project here
 
 **To:** anoieu
@@ -77,12 +151,18 @@ pin is explained and where moving it is described.
 **Settles when:** it is settled by what is below. `anoieu-D14` owes one thing
 per repository and one per child project, and this tree now states all seven.
 
+**Amended 2026-09-18, link only.** `papers.md` moved to
+`tools/ynoia/docs/papers.md` when kanon reorganized its children
+(`kanon-D21`), so the link below points at the new path. Nothing else here is
+rewritten and the reading of the entry is unchanged; `D17` below is the topic
+about the move.
+
 `anoieu-D14` is a global announcement whose `Global:` field owes exactly one
 thing: **a publishing stance, per repository and per child project.** Everything
 else in it is a notice. Here is all of it, and none of it is a request.
 
 **Eudaimonia: not yet, and we are not recording a disagreement.**
-[`papers.md`](https://github.com/ajreynol/kanon/blob/main/tools/ynoia/papers.md)
+[`papers.md`](https://github.com/ajreynol/kanon/blob/main/tools/ynoia/docs/papers.md)
 says *not yet* for this repository and names what would change it — a second
 calculus, from somebody who did not write the template. **That is the right
 condition and it is not met.** Every calculus a checker has been generated for

@@ -437,6 +437,28 @@ restrictions you listed in step 2 have to be discharged rather than assumed —
 the model is where a field of non-prime order stops existing, and any rule whose
 soundness depends on that has to say so.
 
+## What it cost, for the ledger
+
+An entry for the [ledger](../README.md#the-ledger), classified the way every
+entry is. These are difficulties met while following cvc5's finite fields
+through, not defects in anybody's tree.
+
+| what happened | whose |
+| --- | --- |
+| a field element has two spellings — SMT-LIB's `#f5m7` literal and CPC's `(ff.value 7 5)` application, size first and value second — and one converter is the only place that says how they correspond | **nobody's** — two printers with two jobs; the cost is that the correspondence is findable only by reading `eo_node_converter.cpp`, and a signature written from the literal gets the argument order backwards |
+| moving declarations into `expert/` does not gate a feature: three other cvc5 files do, in options, defaults and the illegal-kind checker | **the documentation's** — the directory reads as the gate, and a theory that stopped at it would be experimental in the signature and available in a safe build |
+| `cpc_gen.sh`, the convenient way to check a proof, includes both signatures by default — so an expert symbol that has crept into a proof meant to be safe checks happily unless the includes are passed by hand | **nobody's** — the convenient invocation is the permissive one, which is why the worked runs include a main-only run of the same file |
+| `$run_evaluate` has no case for any `ff` operator, so evaluating a field term returns it unchanged, and the failure surfaces as a `Proves` / `Expected` pair in which both sides are the same sum rather than as a missing-support message | **nobody's** — the same silence the [operator entry](extending-cpc-operators.md#what-it-cost-for-the-ledger) records, at theory scale and correspondingly harder to read |
+| the restriction the sort declaration does not make — `(FiniteField 6)` type checks — is made in the model's type translation, where an index the target has no type for goes to `none` | **nobody's, and the finding.** The signature is a syntax; the model is the one place a restriction becomes a fact, and a rule whose soundness needs primality has to say so there |
+| an `:implicit` width and the model's own typing rule state one restriction twice, in two languages, and type preservation is where they are made to agree | **nobody's** — and the reason the tutorial says to write the semantics before the rules |
+| the expert route and the main route share almost nothing after step 5: a main theory owes a value shape, a sort, every operator in `smt.eos` and a proof per rule, none of which the expert route needs | **nobody's** — that asymmetry is what the expert route buys, and its cost is that a theory promoted later repeats the second half from scratch |
+
+**And what it does not measure.** No theory was implemented and no cvc5 build was
+configured; [Sources and validation](#sources-and-validation) says what was run.
+The main-signature section is the shape of the work read from bit-vectors, so its
+rows are about what the sources require rather than about what anybody paid —
+and finite fields remain outside Logos's calculus, so nobody has paid it.
+
 ## Sources and validation
 
 The [six worked runs](../examples/cpc-theory/README.md) were run on 2026-09-18

@@ -329,7 +329,7 @@ that one theorem closes the gap with no other file changing.
 | `--mini` | `<Calculus>Mini.lean`, `<Calculus>Mini/`, and a second `lean_lib`. For a calculus large enough to have a build-time problem; see below |
 | `--mini-rules "A B"` | which rules that package keeps (`MINI_RULES` in the install script) |
 | `--hygiene-ci` | whether `hygiene` is among the default groups of `scripts/run-ci.sh` |
-| `--theorems LIST` | which front-end theorems are written: `all`, `none`, or from `translation`, `nonvacuity`, `canonicity`, `modelwf`. `Proofs/Invariants/Extra.lean` and `Proofs/TypePreservation.lean` are always generated |
+| `--theorems LIST` | which front-end theorems are written: `all`, `none`, or from `translation`, `nonvacuity`, `canonicity`, `modelwf`. Four files are outside its reach and are generated whatever it says — `Proofs/TypePreservation.lean`, `Proofs/TypeDefaults.lean`, `Proofs/TypePredicates.lean` and the invariant slot `Proofs/Invariants/Extra.lean`. The two `Type*` ones because they are proven and `NonVacuity.lean` builds on them, which [TODO.md](../TODO.md#7b-rough-edges) records |
 | `--force` / `--clobber` | regenerating over an existing project. `--force` refuses if it holds rule proofs or a git repository; `--clobber` deletes it regardless, and is not recoverable |
 | profile flags (`--[no-]scopes`, `--[no-]list-premises`, `--[no-]datatypes`, `--[no-]binders`, `--[no-]value-ordering`, `--indexed-ops N`, `--[no-]parser`) | `install/defs/profile.conf`, which the installer re-checks against the compiled signature |
 

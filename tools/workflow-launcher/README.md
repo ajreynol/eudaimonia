@@ -1,6 +1,9 @@
 # Workflow Launcher
 
-**Eunoia listing:** unadvertised
+**Footing:** `unadvertised-child` — the parent's front page does not name it,
+and is not to, nor is its documentation index. What this examines is how the
+ecosystem's own work is run, so an entry on a page a user of the framework reads
+would lend the framework's credibility to a reading of the framework.
 
 A **child project** about the first hour of a new tool's life: what somebody has
 to decide before a repository exists, and whether handing those decisions to an

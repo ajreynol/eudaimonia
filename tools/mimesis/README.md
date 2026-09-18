@@ -29,8 +29,9 @@ the rule in Logos is part of that job.
 | [`docs/case-study.md`](docs/case-study.md) | case study | **BV abstraction.** One CPC rule from a paper's lemma schemes into a Eunoia signature, into Logos as 11,168 lines of Lean — where stating the obligation exposed it as unsound — then fixed, proved, and simplified, with the proof shrinking twenty lines for every line the signature lost |
 | [`docs/defining-a-calculus.md`](docs/defining-a-calculus.md) | tutorial | **Defining a calculus: propositional resolution.** Write a signature from scratch, with worked proof tests |
 | [`docs/extending-cpc-operators.md`](docs/extending-cpc-operators.md) | tutorial | **Extending CPC with a new theory operator.** One operator over existing sorts, followed end to end: `int.pow2`'s declaration, its evaluator, cvc5's printed name, and the Lean lemma that justifies what it computes |
-| [`docs/discussion.md`](docs/discussion.md) | discussion | **cvc5's CPC output documentation.** Four things a contributor changing the signature has to find elsewhere, written as a draft for a person to take upstream; nothing in it was sent to cvc5 |
 | [`docs/extending-cpc-theories.md`](docs/extending-cpc-theories.md) | tutorial | **Extending CPC theories.** A sort, its values and operators, taken from cvc5's expert finite fields: the main-or-expert decision, cvc5's proof output, the safe-mode gate, and what a main theory owes Logos |
+| [`docs/tutorials.md`](docs/tutorials.md) | tutorial | **The router.** One row per job — add a rule, define a calculus, add an operator, add a theory — and which tutorial each starts in. It is the index of that strand, not a tutorial itself |
+| [`docs/upstream-draft.md`](docs/upstream-draft.md) | draft | **cvc5's CPC output documentation.** Four things a contributor changing the signature has to find elsewhere, written as a draft for a person to take upstream; nothing in it was sent to cvc5 |
 
 ## What each strand owes
 
@@ -42,9 +43,12 @@ and leaves through the parent in a person's hands, never through an entry here.
 **A tutorial ships what works.** Every claim in one is something that was run,
 and anything that was not run says so — in the tutorial and in the file itself.
 
-**A discussion is a draft, not a dispatch.** Where writing an entry here turned
+**A draft is a draft, not a dispatch.** Where writing an entry here turned
 up something another project might want to hear, it is written down for a person
-to send or to drop; sending it is not this project's to do.
+to send or to drop; sending it is not this project's to do. It is not
+correspondence and this project has no channel: a child project is addressed
+through the repository that carries it, and the only `docs/discussion.md` in
+this tree is Eudaimonia's.
 
 **Both are additive.** The Eunoia [manual][manual] is the authority on the
 language, the framework's [front page](../../README.md) on what a signature must
@@ -58,6 +62,19 @@ What the entries accumulate into: each difficulty recorded with whose it is to
 fix — **the compiler's**, **the framework's**, **the documentation's**, or
 **nobody's**, a judgement about the calculus that no tool can make. Counts by
 category across entries are the point; one entry is a story.
+
+**It is a convention rather than a file.** Every entry ends with its own rows,
+under *What it cost, for the ledger* or, in the case study, *What it teaches
+about authoring*; there is nothing to keep in step and nothing that can go stale
+against the entries. Entries spell **nobody's** as *irreducible* where that reads
+better, and it is the same category: not that the difficulty is unimportant, but
+that no tool or page could remove it.
+
+**A row is a difficulty, not a defect.** Anything still wrong in a live tree is a
+finding and leaves through the parent in a person's hands. Where a row says *the
+documentation's*, what it names is a place a reader has to reconstruct something
+— and where that is somebody else's page, the draft is
+[upstream-draft.md](docs/upstream-draft.md) and sending it is a person's.
 
 Nothing in a ledger entry is a soundness claim. Passing proof tests does not
 make a calculus sound — it shows that a signature accepts and rejects the proofs

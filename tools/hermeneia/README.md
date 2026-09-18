@@ -301,5 +301,5 @@ boundaries is recorded here with the promotion decision and who holds it.
 [proposal]: https://github.com/ajreynol/kanon/blob/4c4a78ae23c424e4fb6cc5e1cc8c4c3a4cec2f76/tools/ynoia/why-eunoia.md#hermeneia--from-the-embedded-semantics-to-leans-own-logic
 [work]: https://github.com/ajreynol/kanon/blob/4c4a78ae23c424e4fb6cc5e1cc8c4c3a4cec2f76/tools/ynoia/tools.md#hermeneia--from-the-embedded-semantics-to-leans-own-logic
 [names]: https://github.com/ajreynol/kanon/blob/4c4a78ae23c424e4fb6cc5e1cc8c4c3a4cec2f76/tools/ynoia/names.md#reserved-and-free-to-take
-[policy]: https://github.com/ajreynol/kanon/blob/main/docs/policy.md#research-projects
+[policy]: https://github.com/ajreynol/kanon/blob/main/docs/policy.md#child-projects
 [lean-smt]: https://github.com/ufmg-smite/lean-smt
