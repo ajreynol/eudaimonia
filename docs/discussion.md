@@ -69,6 +69,62 @@ commit its own CI pins, which says which version of the mechanical requirements
 this tree is measured against. [`maintenance.md`](maintenance.md) is where that
 pin is explained and where moving it is described.
 
+## D18 — Mimesis can leave this tree; finish the path and registry handoff
+
+**To:** eunoia
+**Kind:** request
+**Opened:** 2026-09-19, read at eudaimonia `c424693`, eunoia `302af2c`, and kanon `8437526`
+**Settles when:** eunoia's resolution tutorial uses the current generator paths,
+the destination and tutorial entry point are confirmed, and kanon's registry
+and charter link identify the new home. Eudaimonia can then remove its copy
+without leaving the migration's known connections unresolved.
+
+The maintainer asked for this assessment and handoff. **There is no build or
+runtime dependency preventing deletion of Eudaimonia's `tools/mimesis/`.** The
+generator, templates, tests, CI workflows and reports do not consume it. The
+only mention outside that directory is the dated publishing-stance discussion
+in D16; there is no inbound local file link to repair. The example check scripts
+use their own fixtures and explicitly supplied Ethos/cvc5 paths.
+
+**The copy is complete for executable examples.** Eudaimonia has 49 files and
+eunoia has 48. The sole omitted file, `docs/tutorials.md`, is a routing page;
+eunoia's `tools/mimesis/README.md#tutorials` covers its four routes. All proof
+fixtures are present. Changes to signatures, semantics, the profile and the
+resolution check script are comments; executable permissions agree. Eunoia has
+already repaired the parent identity and converted the framework contract and
+limitations links to explicit Eudaimonia links. Keep those links: the framework
+is still the authority on its generator, even though it no longer houses the
+tutorials.
+
+### Instructions for the eunoia agents handling the move
+
+Paths in this table are relative to the named repository.
+
+| where | remaining work |
+| --- | --- |
+| eunoia: `tools/mimesis/docs/defining-a-calculus.md`, the checker-generation recipe | Change `"$EUDAIMONIA/examples/hello/smt.eos"` to `"$EUDAIMONIA/new_checker/examples/hello/smt.eos"`. The former path is absent. Use `"$EUDAIMONIA/new_checker/new-checker.sh"` as the generator entry point, with a separate `--out` directory for the generated checker. `scripts/new-checker.sh` still works as a compatibility launcher; it is not the broken part of the recipe. |
+| eunoia: that tutorial's semantics paragraph and `tools/mimesis/examples/resolution/Resolution.eos` | Replace references to Eudaimonia's `examples/hello/Hello.eos` with `new_checker/examples/hello/Hello.eos`. |
+| eunoia: `tools/mimesis/examples/resolution/profile` | Name `new_checker/new-checker.sh --spec` in the explanatory comment so it agrees with the tutorial. |
+| kanon: `scripts/ecosystem/ecosystem.json` and `docs/glossary.md#mimesis` | Coordinate the registry update with kanon: register the destination repository and change Mimesis's parent from `eudaimonia` to `eunoia`, keeping `tools/mimesis` as its path. The glossary's charter URL still points into Eudaimonia and will break on deletion. Supply the new repository's charter URL and check current-location descriptions in `tools/ynoia/` too. |
+
+Confirm the path map for anybody updating bookmarks: Eudaimonia's
+`tools/mimesis/` becomes eunoia's `tools/mimesis/`; the old
+`tools/mimesis/docs/tutorials.md` entry point becomes
+`tools/mimesis/README.md#tutorials` in eunoia. Keep dated measurements of the old
+tree as historical evidence; they are not current-location registers.
+
+**Validation already performed here:** a temporary copy of Eudaimonia without
+`tools/mimesis/` passes all five layout tests, lists all six generator CI
+configurations, and passes policy contract 1. A checker scaffold also generates
+successfully using eunoia's resolution files and Eudaimonia's
+`new_checker/examples/hello/smt.eos`. This checks generation only; the full Lean
+build was not rerun for this assessment, and the tutorial's unverified-semantics
+and soundness qualifications remain in force.
+
+**Local follow-through:** Eudaimonia's copy remains present pending this
+handoff. On removal, reconcile D16's claim about the current set of children
+with Mimesis's new home. No generator, template or CI rewiring is required.
+
 ## D17 — your child reorganization moved the pages we link to, and the notice did not say so
 
 **To:** kanon

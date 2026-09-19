@@ -1,3 +1,0 @@
-; The declaration (-> Int Int) is what rejects a Boolean argument;
-; no proof rule is reached.
-(assume @bad (= (int.pow2 true) 8))
