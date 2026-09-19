@@ -78,7 +78,7 @@ USAGE
 #
 # One line per stage:  id | prompt | what it does | writes
 #
-# The counterpart of the template list in scripts/new-checker.sh, and shorter
+# The counterpart of the template list in new_checker/new-checker.sh, and shorter
 # for a reason worth noticing: that one has a line per generated file because it
 # knows every file it will write. This one cannot know, so a stage is named by
 # what it is asked for rather than by what it produces.
@@ -197,7 +197,7 @@ missing_required() {
 # ---------------------------------------------------------------------------
 # Rendering.
 #
-# The same idea as `render` in scripts/new-checker.sh -- substitute a handful of
+# The same idea as `render` in new_checker/new-checker.sh -- substitute a handful of
 # names into a plain-text template -- with the substitution done by index rather
 # than by regex, because a target is a path a person typed and a path may hold
 # anything. @ANSWERS@ is spliced from a file for the reason that script gives

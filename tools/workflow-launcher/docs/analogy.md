@@ -15,17 +15,17 @@ stale, the project has stopped doing its job.
 | | Eudaimonia | here |
 | --- | --- | --- |
 | **the specification you bring** | a signature (`.eo`), its semantics (`.eos`), and the SMT-LIB semantics they are read against | an answered [interview](../interview.md) |
-| **the settings** | [`config.sh`](../../../config.sh) — names, the calculus profile, the scaffolding switches | [`launcher.conf`](../launcher.conf) — the agent command, the target, the refusals |
+| **the settings** | [`new_checker/config.sh`](../../../new_checker/config.sh) — names, the calculus profile, the scaffolding switches | [`launcher.conf`](../launcher.conf) — the agent command, the target, the refusals |
 | **what varies by kind** | the **calculus profile**: facts about the calculus deciding what a checker needs, must prove and can inherit — a `--flag` each, recorded in the generated project | [`supplements/`](../supplements): the questions one *kind* of tool owes an answer to — `--with` each, merged into the answer file so it stays the whole record |
-| **the generator** | [`scripts/new-checker.sh`](../../../scripts/new-checker.sh) | [`bin/launch`](../bin/launch) |
-| **what it renders** | [`templates/`](../../../templates) — one file per generated file, `.in` suffixed | [`prompts/`](../prompts) — one file per stage |
+| **the generator** | [`new_checker/new-checker.sh`](../../../new_checker/new-checker.sh) | [`bin/launch`](../bin/launch) |
+| **what it renders** | [`new_checker/templates/`](../../../new_checker/templates) — one file per generated file, `.in` suffixed | [`prompts/`](../prompts) — one file per stage |
 | **the substitution** | `@CHECKER@`, `@CALCULUS@`, `@FORMAT@`, `@EXE@`, `@CALCLOWER@`, `@MINI@`, `@TOOLCHAIN@` | `@NAME@`, `@TARGET@`, `@SOURCE@`, `@ANSWERS@` |
 | **the multi-line value** | substituted after rendering, because a line-oriented replacement cannot carry one | the same, and for the same reason: `@ANSWERS@` is spliced from a file |
-| **the worked example** | [`examples/hello`](../../../examples/hello), the smallest specification that works | [`examples/answered.md`](../examples/answered.md), the smallest interview that renders |
+| **the worked example** | [`new_checker/examples/hello`](../../../new_checker/examples/hello), the smallest specification that works | [`examples/answered.md`](../examples/answered.md), the smallest interview that renders |
 | **the install** | `install/get-eo-compiler.sh` fetches and builds a compiler pinned to a commit; `install/install-<calc>.sh` runs it over the signature | `bin/launch run` hands the assembled prompt to an agent, in a directory a person made |
 | **the build** | `scripts/build.sh` | whatever the new repository turns out to build with — not ours, and named in the interview rather than decided here |
 | **the check** | `scripts/run-ci.sh`: build, modules, regress, ethos, regeneration | `bin/launch review`: a second agent reads the result against the interview, and a person reads both |
-| **where output goes** | `checkers/`, not kept in git | the target directory, which is not in this tree at all |
+| **where output goes** | `new_checker/checkers/`, not kept in git | the target directory, which is not in this tree at all |
 | **in CI** | six configurations generated, each running its own CI, about 105 seconds on every push | nothing |
 
 The Eudaimonia column is read off that project's own front page and the

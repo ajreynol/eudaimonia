@@ -4,6 +4,9 @@ The **Eudaimonia build framework**: a framework for building verified proof
 checkers for SMT, in the shape of
 [Logos](https://github.com/cvc5/logos).
 
+**Start with [new_checker/](new_checker/README.md)** to generate a checker.
+Its configuration, templates, examples and implementation live together there.
+
 **[Browse the public reports](https://ajreynol.github.io/eudaimonia/)** —
 Euthyna's interactive graphics of Logos rule and proof size, with dated links
 and downloadable data. [Explore the latest rule scatter](https://ajreynol.github.io/eudaimonia/euthyna/)
@@ -41,8 +44,8 @@ the layout a run generates is `<checker>/<calculus>/` for that reason.
 
 Logos is the reference this is modeled on and nothing more: it is not what a
 run generates, and no part of it is vendored here. The default names in
-`config.sh` are placeholders — `MyChecker` and `MyCalculus` — chosen so that a
-generated project is never mistaken for an existing checker.
+`new_checker/config.sh` are placeholders — `MyChecker` and `MyCalculus` — chosen
+so that a generated project is never mistaken for an existing checker.
 
 ## What a calculus must provide
 
@@ -77,7 +80,7 @@ This second one is *not* a core requirement. With a plain binary `and` the input
 list, the refutation test and the SMT translation are byte-identical; what
 changes is that the parser stops accepting n-ary `(and a b c)`, which is surface
 syntax. A calculus with no `:list`-premise rules needs no nil, and
-`examples/hello` is one.
+`new_checker/examples/hello` is one.
 
 `install/install-<calc>.sh` checks all of this against the compiler's output
 before installing anything — the name an operator compiles to need not be its
@@ -89,7 +92,7 @@ compiled core gathers premises with `and` and no nil exists for it.
 
 Distinct from the contract: the contract is what a signature *must* satisfy,
 while these are facts about the calculus that describe what a checker needs,
-must prove, and can inherit. Each is a flag of `scripts/new-checker.sh`,
+must prove, and can inherit. Each is a flag of `new_checker/new-checker.sh`,
 recorded in the generated `install/defs/profile.conf`, and re-checked at install
 time where the compiled output can settle it.
 
@@ -169,40 +172,41 @@ an md5 helper that takes `md5sum`, `md5` or `openssl` depending on which exists.
 
 ## Usage
 
-Edit `config.sh`, then generate:
+Edit `new_checker/config.sh`, then generate:
 
 ```bash
-scripts/new-checker.sh
+new_checker/new-checker.sh
 ```
 
 Or give the settings on the command line, which override that file:
 
 ```bash
-scripts/new-checker.sh --checker Demo --calculus Lra \
+new_checker/new-checker.sh --checker Demo --calculus Lra \
   --signature ~/sigs/Lra.eo --semantics ~/sigs/Lra.eos
 ```
 
 A specification is three files, and `--spec` names them at once by convention
 (`<Calculus>.eo`, `<Calculus>.eos`, `smt.eos`). A signature may be a tree of
 `(include ...)`s laid out however its author chose; the whole closure is copied
-in, structure intact. `examples/cpc` is a worked specification — a snapshot of
-what Logos compiles — so the generator can be pointed at something real:
+in, structure intact. `new_checker/examples/cpc` is a worked specification — a
+snapshot of what Logos compiles — so the generator can be pointed at something
+real:
 
 ```bash
-scripts/new-checker.sh --checker Demo --calculus Cpc --spec examples/cpc
+new_checker/new-checker.sh --checker Demo --calculus Cpc --spec new_checker/examples/cpc
 ```
 
-`scripts/new-checker.sh --help` lists the rest. Then build what it wrote:
+`new_checker/new-checker.sh --help` lists the rest. Then build what it wrote:
 
 ```bash
-cd checkers/Demo && lake build
+cd new_checker/checkers/Demo && lake build
 ```
 
 ### Starting a new calculus
 
 ```bash
-scripts/new-checker.sh --checker Demo --calculus Logic --dummy-rule
-cd checkers/Demo
+new_checker/new-checker.sh --checker Demo --calculus Logic --dummy-rule
+cd new_checker/checkers/Demo
 install/get-eo-compiler.sh
 install/install-logic.sh
 scripts/build.sh
@@ -215,14 +219,15 @@ signature with one rule (`contra` — from a formula and its negation, derive
 result builds in about 12 seconds and passes its own tests, so a new calculus
 begins by *changing something that works* rather than filling in blanks.
 
-`examples/hello` is the same thing as a specification directory, if you would
-rather start from `--spec`.
+`new_checker/examples/hello` is the same thing as a specification directory, if
+you would rather start from `--spec`.
 
 ### Where a run writes, and what else you can ask for
 
-`--out` decides where a checker is written; the default is `checkers/` here,
-which is not kept in git. A checker you mean to develop belongs in a repository
-of its own. `--hygiene-ci` decides whether CI rejects `sorry` from day one.
+`--out` decides where a checker is written; the default is
+`new_checker/checkers/` here, which is not kept in git. A checker you mean to
+develop belongs in a repository of its own. `--hygiene-ci` decides whether CI
+rejects `sorry` from day one.
 
 [Anatomy of a generated checker](docs/generated-checker.md) has the full option
 table, what each one produces, and what regenerating over an existing checker
@@ -236,7 +241,7 @@ checker, not here** — a checker owns the compiler that regenerates it, so it
 stays self-contained:
 
 ```bash
-cd checkers/<Checker>
+cd new_checker/checkers/<Checker>
 install/get-eo-compiler.sh      # once
 install/install-<calc>.sh       # signature -> Lean
 ```
@@ -293,10 +298,10 @@ scripts/bump-eoc.sh               # advance to the head of main
 scripts/bump-eoc.sh --commit <sha>
 ```
 
-It rewrites `ETHOS_VERSION`, refreshes `examples/*/smt.eos` and
-`examples/cpc/Cpc.eos` from that commit, and updates the digest the calculus
-profile reports `logos-smt` from. Then run `scripts/run-ci.sh`: the semantics
-moving means what the compiler generates may have moved, and anything shipped
+It rewrites `ETHOS_VERSION`, refreshes `new_checker/examples/*/smt.eos` and
+`new_checker/examples/cpc/Cpc.eos` from that commit, and updates the digest the
+calculus profile reports `logos-smt` from. Then run `scripts/run-ci.sh`: the
+semantics moving means what the compiler generates may have moved, and anything shipped
 *proven* — `ModelWf.lean`, `Proofs/{TypeDefaults,TypePredicates,Canonicity}.lean`
 — is proven against the model that semantics generates.
 
@@ -413,8 +418,8 @@ End to end, against the CPC example — 9 signature-wide modules and 591 rule
 stubs:
 
 ```bash
-scripts/new-checker.sh --checker Demo --calculus Cpc --spec examples/cpc
-cd checkers/Demo
+new_checker/new-checker.sh --checker Demo --calculus Cpc --spec new_checker/examples/cpc
+cd new_checker/checkers/Demo
 install/get-eo-compiler.sh
 install/install-cpc.sh
 scripts/build.sh
@@ -428,7 +433,7 @@ reinstalling from the signature reproduces the package byte-for-byte.
 CPC is also where `--mini` earns its keep. 591 rules is minutes to build, which
 makes developing a proof about the checker painful, so adding `--mini` to that
 first command generates `CpcMini` alongside `Cpc` — the same signature cut to
-the five rules in `examples/cpc/mini-rules`, no parser, filled in by
+the five rules in `new_checker/examples/cpc/mini-rules`, no parser, filled in by
 `install/install-cpc.sh --mini`. It is an answer to CPC's size and nothing more:
 no other example here asks for it, and a calculus that builds in seconds has no
 use for one.
@@ -447,20 +452,22 @@ what a run *produces*, which is
 [docs/generated-checker.md](docs/generated-checker.md).
 
 ```text
-config.sh                  the settings a run reads
-scripts/new-checker.sh     the generator
-scripts/run-ci.sh          generate every configuration and run its own CI
-scripts/bump-eoc.sh        move the compiler pin and its semantics snapshot
-                           together, because they do not move apart
-templates/                 what it renders, one file per generated file
-  pkg/                       the calculus package
-  eunoia/                    the proof-format library
-  starter/                   the --dummy-rule signature and its proofs
-  install/ scripts/          the checker's installer and dev scripts
-  docs/ ci/ test/            its documentation, CI workflow and test layout
-examples/cpc/              a worked specification: CPC, as Logos compiles it
-examples/hello/            the smallest one that works: one rule, five proofs
-examples/scoped/           adds assumption discharge and `:list` premises
+new_checker/               self-contained checker generator
+  new-checker.sh              main entry point
+  config.sh                   defaults for a run
+  run-ci.sh                   generate every configuration and run its own CI
+  bump-eoc.sh                 update the compiler pin and semantics together
+  templates/                 one template per generated file
+    pkg/ eunoia/               the calculus and proof-format libraries
+    starter/                   the --dummy-rule specification and proofs
+    install/ scripts/          installer and development commands
+    docs/ ci/ test/            generated documentation, CI and tests
+  examples/cpc/               CPC, as Logos compiles it
+  examples/hello/             one rule, five proofs
+  examples/scoped/            assumption discharge and list premises
+  checkers/                   generated output, ignored by git
+scripts/                   repository launchers for new_checker's commands
+tests/                     generator layout and launcher regression checks
 docs/                      every document, one row each in docs/README.md
   maintenance.md             where a person maintaining this repository starts
   generated-checker.md       the anatomy of what a run produces
@@ -474,7 +481,6 @@ docs/                      every document, one row each in docs/README.md
 tools/                     child projects: research whose subject is outside
                            this tool, importing nothing from it and imported
                            by nothing. Deleting one changes nothing here
-checkers/                  where runs write, ignored by git
 TODO.md                    what Logos has that a generated checker still needs
 ```
 

@@ -63,7 +63,7 @@ has a `signature/` directory and no way to turn it into Lean.
 - [x] **Run the compiler and install what it publishes.**
       `install/install-<calc>.sh` in a generated checker drives
       `driver.py lean` with `--semantics`, `--smt-semantics` and `--calc-name`,
-      then installs the published tree. Verified against `examples/cpc`: 8
+      then installs the published tree. Verified against `new_checker/examples/cpc`: 8
       signature-wide modules and 591 rule files, byte-identical to what Logos
       carries modulo the generated header, and the result builds.
 - [x] **Preserve per-rule proofs across a regeneration.** Signature-wide
@@ -79,7 +79,7 @@ has a `signature/` directory and no way to turn it into Lean.
       (build, proof hygiene, CI groups), `docs/` about its own calculus,
       `test/regress/`, a CI workflow and a `.gitignore` — the Logos shape. It
       does not refer back to this repository.
-- [x] **`--force` no longer destroys proofs.** `scripts/new-checker.sh --force`
+- [x] **`--force` no longer destroys proofs.** `new_checker/new-checker.sh --force`
       refuses when the target holds rule proofs or a git repository, names what
       it found, and points at the checker's own installer — which is the right
       way to refresh a calculus, since it keeps every proof. `--clobber` is the
@@ -391,7 +391,7 @@ packages. From inside, the maintainer can say what the diff *means*:
       lands, those four stop being stubs a user writes and become files a
       generated checker inherits.
 - [ ] **Take the report\'s advice to start from `CpcMini`.** The worked example
-      here is `examples/cpc`, which generates 591 rule stubs and a full
+      here is `new_checker/examples/cpc`, which generates 591 rule stubs and a full
       semantics layer. A minimal specification would exercise the same pipeline
       in seconds. This is the same item as the mini calculus in §6, now with an
       argument for it from the other side.
@@ -443,7 +443,7 @@ deliberately rather than drifted into.
 
 High-level facts about a calculus that decide what a checker needs, what it must
 prove, and what it can inherit. Implemented as one uniform category: a flag on
-`scripts/new-checker.sh`, a line in the generated `install/defs/profile.conf`,
+`new_checker/new-checker.sh`, a line in the generated `install/defs/profile.conf`,
 and a re-check at install time where compiled output can settle it.
 
 - [x] **Seven questions, five verified and two declared.** scopes,
@@ -462,7 +462,7 @@ and a re-check at install time where compiled output can settle it.
       `value-ordering` are declared for the same underlying reason: the
       machinery is template-fixed in eoc.
 - [ ] **Datatype machinery is unconditional — now measured, not argued.**
-      `examples/hello` declares three constants and one rule, no datatypes and
+      `new_checker/examples/hello` declares three constants and one rule, no datatypes and
       no literals beyond `Bool`, and still gets `DatatypeType`, `DtCons`,
       `DtSel`, `DatatypeDecl`, `Numeral`, `Rational` and `Binary`: **370 of its
       2,395 generated lines, 15%, are machinery it cannot use.** The mechanism
@@ -551,7 +551,7 @@ wrong.
 - [x] **A starter signature.** `--dummy-rule` writes a working one-rule calculus
       instead of a commented stub — signature, semantics, and five regression
       proofs covering every verdict. Builds in ~12s and passes its own tests.
-      `examples/hello` is the same as a specification directory.
+      `new_checker/examples/hello` is the same as a specification directory.
 - [x] **A second calculus, which paid for itself immediately.** Compiling
       anything other than CPC exposed three bugs that CPC could not:
       the installer only worked for a checker named `Logos`; the indexed-op
@@ -724,7 +724,7 @@ than making it more complete.
       the proof, and verified the assumptions match, would close a gap the
       parser work does not.
 
-- [ ] **A second worked specification that is not CPC.** `examples/hello` is
+- [ ] **A second worked specification that is not CPC.** `new_checker/examples/hello` is
       minimal by design; CPC is enormous. Something in between — one real theory,
       a dozen rules — would exercise the parts of the template that neither
       currently reaches, and would be the honest test of whether this generalises
@@ -803,7 +803,7 @@ generation to proofs. What that needs, and does not yet have.
       against a real multi-file signature: the includes resolve from inside the
       generated project.
 
-      Note that `examples/cpc/Cpc.eo` is *flattened*, and that is specific to
+      Note that `new_checker/examples/cpc/Cpc.eo` is *flattened*, and that is specific to
       Logos rather than the style this framework expects.
 
 - [ ] **Surface compiler failures legibly.** When eoc fails, its C++ fatal
@@ -888,5 +888,5 @@ that "known limitations" there stays about substance.
 ## What is not on this list
 
 Choosing the calculus. That is the user's, and it is the whole reason this
-repository exists: `examples/cpc` is one specification, and the point is that
+repository exists: `new_checker/examples/cpc` is one specification, and the point is that
 it is replaceable.

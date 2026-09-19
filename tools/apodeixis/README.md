@@ -209,7 +209,7 @@ improves after the fact is worth flagging as such.
 **A collision, since resolved.** `Apodeixis` was this repository's placeholder
 checker name in its usage examples — on the front page, in
 [`docs/generated-checker.md`](../../docs/generated-checker.md) and in
-`scripts/new-checker.sh` — which predated this directory and pointed at nothing.
+`new_checker/new-checker.sh` — which predated this directory and pointed at nothing.
 It was a reader trap all the same: the front page appearing to name a child
 project is exactly the arrangement a child project is supposed to avoid, and the
 name of the trap is that the parent's own credibility gets lent to speculative
@@ -336,7 +336,7 @@ the policy says is served better by an actual branch.
 Three endings, and a person picks: it **graduates** into its own repository —
 which would mean it had stopped being a stress test and become an Alethe project,
 and would want a charter this one explicitly refuses; it is **folded** into the
-parent — the fragments become another entry beside `examples/`, and the ledger
+parent — the fragments become another entry beside `new_checker/examples/`, and the ledger
 becomes rows in `TODO.md` and `docs/limitations.md`, which is the likeliest good
 outcome; or it is **retired in place**, with a line here saying what the load
 showed and why it stopped.

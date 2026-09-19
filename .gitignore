@@ -1,17 +1,11 @@
-# Generated checkers. `scripts/new-checker.sh` writes them here, and everything
-# it writes is reproducible from config.sh and templates/, so none of it is
-# kept in git. A checker being developed for its own sake belongs in its own
-# repository: generate it there with --out.
-/checkers/
-
-# The Ethos tree and ethos-eoc, downloaded and built by
-# scripts/get-eo-compiler.sh. Reproducible from the pin in that script, so what
-# is kept in git is the pin and not what it fetches.
+# Shared dependency checkouts are fetched, never committed. Generated checkers
+# keep their compiler dependencies inside their own ignored install/deps/.
 /deps/
 
 # Editor scratch files.
 .*.kate-swp
 *~
+__pycache__/
 
 # Lake build artifacts.
 .lake/

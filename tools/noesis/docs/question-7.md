@@ -115,7 +115,7 @@ proof yours. These are not core files and they are not free either. So:
 ## Why this cannot be finished here
 
 **One calculus and its own cut-down variant is a family, not a sample.** CPC,
-`CpcMini` and `examples/hello` all agree about the line, and they agree partly
+`CpcMini` and `new_checker/examples/hello` all agree about the line, and they agree partly
 because each was written by somebody who knew where the line was. This
 repository has already recorded what happens when that stops being true: the
 first calculus that was not CPC exposed three bugs CPC could not, all of them

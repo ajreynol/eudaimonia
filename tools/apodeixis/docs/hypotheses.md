@@ -65,7 +65,7 @@ the conclusion became.
 Alethe's subproofs open with an anchor carrying a context — a substitution,
 used to reason under binders — and this is not the same mechanism as discharging
 an assumption into an implication, which is what the framework's `scopes`
-profile answer describes and what `examples/scoped` exercises through step-pop.
+profile answer describes and what `new_checker/examples/scoped` exercises through step-pop.
 
 This is the prediction with the most riding on it. If a context has to be
 encoded *through* assumption discharge, the encoding is where a stress test

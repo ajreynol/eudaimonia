@@ -10,7 +10,7 @@ name: SMT semantics drift
 #
 # The main CI deliberately builds the compiler `--pinned`, so it cannot see
 # this. The `.eos` format is under active development, and the snapshot in
-# examples/*/smt.eos is frozen -- keeping it current is a manual decision, with
+# new_checker/examples/*/smt.eos is frozen -- keeping it current is a manual decision, with
 # consequences for everything proven against the model it generates. This job
 # exists so that decision is prompted by a report rather than by a surprise.
 #
@@ -44,8 +44,8 @@ jobs:
       # profile if it parses but the semantics has moved.
       - name: Install against the compiler's development tip
         run: |
-          scripts/new-checker.sh --checker Drift --calculus Hello \
-            --spec examples/hello --out checkers/.drift
-          cd checkers/.drift/Drift
+          new_checker/new-checker.sh --checker Drift --calculus Hello \
+            --spec new_checker/examples/hello --out new_checker/checkers/.drift
+          cd new_checker/checkers/.drift/Drift
           ./install/get-eo-compiler.sh --tip --branch ethosEoc3
           ./install/install-hello.sh

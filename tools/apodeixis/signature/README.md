@@ -25,9 +25,9 @@ rather than declared — and a fragment that needs a modified one is a substanti
 finding rather than a step, because the framework says replacing it *"is the
 hardest part of the specification rather than a flag"*.
 
-The parent's [`examples/hello`](../../../examples/hello) and
-[`examples/scoped`](../../../examples/scoped) are the two worked minimal
-specifications to read first; `examples/cpc` is the full one. Reading them is
+The parent's [`new_checker/examples/hello`](../../../new_checker/examples/hello) and
+[`new_checker/examples/scoped`](../../../new_checker/examples/scoped) are the two worked minimal
+specifications to read first; `new_checker/examples/cpc` is the full one. Reading them is
 also the calibration this project needs, because both were written by somebody
 who knew where the framework's line was, and the point here is to write one that
 was not.

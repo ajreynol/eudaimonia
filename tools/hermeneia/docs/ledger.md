@@ -40,7 +40,7 @@ Eudaimonia root; neighboring files are read-only evidence, not package imports.
 
 Relevant declarations at those revisions:
 
-- Eudaimonia `examples/hello/smt.eos`: `define-sort Int`, the value constructor
+- Eudaimonia `new_checker/examples/hello/smt.eos`: `define-sort Int`, the value constructor
   `Numeral`, `define-literal Numeral`, Boolean and arithmetic symbol entries.
 - Logos `Cpc/LogosTerm.lean`: `Term.Numeral : native_Int → Term`.
 - Logos `Cpc/Spec.lean`: `__eo_to_smt` literal and Boolean cases;

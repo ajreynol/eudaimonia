@@ -5,7 +5,7 @@ compiles: the Cooperating Proof Calculus, the calculus cvc5 emits proofs in.
 
 It is here as a **worked example of the three files a checker is specified by**,
 so that the generator has something real to be pointed at. Nothing in the
-framework depends on it, and it is not the default: `config.sh` generates a
+framework depends on it, and it is not the default: `new_checker/config.sh` generates a
 stubbed project under placeholder names.
 
 ## The three files
@@ -14,7 +14,7 @@ A checker specification is a signature and the two semantics it is read
 against. The generator picks all three up from one directory:
 
 ```bash
-scripts/new-checker.sh --checker Logos --calculus Cpc --spec examples/cpc
+new_checker/new-checker.sh --checker Logos --calculus Cpc --spec new_checker/examples/cpc
 ```
 
 | file       | what it is                                                       |

@@ -60,7 +60,7 @@ the measurement as a trajectory.
 Four words are load-bearing.
 
 **single prompt** — one instruction, not one command.
-`scripts/new-checker.sh --checker Demo --calculus Cpc --spec examples/cpc` is
+`new_checker/new-checker.sh --checker Demo --calculus Cpc --spec new_checker/examples/cpc` is
 already a single command, and what it does is much smaller: it writes a project
 that compiles, from a specification somebody else wrote. Under autarkeia what
 the prompt names is the calculus and what it is for, and the signature, the
@@ -96,7 +96,7 @@ specification rather than a flag.
 **The floor is a single command, and it is checked on every push.** A run
 generates a checker that builds — six option configurations generated, built and
 run against their own CI suite, plus a generate-install-build-check smoke test
-on macOS. `examples/cpc` is a real specification of a 591-rule calculus, and the
+on macOS. `new_checker/examples/cpc` is a real specification of a 591-rule calculus, and the
 framework generates against it.
 
 **The ceiling of that floor is that nothing generated is proven**, and the price
@@ -158,7 +158,7 @@ A test rather than a mood, in two steps — and the second is not the first scal
 up.
 
 **The checkable one, and it is small.** One prompt, no human intervention
-between it and a built checker for `examples/hello` — one rule, `contra` — with
+between it and a built checker for `new_checker/examples/hello` — one rule, `contra` — with
 no `sorry` anywhere in it and its trusted base stated in its own README. Nothing
 about that is out of reach in principle, nobody has done it, and doing it once
 would settle more than any argument on this page.

@@ -6,6 +6,8 @@ assume it has been read.
 
 | document | what it is for |
 | --- | --- |
+| [`new_checker/`](../new_checker/README.md) | The generator's entry points, inputs and output directory. |
+| [CPC specification](../new_checker/examples/cpc/README.md) | The worked specification's files and their provenance. |
 | [Public reports](https://ajreynol.github.io/eudaimonia/) · [publishing guide](../tools/euthyna/docs/publishing.md) | Euthyna's interactive measurements of Logos, with shareable snapshot links and downloads; how to build and publish them. |
 | [`maintenance.md`](maintenance.md) | How a person maintains this repository, possibly by directing an agent: what it is responsible for, the one command that says whether it is healthy, and the four decisions an agent may prepare and may not take. |
 | [`generated-checker.md`](generated-checker.md) | The anatomy of what a run produces: the full option table, what each option writes, and what regenerating over an existing checker does and refuses to do. |

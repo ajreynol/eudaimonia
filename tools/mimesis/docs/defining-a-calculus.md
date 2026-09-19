@@ -251,7 +251,7 @@ the output — `check.sh` does.
 compiled here. `ethos` reads the signature and never the semantics; compiling it
 needs `ethos-eoc`, and the build available in this environment is newer than the
 parent's pinned compiler and rejects the parent's own
-`examples/hello/Hello.eos` in the same way it rejects this file. The file is
+`new_checker/examples/hello/Hello.eos` in the same way it rejects this file. The file is
 therefore written to match that shipped example exactly in form, with `or`
 added, and is labelled unverified in its own header.
 
@@ -265,8 +265,8 @@ mkdir /tmp/res-spec
 cp tools/mimesis/examples/resolution/Resolution.eo  /tmp/res-spec/
 cp tools/mimesis/examples/resolution/Resolution.eos /tmp/res-spec/
 cp tools/mimesis/examples/resolution/profile        /tmp/res-spec/
-cp examples/hello/smt.eos                           /tmp/res-spec/   # unchanged
-scripts/new-checker.sh --checker Demo --calculus Resolution --spec /tmp/res-spec
+cp new_checker/examples/hello/smt.eos                           /tmp/res-spec/   # unchanged
+new_checker/new-checker.sh --checker Demo --calculus Resolution --spec /tmp/res-spec
 ```
 
 Those commands were **not** run here, and the spec directory is assembled

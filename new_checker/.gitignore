@@ -1,0 +1,3 @@
+# Generated projects are reproducible from config.sh and templates/.
+# Use --out for a checker developed in its own repository.
+/checkers/

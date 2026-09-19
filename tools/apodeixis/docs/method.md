@@ -49,7 +49,7 @@ a result, provided where it stopped is written down.
 | --- | --- | --- |
 | **render** | a fragment of the target is written as a Eunoia signature and semantics in [`../signature/`](../signature/README.md) | what could not be said at all — the entries that never reach a tool |
 | **contract** | the installer checks the signature contract against the compiler's output before installing anything | the framework refusing in the open, which is its best behaviour |
-| **generate** | `scripts/new-checker.sh` with `--out` into `work/`, and the profile flags the fragment claims | derived-answer disagreements, and what landed in the seam |
+| **generate** | `new_checker/new-checker.sh` with `--out` into `work/`, and the profile flags the fragment claims | derived-answer disagreements, and what landed in the seam |
 | **build** | `lake build` in the generated project, then its own regression suite | mis-shaped obligations, and whether a proof of a refutation checks |
 
 A run is named by the date and the fragment, and its record lives beside its

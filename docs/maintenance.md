@@ -13,8 +13,13 @@ and the generator that renders it. Bring a Eunoia signature and a semantics, get
 a Lake project with a checker, its proofs, its regression suite and its
 documentation.
 
+The implementation, defaults, templates and example specifications are in
+[`new_checker/`](../new_checker/README.md). The three commands in `scripts/`
+launch the corresponding scripts there. Shared documentation stays in `docs/`,
+regression checks in `tests/`, and child projects in `tools/`.
+
 **Not the checkers it writes.** A checker you mean to develop belongs in a
-repository of its own; `checkers/` here is scratch space and git ignores it.
+repository of its own; `new_checker/checkers/` here is scratch space and git ignores it.
 
 **Not the compiler.** `ethos-eoc` is cvc5's, and what this repository wants from
 it is a ranked list in [`eoc-requests.md`](eoc-requests.md) rather than a patch.
@@ -34,6 +39,10 @@ it is a ranked list in [`eoc-requests.md`](eoc-requests.md) rather than a patch.
 ```bash
 scripts/run-ci.sh
 ```
+
+The repository launcher first runs `tests/test_layout.py`, which checks the
+standalone tool and launchers without downloading or building dependencies.
+Run those checks alone with `python3 -m unittest discover -s tests -p 'test_*.py'`.
 
 It generates a checker for six option configurations, installs each calculus,
 and then runs **that project's own CI** — so what is tested is what a user gets

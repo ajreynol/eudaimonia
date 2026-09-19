@@ -1,4 +1,4 @@
-# The project to generate. `scripts/new-checker.sh` reads this file; every
+# The project to generate. `./new-checker.sh` reads this file; every
 # setting here is also a command-line option of that script, which wins over
 # what is set here.
 #
@@ -29,7 +29,7 @@ SIGNATURE=""
 SEMANTICS=""
 SMT_SEMANTICS=""
 
-# Where generated checkers are written. The default is inside this repository
+# Where generated checkers are written. The default is inside this tool directory
 # and is not kept in git, which suits trying the generator out and working on
 # the templates. A checker being developed for its own sake belongs in its own
 # repository: name that directory here, or with --out, and this one is not
@@ -41,7 +41,7 @@ OUT_DIR=""
 #
 # High-level facts about the calculus that decide what a generated checker
 # needs, what it has to prove, and what it can inherit. Each is a yes/no
-# question, each is also a --flag of scripts/new-checker.sh, and each is written
+# question, each is also a --flag of ./new-checker.sh, and each is written
 # into the generated project as install/defs/profile.conf.
 #
 # Answering `no` where the truth is `yes` does not break the build -- the

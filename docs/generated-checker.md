@@ -1,6 +1,6 @@
 # Anatomy of a generated checker
 
-What `scripts/new-checker.sh` produces, how to find your way around it, and
+What `new_checker/new-checker.sh` produces, how to find your way around it, and
 which option decided each part.
 
 This describes the **generated project**, not this repository. For this
@@ -322,7 +322,7 @@ that one theorem closes the gap with no other file changing.
 | `--calculus NAME` | the calculus library: `<Calculus>.lean` and `<Calculus>/` |
 | `--format-name NAME` | the format library: `<Format>.lean`, `<Format>/Sexp.lean`, `<Format>/Parser.lean`. Defaults to `Eunoia` |
 | `--toolchain VERSION` | `lean-toolchain` |
-| `--out DIR` | where the project is written. Defaults to `checkers/` in this repository, which is not kept in git |
+| `--out DIR` | where the project is written. Defaults to `new_checker/checkers/` in this repository, which is not kept in git |
 | `--signature` / `--semantics` / `--smt-semantics` | `install/defs/*` |
 | `--spec DIR` | all three of the above at once, plus `test/` → `test/regress/`, `mini-rules` → `MINI_RULES`, and `profile` → `install/defs/profile.conf` |
 | `--dummy-rule` | with no signature given, a **working** starter instead of commented stubs: a one-rule signature, its semantics, and five regression proofs covering every verdict |
@@ -348,7 +348,7 @@ the generator:
 **`--mini`** generates a second package: the same signature compiled with a
 handful of rules and no parser, refreshed by `install/install-<calc>.sh --mini`.
 Which rules it keeps comes from `--mini-rules`, or from a `mini-rules` file in
-the specification directory — `examples/cpc` is the only one here that has one.
+the specification directory — `new_checker/examples/cpc` is the only one here that has one.
 
 It answers a build-time problem, so it is worth having only for a calculus that
 has one. On the CPC example the reduced package builds in **8 seconds against
@@ -370,16 +370,16 @@ the stubs are discharged.
 
 ## Where a checker lives
 
-`--out` decides. The default is `checkers/` inside the Eudaimonia repository,
+`--out` decides. The default is `new_checker/checkers/` inside the Eudaimonia repository,
 which is **not kept in git**: everything a run writes there is reproducible from
-`config.sh` and `templates/`, so trying the generator out leaves nothing behind.
+`new_checker/config.sh` and `new_checker/templates/`, so trying the generator out leaves nothing behind.
 
 A checker you intend to develop belongs somewhere else. It will accumulate
 hand-written Lean — the per-rule proofs live inside the generated package — and
 that wants a repository of its own:
 
 ```bash
-scripts/new-checker.sh --checker Demo --out ~/demo
+new_checker/new-checker.sh --checker Demo --out ~/demo
 ```
 
 It builds without anything from the generator, so it can equally be generated in

@@ -129,9 +129,9 @@ Three things, and the first two are the point.
 | --- | --- | --- |
 | what you bring | a signature and its semantics | an answered interview |
 | what varies by *kind* | the calculus profile — facts about the calculus that decide what a checker needs | [`supplements/`](supplements) — questions the kind of tool owes an answer to |
-| the settings | [`config.sh`](../../config.sh) | [`launcher.conf`](launcher.conf) |
-| the generator | [`scripts/new-checker.sh`](../../scripts/new-checker.sh) | [`bin/launch`](bin/launch) |
-| what it renders | [`templates/`](../../templates), one file per generated file | [`prompts/`](prompts), one file per stage |
+| the settings | [`new_checker/config.sh`](../../new_checker/config.sh) | [`launcher.conf`](launcher.conf) |
+| the generator | [`new_checker/new-checker.sh`](../../new_checker/new-checker.sh) | [`bin/launch`](bin/launch) |
+| what it renders | [`new_checker/templates/`](../../new_checker/templates), one file per generated file | [`prompts/`](prompts), one file per stage |
 | what does the writing | `sed`, substituting `@CHECKER@` and four others | an agent, over a prompt with `@NAME@` and three others substituted the same way |
 | the install | a pinned compiler, fetched and built | a person running one command and watching |
 | the check | reinstalling reproduces the package byte-for-byte, and CI proves it | a second agent reads the result against the interview, and a person reads both |
