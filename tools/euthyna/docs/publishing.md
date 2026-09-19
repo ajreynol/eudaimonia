@@ -29,13 +29,19 @@ explains how shared code is partitioned and why LOC is not a measure of effort.
 From the repository root:
 
 ```bash
-tools/euthyna/bin/euthyna site
-python3 -m http.server 8000 --directory tools/euthyna/site
+tools/euthyna/scripts/euthyna site
+python3 -m http.server 8000 --directory tools/euthyna/scratch/site
 ```
 
 Open <http://localhost:8000/>. The site also works by opening
-`tools/euthyna/site/index.html` directly. Copy-link buttons always refer to the
+`tools/euthyna/scratch/site/index.html` directly. Copy-link buttons always refer to the
 public snapshot URL, even in a local preview.
+
+The builder lives in `report_site/`; saved measurements live in
+`measurement/data/snapshots/`. Generated HTML belongs in the ignored
+`scratch/site/` and `scratch/plots/` directories. The Reports workflow uploads
+`scratch/site/`; public URLs and dated snapshot IDs are independent of these
+local paths.
 
 The builder uses only Python's standard library and the saved snapshots.
 It never reads the current Logos checkout or contacts a network service.
@@ -46,7 +52,7 @@ The latest report is selected by the measurement's `started` timestamp.
 For another hosting location:
 
 ```bash
-tools/euthyna/bin/euthyna site --out /tmp/euthyna-site --base-url https://example.org/reports
+tools/euthyna/scripts/euthyna site --out /tmp/euthyna-site --base-url https://example.org/reports
 ```
 
 Upload that output directory to the specified URL. Navigation and downloads
@@ -69,8 +75,8 @@ The URLs above become available after the first successful deployment.
 
 To publish a new measurement:
 
-1. Run `tools/euthyna/bin/euthyna measure --logos /path/to/logos`.
-2. Run `tools/euthyna/bin/euthyna site` and inspect the report locally.
+1. Run `tools/euthyna/scripts/euthyna measure --logos /path/to/logos`.
+2. Run `tools/euthyna/scripts/euthyna site` and inspect the report locally.
 3. Commit the new snapshot's data and push it to `main`.
 4. Check the **Reports** workflow's deployment result, then share the dated link.
 

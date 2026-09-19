@@ -2,7 +2,7 @@
 #
 # Euthyna's measurement harness.
 #
-# The vendored scripts under analysis/upstream/ are Logos's own, unedited, and
+# The vendored scripts under measurement/upstream/ are Logos's own, unedited, and
 # each of them locates the tree it measures as the parent of the directory it
 # sits in. So they cannot simply be run from here: they have to be run from a
 # `scripts/` directory one level under a Logos root.
@@ -17,13 +17,13 @@
 
 set -euo pipefail
 
-readonly bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly root="$(cd "${bin_dir}/.." && pwd)"
-readonly upstream="${root}/analysis/upstream"
+readonly tool_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly root="$(cd "${tool_dir}/.." && pwd)"
+readonly upstream="${root}/measurement/upstream"
 
 # Settings, then the environment, then the command line.
 LOGOS_ROOT="${HOME}/logos"
-SNAPSHOT_DIR="data/snapshots"
+SNAPSHOT_DIR="measurement/data/snapshots"
 RUN_BUILD_MEASURES="no"
 # shellcheck source=/dev/null
 [ -f "${root}/euthyna.conf" ] && . "${root}/euthyna.conf"
@@ -39,16 +39,16 @@ usage() {
 usage: euthyna <command> [options]
 
   measure     Run every static measure against a Logos checkout and write a
-              snapshot under data/snapshots/.
+              snapshot under measurement/data/snapshots/.
   measures    List the measure catalogue: what runs, and what it reports.
   show [ID]   Print the headline numbers of a snapshot (default: the newest).
-  plot [ID]   Redraw a snapshot's rule scatter as rules.html.
+  plot [ID]   Redraw a snapshot's scatter in scratch/plots/<ID>/rules.html.
   site        Build the shareable report site from every saved snapshot.
-              Accepts --out PATH and --base-url URL (see site --help).
+              Defaults to scratch/site/; accepts --out PATH and --base-url URL.
   rules SUB   Maintain the coreness order the partition depends on:
               'check' (default) reports drift, 'update' appends new rules and
               removes departed ones, 'seed' writes it from scratch (once).
-  verify      Check the vendored scripts against analysis/upstream/MANIFEST.
+  verify      Check the vendored scripts against measurement/upstream/MANIFEST.
   sync        Re-snapshot the whole of Logos's scripts/ and rewrite the
               manifest. Prints what changed.
 
@@ -75,7 +75,7 @@ measures() {
 rule-status|source|./scripts/classify-rule-status.py Cpc|rule-status.tsv
 core-rule-status|source|./scripts/classify-core-rule-status.sh|core-rule-status.tsv
 rule-loc|source|./scripts/cpc-rule-loc.py --csv|rule-loc.csv
-rule-partition|source|"${EUTHYNA_ROOT}/analysis/rule-partition.py" --root . --csv|rule-partition.csv
+rule-partition|source|"${EUTHYNA_ROOT}/measurement/rule-partition.py" --root . --csv|rule-partition.csv
 loc-summary|source|./scripts/cpc-loc-summary.py --files --deps|loc-summary.txt
 proof-hygiene|source|./scripts/check-proof-hygiene.sh|proof-hygiene.txt
 proof-modularity|source|./scripts/check-proof-modularity.sh|proof-modularity.txt
@@ -189,7 +189,7 @@ cmd_sync() {
   return 0
 }
 
-# The coreness order. Delegated wholesale to analysis/rule-order.py, which is
+# The coreness order. Delegated wholesale to measurement/rule-order.py, which is
 # where the append-only discipline is enforced and explained.
 cmd_rules() {
   local sub="${1:-check}"
@@ -198,11 +198,15 @@ cmd_rules() {
     *) die "unknown 'rules' subcommand: ${sub} (seed|check|update)" ;;
   esac
   shift || true
-  "${root}/analysis/rule-order.py" "${sub}" \
+  "${root}/measurement/rule-order.py" "${sub}" \
     --logos "${LOGOS_ROOT}" \
     --date "$(date -u +%Y-%m-%d)" \
     --commit "$(git -C "${LOGOS_ROOT}" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)" \
     "$@"
+}
+
+plot_output() {
+  printf '%s/scratch/plots/%s/rules.html' "${root}" "$(basename "$1")"
 }
 
 cmd_plot() {
@@ -213,10 +217,12 @@ cmd_plot() {
     snap="${root}/${SNAPSHOT_DIR}/${snap}"
   fi
   [ -f "${snap}/rule-partition.csv" ] || die "no rule-partition.csv in ${snap}"
-  "${root}/analysis/plot-rules.py" \
+  local out="$(plot_output "${snap}")"
+  mkdir -p "$(dirname "${out}")"
+  "${root}/report_site/plot-rules.py" \
     --partition "${snap}/rule-partition.csv" \
     --meta "${snap}/meta.json" \
-    --out "${snap}/rules.html"
+    --out "${out}"
 }
 
 cmd_measure() {
@@ -241,9 +247,9 @@ cmd_measure() {
   # The partition is a function of the coreness order, so a stale order makes
   # it quietly wrong for the rules it omits. Warn, but measure anyway -- a
   # snapshot with a noted gap beats no snapshot.
-  if ! "${root}/analysis/rule-order.py" check --logos "${LOGOS_ROOT}" >/dev/null 2>&1; then
+  if ! "${root}/measurement/rule-order.py" check --logos "${LOGOS_ROOT}" >/dev/null 2>&1; then
     note "  warning: the coreness order is out of date; 'euthyna rules update'"
-    "${root}/analysis/rule-order.py" check --logos "${LOGOS_ROOT}" 2>/dev/null | sed 's/^/  /' >&2 || true
+    "${root}/measurement/rule-order.py" check --logos "${LOGOS_ROOT}" 2>/dev/null | sed 's/^/  /' >&2 || true
   fi
 
   note "staging ${LOGOS_ROOT} -> ${stage}"
@@ -295,18 +301,16 @@ META
   # `${RUN_BUILD_MEASURES/#yes/true}` leaves "no" alone; make it valid JSON.
   sed -i 's/"build_measures": no/"build_measures": false/' "${snap}/meta.json"
 
-  "${root}/analysis/derive.py" "${snap}" > "${snap}/summary.json"
+  "${root}/measurement/derive.py" "${snap}" > "${snap}/summary.json"
   if [ -s "${snap}/rule-partition.csv" ]; then
-    "${root}/analysis/plot-rules.py" \
-      --partition "${snap}/rule-partition.csv" \
-      --meta "${snap}/meta.json" \
-      --out "${snap}/rules.html" >/dev/null
+    cmd_plot "${snap}" >/dev/null
   fi
   note ""
   cmd_show "${snap}"
   note ""
   note "snapshot: ${snap#"${root}/"}"
-  [ -f "${snap}/rules.html" ] && note "scatter:  ${snap#"${root}/"}/rules.html"
+  local scatter="$(plot_output "${snap}")"
+  [ -f "${scatter}" ] && note "scatter:  ${scatter#"${root}/"}"
 }
 
 newest_snapshot() {
@@ -324,7 +328,7 @@ cmd_show() {
     snap="${root}/${SNAPSHOT_DIR}/${snap}"
   fi
   [ -f "${snap}/summary.json" ] || die "no summary in ${snap}"
-  "${root}/analysis/derive.py" --report "${snap}"
+  "${root}/measurement/derive.py" --report "${snap}"
 }
 
 # ---------------------------------------------------------------------------
@@ -332,11 +336,11 @@ cmd_show() {
 cmd="$1"; shift
 
 if [ "${cmd}" = "site" ]; then
-  exec python3 "${root}/analysis/build-site.py" \
+  exec python3 "${root}/report_site/build-site.py" \
     --snapshots "${root}/${SNAPSHOT_DIR}" "$@"
 fi
 
-# `rules` forwards its own flags (--out, --force) to analysis/rule-order.py, so
+# `rules` forwards its own flags (--out, --force) to measurement/rule-order.py, so
 # its arguments bypass the option loop below. --logos is still honoured here.
 if [ "${cmd}" = "rules" ]; then
   forwarded=()

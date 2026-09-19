@@ -22,13 +22,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check report generation and links
-        run: python3 -m unittest discover -s tools/euthyna/analysis -p 'test_*.py'
+        run: python3 -m unittest discover -s tools/euthyna/tests -p 'test_*.py'
       - name: Build reports from saved measurements
-        run: tools/euthyna/bin/euthyna site
+        run: tools/euthyna/scripts/euthyna site
       - name: Upload report site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: tools/euthyna/site
+          path: tools/euthyna/scratch/site
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

@@ -2,9 +2,9 @@
 
 The catalogue. Eight measures come from Logos and are run unedited, one is
 Euthyna's own, and the derived metrics below them are computed from all of
-their output by `analysis/derive.py`.
+their output by `measurement/derive.py`.
 
-`bin/euthyna measures` prints the first table's live version.
+`scripts/euthyna measures` prints the first table's live version.
 
 ## The catalogue
 
@@ -16,7 +16,7 @@ Euthyna's.
 | `rule-status` | `classify-rule-status.py Cpc` | source | Every rule, classified `Proven` / `Unproven` / `OutOfScope`, by a recursive scan of `cmd_step_<rule>_properties` and `__eo_prog_<rule>` for proof gaps (`sorry`, `admit`, `sorryAx`, `axiom`). TSV, with a summary block. |
 | `core-rule-status` | `classify-core-rule-status.sh` | source | The same, restricted to the core rules named in `core-rules.txt` — the subset a calculus is expected to have before anything else. |
 | `rule-loc` | `cpc-rule-loc.py --csv` | source | Per rule: `proof_loc` and `proof_files`, the transitive reach of its correctness proof excluding the lower proof layers and the definitional base; and `eo_prog_loc` / `eo_prog_defs`, the size of the `__eo_prog_` implementation it is proven about. Neither column is a partition. |
-| `rule-partition` | **Euthyna's** `analysis/rule-partition.py` | source | Per rule, the **partitioned** proof size and rule size: every file of the rule-proof layer claimed by the most core rule that reaches it, so both columns are disjoint and sum to their layer. Excludes the central theorems entirely. Reconciles against bucket (f) or fails. See [partition.md](partition.md). |
+| `rule-partition` | **Euthyna's** `measurement/rule-partition.py` | source | Per rule, the **partitioned** proof size and rule size: every file of the rule-proof layer claimed by the most core rule that reaches it, so both columns are disjoint and sum to their layer. Excludes the central theorems entirely. Reconciles against bucket (f) or fails. See [partition.md](partition.md). |
 | `loc-summary` | `cpc-loc-summary.py --files --deps` | source | The whole development divided into four pieces — the definition of satisfiability, the checker, the parser, the proof — with the proof further split into seven **disjoint** buckets by priority attribution, so they sum to the whole. Plus the per-file listing and the inter-bucket dependency edges. |
 | `proof-hygiene` | `check-proof-hygiene.sh` | source | Fails if any standalone `sorry`, `admit`, or `axiom` token appears anywhere under `Cpc` or `CpcMini`, comments included. Reports how many files were scanned. |
 | `proof-modularity` | `check-proof-modularity.sh` | source | Six invariants of the checker layer: that `Cpc` and `CpcMini` share one copy of each common file, that `Checker.lean` names no rule or operator or calculus-specific invariant, that `CheckerState.lean` carries no invariant, that the checker layer depends on exactly one operator, and that it names no generated arm by number. |
@@ -28,7 +28,7 @@ why a full run is fifteen seconds rather than two hours.
 
 ### Snapshotted but not run
 
-`analysis/upstream/` holds the **whole** of Logos's `scripts/` directory — all
+`measurement/upstream/` holds the **whole** of Logos's `scripts/` directory — all
 seventeen files — not just the nine the catalogue names. Which scripts measure
 a proof is a judgement that will change as Euthyna asks better questions; which
 scripts existed at a Logos commit is a fact, and the fact is the thing worth
@@ -72,7 +72,7 @@ point is in [partition.md](partition.md).
 These are Euthyna's. They exist because the vendored measures each answer one
 question and stop, and the question Euthyna is actually asking — what is this
 proof *shaped* like — is not any one of theirs. Definitions are in
-`analysis/derive.py`, which reads only the measures' output.
+`measurement/derive.py`, which reads only the measures' output.
 
 ### floor
 

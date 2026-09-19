@@ -43,18 +43,18 @@ with the numbers Logos itself reports.
 
 So the scripts are copied, not reimplemented, and copied *unedited*:
 
-- `analysis/upstream/` holds the whole of Logos's `scripts/` directory byte for
+- `measurement/upstream/` holds the whole of Logos's `scripts/` directory byte for
   byte, with `MANIFEST` recording the origin commit and a SHA-256 of each file.
   All of it, not the subset that runs: which scripts measure a proof is a
   judgement that will change, and which existed at a commit is a fact.
-- `bin/euthyna verify` re-checks those digests. A vendored script that has
+- `scripts/euthyna verify` re-checks those digests. A vendored script that has
   been touched is a script whose output is evidence about Euthyna's edit
   rather than about Logos.
-- `bin/euthyna sync` re-copies from a Logos checkout and rewrites the
+- `scripts/euthyna sync` re-copies from a Logos checkout and rewrites the
   manifest, reporting which files changed. Upstream drift is a thing to
   notice deliberately, on a date, not a thing to absorb silently.
 
-Anything Euthyna wants that upstream does not provide goes in `analysis/`,
+Anything Euthyna wants that upstream does not provide goes in `measurement/`,
 alongside rather than inside. `derive.py` and `plot-rules.py` keep the seam
 strictly: they read the vendored scripts' *output* and never their internals.
 
@@ -68,13 +68,13 @@ every byte of it is Logos's.
 
 **That is the failure this rule is for, in its worst form.** The edit was
 comment-only, so no measurement moved and nothing in the baseline is wrong. But
-a reader of `analysis/upstream/` attributes what they find there to Logos's
+a reader of `measurement/upstream/` attributes what they find there to Logos's
 authors, and this was Euthyna talking. An observation about somebody else's
 proof is worth having; it is worth having *here*, signed, where a reader knows
 who is making it. It is [in `measures.md`](measures.md#gaps) now, and it turned
 out to be more interesting than the comment claimed.
 
-The file was restored to its upstream bytes on 2026-09-02. `bin/euthyna verify`
+The file was restored to its upstream bytes on 2026-09-02. `scripts/euthyna verify`
 reported it as `CHANGED` on the next run after the edit and on every run until
 the repair, which is the whole of what the digests are for: **the discipline is
 not that nobody edits these files, it is that an edit cannot go unnoticed.**
@@ -95,7 +95,7 @@ root is the parent of the directory the script sits in. `cpc-rule-loc.py`
 computes `REPO_ROOT` from `__file__`; the shell scripts compute `repo_root`
 from `BASH_SOURCE`. Two of them resolve symlinks while doing it.
 
-That contract cannot be met from `tools/euthyna/analysis/upstream/`, and it
+That contract cannot be met from `tools/euthyna/measurement/upstream/`, and it
 must not be met by writing a scripts directory into somebody's Logos checkout.
 So a run stages instead: it copies the Logos tree — everything but `.git` and
 `.lake`, about 50 MB — into a temporary directory, drops the vendored scripts
@@ -119,7 +119,7 @@ resulting paths are then rejected as being outside the repository root.
 
 ## Snapshots
 
-A run writes one directory under `data/snapshots/`, named
+A run writes one directory under `measurement/data/snapshots/`, named
 `<date>-<logos-commit>[-dirty][-tag]`. It holds every measure's raw output
 verbatim, plus:
 
@@ -128,8 +128,11 @@ verbatim, plus:
 | `meta.json` | what was measured: Logos commit and date, whether the tree was dirty, which manifest commit the scripts came from, when the run started and ended |
 | `measures.tsv` | which measures ran, which were skipped, and their exit status |
 | `summary.json` | the derived analysis, machine-readable |
-| `rules.html` | the rule scatter — the one file not kept in git, since `euthyna plot` regenerates it exactly from `rule-partition.csv` |
 | `<measure>.err` | present only if that measure wrote to stderr |
+
+The rule scatter is rendered separately to
+`scratch/plots/<snapshot-id>/rules.html`, ignored by git. `euthyna plot`
+regenerates it from the saved `rule-partition.csv`; it never changes the snapshot.
 
 Snapshots are kept in git — about 150 KB each. That is the point: a single
 measurement says what the proof is like, and a series of them says what it is

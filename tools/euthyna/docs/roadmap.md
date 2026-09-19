@@ -139,7 +139,7 @@ names the commit it was drawn from, and every number on it is in
 Worth writing down, so it is not rediscovered as an idea.
 
 - **Not editing the vendored scripts.** Anything Euthyna needs and upstream
-  does not provide goes beside them in `analysis/`, against their output. The
+  does not provide goes beside them in `measurement/`, against their output. The
   one restatement of upstream logic, in `euthyna_lean.py`, is held in place by
   a reconciliation check rather than by good intentions. See
   [method.md](method.md#the-vendoring-discipline).

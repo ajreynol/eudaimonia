@@ -1,11 +1,5 @@
-# The rule scatter is derived from a snapshot's rule-partition.csv and is
-# regenerated exactly by `bin/euthyna plot <snapshot>`. Snapshots keep what was
-# *measured*; a 100 KB rendering of it per snapshot is not that, and it would
-# be the largest thing in this directory within a dozen runs.
-data/snapshots/*/rules.html
-
-# Python bytecode from analysis/ imports.
+# Python bytecode from measurement and report imports.
 __pycache__/
 
-# Built and deployed by the reports workflow from the versioned snapshots.
-/site/
+# Reproducible HTML renderings, separate from versioned measurement evidence.
+/scratch/

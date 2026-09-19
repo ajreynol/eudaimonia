@@ -1,29 +1,32 @@
-# analysis/
+# Measurement
 
-Two things, kept apart on purpose.
+`euthyna` stages a Logos checkout, runs the measurements, and saves the results
+in `data/snapshots/`. From Euthyna's directory, use
+`scripts/euthyna measure --logos /path/to/logos`; `scripts/euthyna show` reads
+the latest saved result.
 
 `upstream/` is Logos's own measurement scripts, vendored **byte for byte** and
 never edited, pinned by `upstream/MANIFEST` to a Logos commit with a SHA-256
 per file. They are better instruments than anything written from outside the
 development would be, and they stay evidence about Logos only for as long as
-nobody touches them. `bin/euthyna verify` re-checks the digests;
-`bin/euthyna sync` re-copies and reports what moved.
+nobody touches them. `scripts/euthyna verify` re-checks the digests;
+`scripts/euthyna sync` re-copies and reports what moved.
 
 Everything else here is Euthyna's:
 
 | file | what it does |
 | ---- | ------------ |
+| `euthyna` | measurement harness and command dispatch |
 | `euthyna_lean.py` | the shared primitives — Lean-aware line count, module import graph, definition call graph, and the bucket attribution that identifies the rule-proof layer |
 | `rule-order.py` | seeds, checks and updates `rule-order.txt`, the append-only coreness order |
 | `rule-order.txt` | that order: 591 rules, most core first. The partition is a function of it |
 | `rule-partition.py` | the partitioned per-rule proof and rule sizes, reconciled against the layer or the run fails |
-| `plot-rules.py` | the scatter those two columns are the axes of, as a standalone HTML page |
-| `build-site.py` | builds the public report index, latest and dated charts, and downloadable data from saved snapshots |
-| `test_site.py` | checks report data, latest selection, local links, and incomplete-snapshot failures |
 | `derive.py` | the metrics over everything's output: floor, surplus, concentration, leverage, price, and the partition's own statistics |
+| [`data/`](data/README.md) | saved measurements and their provenance |
 
-`derive.py` and `plot-rules.py` read the vendored scripts' **output** and never
-their internals. `euthyna_lean.py` is the exception and is documented as one:
+`derive.py` and the separate [report tool](../report_site/README.md) read the
+vendored scripts' **output** and never their internals. `euthyna_lean.py` is the
+exception and is documented as one:
 it restates upstream's line count and bucket attribution because a partition
 cannot be derived from a printed report. What keeps that honest is arithmetic
 — the partition must sum to the layer total `cpc-loc-summary.py` computes

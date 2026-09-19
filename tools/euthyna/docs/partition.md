@@ -74,7 +74,7 @@ rather than reporting a plausible wrong answer.
 
 ## The coreness order
 
-The partition is a function of `analysis/rule-order.txt`. It is a decision, not
+The partition is a function of `measurement/rule-order.txt`. It is a decision, not
 a measurement, so it is written down where it can be argued with.
 
 **Seeded once**, on 2026-08-31:

@@ -1,13 +1,13 @@
 # Baseline
 
 The first measurement. Logos at `373d56c5bb24`, measured 2026-08-31. Snapshot
-`data/snapshots/2026-08-31-373d56c5bb24-dirty/`.
+`measurement/data/snapshots/2026-08-31-373d56c5bb24-dirty/`.
 
 The tree carried two untracked files (`ai-estimate.txt` and a regression input,
 neither a Lean source under `Cpc`), so the snapshot is marked dirty and is not
 exactly reproducible. Nothing measured here depends on either.
 
-Every number below is from that snapshot; `bin/euthyna show` reprints the
+Every number below is from that snapshot; `scripts/euthyna show` reprints the
 report it came from. What the numbers mean is in [measures.md](measures.md);
 what they are *not* evidence of is in [method.md](method.md#what-these-numbers-are-not).
 
@@ -159,7 +159,7 @@ checker code it is about.
 
 Everything above is reach. The `rule-partition` measure replaces it with a
 disjoint share: every file of the rule-proof layer claimed by the most core
-rule that reaches it, under the order in `analysis/rule-order.txt`. How the
+rule that reaches it, under the order in `measurement/rule-order.txt`. How the
 attribution works and what it does and does not license is in
 [partition.md](partition.md).
 
@@ -199,7 +199,7 @@ onto the rules that genuinely introduce it.
 
 ## The scatter
 
-`rules.html` in the snapshot, drawn by `euthyna plot`. Lines of rule on x,
+`scratch/plots/<snapshot-id>/rules.html`, drawn by `euthyna plot`. Lines of rule on x,
 lines of proof on y, both logarithmic, one point per rule.
 
 The relationship is real but loose — Pearson *r* = 0.49 on the raw values, 0.56

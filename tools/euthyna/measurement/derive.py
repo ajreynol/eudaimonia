@@ -47,8 +47,8 @@ So this reads a snapshot's raw outputs and derives:
                 from, and the one to read when reach and share disagree.
 
 Usage:
-  analysis/derive.py <snapshot>            emit summary.json on stdout
-  analysis/derive.py --report <snapshot>   print the human-readable report
+  measurement/derive.py <snapshot>            emit summary.json on stdout
+  measurement/derive.py --report <snapshot>   print the human-readable report
 """
 
 from __future__ import annotations

@@ -73,7 +73,7 @@ The measuring is not Euthyna's invention. Logos already carries scripts that
 count its own proof — rule status, lines by layer, per-rule cost, structural
 invariants — and those are better evidence about Logos than anything written
 from outside it would be. The whole of its `scripts/` directory is snapshotted
-here unedited, under [`analysis/upstream/`](analysis/upstream/), pinned to a
+here unedited, under [`measurement/upstream/`](measurement/upstream/), pinned to a
 Logos commit and checksummed. Which of them measure a proof is a judgement that
 will change; which of them existed at a commit is a fact, and the fact is what
 is kept.
@@ -81,21 +81,21 @@ is kept.
 What Euthyna adds sits on top of them:
 
 - a harness that runs the measuring ones together against one Logos revision
-  and keeps the result ([`bin/euthyna`](bin/euthyna));
+  and keeps the result ([`scripts/euthyna`](scripts/euthyna));
 - a **partition** of the rule-proof layer across the rules
-  ([`analysis/rule-partition.py`](analysis/rule-partition.py)). Upstream reports
+  ([`measurement/rule-partition.py`](measurement/rule-partition.py)). Upstream reports
   each rule's transitive *reach*, which double-counts everything shared and sums
   to twenty times the layer it measures. This gives every shared file to the
   most core rule that uses it, so the columns are disjoint and sum to the layer
   exactly — and the run fails if they do not;
 - the **coreness order** that partition is a function of
-  ([`analysis/rule-order.txt`](analysis/rule-order.txt)), maintained here and
+  ([`measurement/rule-order.txt`](measurement/rule-order.txt)), maintained here and
   append-only, so two snapshots stay comparable;
 - the **scatter** those two axes exist for
-  ([`analysis/plot-rules.py`](analysis/plot-rules.py)): proof size against rule
+  ([`report_site/plot-rules.py`](report_site/plot-rules.py)): proof size against rule
   size, one point per rule, which is where "short but hard to prove" and "large
   but easy to prove" become visible as places on a chart;
-- and a derivation over all of it ([`analysis/derive.py`](analysis/derive.py))
+- and a derivation over all of it ([`measurement/derive.py`](measurement/derive.py))
   — the fixed cost every rule pays, how concentrated the variable cost is, and
   what a line of rule costs in lines of proof.
 
@@ -103,46 +103,50 @@ What Euthyna adds sits on top of them:
 
 | path | what it holds |
 | ---- | ------------- |
-| `bin/euthyna` | the harness: stage a Logos checkout, run every measure, write a snapshot |
+| `scripts/euthyna` | shared command launcher for measurement and reports |
+| [`measurement/`](measurement/README.md) | measurement implementation, vendored instruments and saved evidence; `measurement/euthyna` runs the harness |
+| [`report_site/`](report_site/README.md) | site builder and chart renderer, reading saved evidence |
 | `euthyna.conf` | where Logos is, where snapshots go |
-| `analysis/upstream/` | the whole of Logos's `scripts/`, snapshotted verbatim, with `MANIFEST` |
-| `analysis/rule-order.txt` | the coreness order over the rules — append-only, maintained here |
-| `analysis/rule-partition.py` | the partitioned per-rule proof and rule sizes |
-| `analysis/plot-rules.py` | the scatter, as a standalone HTML page |
-| `analysis/build-site.py` | the public report index, latest page, dated reports, and data downloads |
-| `analysis/derive.py` | Euthyna's derived metrics, over those scripts' output |
-| `analysis/euthyna_lean.py` | the Lean line count, import graph and bucket attribution the three share |
-| `data/snapshots/` | one directory per measurement run, kept in git |
-| `site/` | generated website, ignored locally and deployed by GitHub Actions |
+| `measurement/upstream/` | the whole of Logos's `scripts/`, snapshotted verbatim, with `MANIFEST` |
+| `measurement/rule-order.txt` | the coreness order over the rules — append-only, maintained here |
+| `measurement/rule-partition.py` | the partitioned per-rule proof and rule sizes |
+| `report_site/plot-rules.py` | the scatter, as a standalone HTML page |
+| `report_site/build-site.py` | the public report index, latest page, dated reports, and data downloads |
+| `measurement/derive.py` | Euthyna's derived metrics, over those scripts' output |
+| `measurement/euthyna_lean.py` | the Lean line count, import graph and bucket attribution the three share |
+| `measurement/data/snapshots/` | one directory per measurement run, kept in git |
+| `scratch/site/` | generated website, ignored locally and deployed by GitHub Actions |
+| `scratch/plots/` | regenerated standalone plots, ignored by git |
+| `tests/` | report data, link and output-location checks |
 | `docs/` | what is measured, how, what it showed, and where it goes next |
 
 ## Running it
 
 ```
-tools/euthyna/bin/euthyna measure --logos ~/logos
+tools/euthyna/scripts/euthyna measure --logos ~/logos
 ```
 
 Fifteen seconds, no build required, no write to the checkout. It stages a copy
 of the Logos tree, runs the nine measures, writes
-`data/snapshots/<date>-<commit>/`, draws the scatter, and prints the report.
+`measurement/data/snapshots/<date>-<commit>/`, draws the scatter, and prints the report.
 
 ```
-tools/euthyna/bin/euthyna measures      # the catalogue: what runs, what it needs
-tools/euthyna/bin/euthyna show          # re-print the newest snapshot's report
-tools/euthyna/bin/euthyna plot          # redraw the newest snapshot's scatter
-tools/euthyna/bin/euthyna site          # build the full shareable website
-tools/euthyna/bin/euthyna rules check   # is the coreness order current?
-tools/euthyna/bin/euthyna rules update  # append new rules, drop departed ones
-tools/euthyna/bin/euthyna verify        # vendored scripts vs. MANIFEST
-tools/euthyna/bin/euthyna sync          # re-snapshot from a Logos checkout
+tools/euthyna/scripts/euthyna measures      # the catalogue: what runs, what it needs
+tools/euthyna/scripts/euthyna show          # re-print the newest snapshot's report
+tools/euthyna/scripts/euthyna plot          # redraw the newest snapshot's scatter
+tools/euthyna/scripts/euthyna site          # build the full shareable website
+tools/euthyna/scripts/euthyna rules check   # is the coreness order current?
+tools/euthyna/scripts/euthyna rules update  # append new rules, drop departed ones
+tools/euthyna/scripts/euthyna verify        # vendored scripts vs. MANIFEST
+tools/euthyna/scripts/euthyna sync          # re-snapshot from a Logos checkout
 ```
 
-The run writes `rules.html` into the snapshot and tells you where. It is the
-one file a snapshot does not keep in git — it is derived from
-`rule-partition.csv`, and `euthyna plot` puts it back.
+The run writes the scatter to `scratch/plots/<snapshot-id>/rules.html` and tells
+you where. Renderings are separate from the saved measurements and ignored by
+git; `euthyna plot` regenerates them from a snapshot's `rule-partition.csv`.
 
 For sharing, use the website. `euthyna site` builds it locally at
-`tools/euthyna/site/index.html` from every saved snapshot, without a Logos
+`tools/euthyna/scratch/site/index.html` from every saved snapshot, without a Logos
 checkout or extra Python packages. The Reports workflow builds and deploys
 the same site when report sources or snapshots are pushed to `main`.
 See [publishing.md](docs/publishing.md) for first-time Pages setup and previewing.
